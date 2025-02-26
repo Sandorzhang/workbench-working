@@ -2,22 +2,25 @@
 
 import * as React from "react"
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
-  Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
   PieChart,
   Settings2,
   SquareTerminal,
+  GraduationCap,
+  Users,
+  FileText,
+  BarChart,
+  Calendar,
+  Building,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUserAuth } from "@/components/nav-user-auth"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { SchoolSwitcher } from "@/components/school-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -30,105 +33,88 @@ import { useRouter } from "next/navigation"
 
 // This is sample data.
 const data = {
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
-      title: "Playground",
-      url: "#",
+      title: "工作台",
+      url: "/dashboard",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "History",
+          title: "应用列表",
+          url: "/dashboard",
+        },
+        {
+          title: "消息中心",
           url: "#",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
+          title: "通知设置",
           url: "#",
         },
       ],
     },
     {
-      title: "Models",
+      title: "教学管理",
       url: "#",
-      icon: Bot,
+      icon: GraduationCap,
       items: [
         {
-          title: "Genesis",
+          title: "课程管理",
           url: "#",
         },
         {
-          title: "Explorer",
+          title: "班级管理",
           url: "#",
         },
         {
-          title: "Quantum",
+          title: "学生管理",
           url: "#",
         },
       ],
     },
     {
-      title: "Documentation",
+      title: "资源中心",
       url: "#",
       icon: BookOpen,
       items: [
         {
-          title: "Introduction",
+          title: "教学资源",
           url: "#",
         },
         {
-          title: "Get Started",
+          title: "试题库",
           url: "#",
         },
         {
-          title: "Tutorials",
+          title: "教案库",
           url: "#",
         },
         {
-          title: "Changelog",
+          title: "资源共享",
           url: "#",
         },
       ],
     },
     {
-      title: "Settings",
+      title: "系统设置",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "General",
+          title: "基础设置",
           url: "#",
         },
         {
-          title: "Team",
+          title: "用户管理",
           url: "#",
         },
         {
-          title: "Billing",
+          title: "权限配置",
           url: "#",
         },
         {
-          title: "Limits",
+          title: "日志查询",
           url: "#",
         },
       ],
@@ -136,19 +122,24 @@ const data = {
   ],
   projects: [
     {
-      name: "Design Engineering",
+      name: "教师空间",
       url: "#",
-      icon: Frame,
+      icon: Users,
     },
     {
-      name: "Sales & Marketing",
+      name: "数据分析",
       url: "#",
-      icon: PieChart,
+      icon: BarChart,
     },
     {
-      name: "Travel",
+      name: "校历管理",
       url: "#",
-      icon: Map,
+      icon: Calendar,
+    },
+    {
+      name: "校园设施",
+      url: "#",
+      icon: Building,
     },
   ],
 }
@@ -165,7 +156,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <SchoolSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
