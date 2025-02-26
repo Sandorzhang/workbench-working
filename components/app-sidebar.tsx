@@ -39,20 +39,13 @@ const data = {
       url: "/dashboard",
       icon: SquareTerminal,
       isActive: true,
-      items: [
-        {
-          title: "应用列表",
-          url: "/dashboard",
-        },
-        {
-          title: "我的日历",
-          url: "/calendar",
-        },
-        {
-          title: "消息中心",
-          url: "#",
-        },
-      ],
+      items: [],
+    },
+    {
+      title: "我的日历",
+      url: "/calendar",
+      icon: Calendar,
+      items: [],
     },
     {
       title: "教学管理",
@@ -130,11 +123,6 @@ const data = {
       name: "数据分析",
       url: "#",
       icon: BarChart,
-    },
-    {
-      name: "校历管理",
-      url: "/calendar",
-      icon: Calendar,
     },
     {
       name: "校园设施",

@@ -70,6 +70,55 @@ export default function DashboardPage() {
   
   // 简化的应用获取逻辑
   useEffect(() => {
+    // 使用模拟数据，简化身份验证逻辑
+    const mockApplications = [
+      {
+        id: '1',
+        name: '课程管理系统',
+        description: '管理学校课程、教学计划和课表',
+        icon: 'book',
+        url: '#',
+        roles: ['教师', '管理员']
+      },
+      {
+        id: '2',
+        name: '学生信息系统',
+        description: '管理学生基本信息、成绩和考勤',
+        icon: 'users',
+        url: '#',
+        roles: ['教师', '管理员']
+      },
+      {
+        id: '3',
+        name: '教学资源库',
+        description: '存储和共享教学资料、课件和教案',
+        icon: 'file',
+        url: '#',
+        roles: ['教师']
+      },
+      {
+        id: '4',
+        name: '校园活动管理',
+        description: '管理学校活动、社团和比赛',
+        icon: 'calendar',
+        url: '/calendar',
+        roles: ['教师', '管理员']
+      },
+      {
+        id: '5',
+        name: '教师评价系统',
+        description: '学生对教师的教学评价和反馈',
+        icon: 'clipboard',
+        url: '#',
+        roles: ['管理员']
+      }
+    ];
+    
+    // 设置模拟数据
+    setApplications(mockApplications);
+    setIsLoading(false);
+    
+    /* 原身份验证和数据获取逻辑（已注释）
     // 避免在身份验证加载过程中执行任何操作
     if (authLoading) {
       return;
@@ -132,12 +181,14 @@ export default function DashboardPage() {
       
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, token, authLoading, dataFetched, router, isLoading]);
+    */
+  }, []);
   
   const handleAppClick = (url: string) => {
     router.push(url);
   };
   
+  /* 原身份验证加载界面（已注释）
   // 如果身份验证加载中，显示加载界面
   if (authLoading) {
     return (
@@ -154,6 +205,7 @@ export default function DashboardPage() {
   if (!isAuthenticated) {
     return null;
   }
+  */
   
   // 使用新的布局
   return (
