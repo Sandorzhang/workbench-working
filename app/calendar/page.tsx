@@ -77,6 +77,7 @@ const eventTypeConfig: Record<string, { color: string, bgColor: string }> = {
   'exam': { color: 'text-red-600', bgColor: 'bg-red-100' },
   'activity': { color: 'text-purple-600', bgColor: 'bg-purple-100' },
   'holiday': { color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  'classroom-impression': { color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
 };
 
 export default function CalendarPage() {
@@ -98,69 +99,12 @@ export default function CalendarPage() {
   useEffect(() => {
     console.log('获取日历事件数据...');
     
-    // 使用模拟数据而不是进行API请求
-    const mockEvents = [
-      {
-        id: '1',
-        title: '教师会议',
-        date: '2024-03-20',
-        startTime: '09:00',
-        endTime: '10:30',
-        location: '会议室A',
-        type: 'meeting',
-        description: '讨论本学期教学计划',
-        participants: ['张老师', '李老师', '王老师']
-      },
-      {
-        id: '2',
-        title: '高等数学课',
-        date: '2024-03-20',
-        startTime: '14:00',
-        endTime: '15:30',
-        location: '教室201',
-        type: 'class',
-        description: '微积分基础',
-        participants: ['一年级数学班']
-      },
-      {
-        id: '3',
-        title: '期中考试',
-        date: '2024-03-25',
-        startTime: '09:00',
-        endTime: '11:00',
-        location: '考场1',
-        type: 'exam',
-        description: '高等数学期中考试',
-        participants: ['一年级全体学生']
-      },
-      {
-        id: '4',
-        title: '校园文化节',
-        date: '2024-03-28',
-        startTime: '13:00',
-        endTime: '17:00',
-        location: '学校操场',
-        type: 'activity',
-        description: '年度校园文化节活动',
-        participants: ['全校师生']
-      },
-      {
-        id: '5',
-        title: '清明节放假',
-        date: '2024-04-05',
-        startTime: '00:00',
-        endTime: '23:59',
-        location: '',
-        type: 'holiday',
-        description: '清明节假期',
-        participants: []
-      }
-    ];
-    
-    // 直接设置模拟数据
-    setEvents(mockEvents);
-    setIsLoading(false);
-    
+    // 模拟数据加载
+    setIsLoading(true);
+    setTimeout(() => {
+      setEvents(mockEvents);
+      setIsLoading(false);
+    }, 800);
   }, []);
   
   // 日历导航
@@ -258,6 +202,112 @@ export default function CalendarPage() {
       weekday: 'long'
     });
   };
+  
+  // 处理事件点击
+  const handleEventClick = (event: CalendarEvent) => {
+    if (event.type === 'classroom-impression') {
+      // 提取课堂记录ID（假设存储在description字段中）
+      const recordId = event.description.split('recordId:')[1]?.trim();
+      if (recordId) {
+        router.push(`/classroom-timemachine?recordId=${recordId}`);
+      } else {
+        router.push('/classroom-timemachine');
+      }
+    }
+  };
+  
+  // 模拟日历事件数据
+  const mockEvents: CalendarEvent[] = [
+    {
+      id: '1',
+      title: '教师会议',
+      date: '2023-10-15',
+      startTime: '09:00',
+      endTime: '10:30',
+      location: '会议室A',
+      type: 'meeting',
+      description: '讨论本学期教学计划和学生评估方法',
+      participants: ['王校长', '李主任', '张老师', '刘老师']
+    },
+    {
+      id: '2',
+      title: '数学课',
+      date: '2023-10-16',
+      startTime: '08:00',
+      endTime: '09:40',
+      location: '教室301',
+      type: 'class',
+      description: '几何证明方法讲解与练习',
+      participants: ['高一(3)班']
+    },
+    {
+      id: '3',
+      title: '期中考试',
+      date: '2023-10-20',
+      startTime: '08:00',
+      endTime: '11:30',
+      location: '考场1-10',
+      type: 'exam',
+      description: '语文、数学、英语三科考试',
+      participants: ['高一年级全体学生']
+    },
+    {
+      id: '4',
+      title: '校园文化节',
+      date: '2023-10-25',
+      startTime: '13:00',
+      endTime: '17:00',
+      location: '学校操场',
+      type: 'activity',
+      description: '包括文艺表演、游戏活动和美食展示',
+      participants: ['全校师生']
+    },
+    {
+      id: '5',
+      title: '国庆假期',
+      date: '2023-10-01',
+      startTime: '00:00',
+      endTime: '23:59',
+      location: '',
+      type: 'holiday',
+      description: '国庆节假期，学校放假',
+      participants: []
+    },
+    // 添加课堂印象事件
+    {
+      id: '6',
+      title: '物理课课堂印象',
+      date: '2023-10-18',
+      startTime: '10:00',
+      endTime: '11:40',
+      location: '教室305',
+      type: 'classroom-impression',
+      description: '电磁感应原理讲解与实验 recordId:1',
+      participants: ['高二(2)班']
+    },
+    {
+      id: '7',
+      title: '语文课课堂印象',
+      date: '2023-10-19',
+      startTime: '08:00',
+      endTime: '09:40',
+      location: '教室203',
+      type: 'classroom-impression',
+      description: '古代诗词赏析与写作技巧 recordId:2',
+      participants: ['高一(5)班']
+    },
+    {
+      id: '8',
+      title: '化学课课堂印象',
+      date: '2023-10-22',
+      startTime: '14:00',
+      endTime: '15:40',
+      location: '实验室2',
+      type: 'classroom-impression',
+      description: '有机化学反应实验与观察 recordId:3',
+      participants: ['高三(1)班']
+    }
+  ];
   
   return (
     <>
@@ -426,7 +476,11 @@ export default function CalendarPage() {
                       ) : selectedDateEvents.length > 0 ? (
                         <div className="space-y-4">
                           {selectedDateEvents.map((event) => (
-                            <div key={event.id} className="border rounded-lg p-3 hover:shadow-sm transition-shadow">
+                            <div 
+                              key={event.id} 
+                              className="border rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer"
+                              onClick={() => handleEventClick(event)}
+                            >
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   <h4 className="font-medium">{event.title}</h4>
@@ -457,11 +511,23 @@ export default function CalendarPage() {
                                   {event.type === 'exam' && '考试'}
                                   {event.type === 'activity' && '活动'}
                                   {event.type === 'holiday' && '假期'}
-                                  {!['meeting', 'class', 'exam', 'activity', 'holiday'].includes(event.type) && event.type}
+                                  {event.type === 'classroom-impression' && '课堂印象'}
+                                  {!['meeting', 'class', 'exam', 'activity', 'holiday', 'classroom-impression'].includes(event.type) && event.type}
                                 </Badge>
                               </div>
                               {event.description && (
-                                <p className="mt-2 text-sm text-gray-600">{event.description}</p>
+                                <p className="mt-2 text-sm text-gray-600">
+                                  {event.type === 'classroom-impression' 
+                                    ? event.description.split('recordId:')[0].trim() 
+                                    : event.description}
+                                </p>
+                              )}
+                              {event.type === 'classroom-impression' && (
+                                <div className="mt-2">
+                                  <Button variant="outline" size="sm">
+                                    查看课堂时光机
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           ))}
