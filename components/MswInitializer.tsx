@@ -2,7 +2,11 @@
 
 import { useEffect, useState, useRef } from 'react';
 
-export function MswInitializer() {
+interface MswInitializerProps {
+  onInitialized?: () => void;
+}
+
+export function MswInitializer({ onInitialized }: MswInitializerProps) {
   const [status, setStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const initAttemptedRef = useRef(false);
 
@@ -14,6 +18,7 @@ export function MswInitializer() {
     const initMsw = async () => {
       if (process.env.NODE_ENV !== 'development') {
         setStatus('success');
+        onInitialized?.();
         return;
       }
 
@@ -32,8 +37,16 @@ export function MswInitializer() {
             },
           });
           
+          // 确保默认会话可用
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.log('设置默认测试token');
+            localStorage.setItem('token', 'default-token');
+          }
+          
           console.log('✅ MSW初始化成功');
           setStatus('success');
+          onInitialized?.();
         } else {
           console.error('❌ 浏览器不支持Service Worker');
           setStatus('error');
@@ -45,7 +58,7 @@ export function MswInitializer() {
     };
 
     initMsw();
-  }, []);
+  }, [onInitialized]);
 
   // 仅在开发环境中的调试信息
   if (process.env.NODE_ENV === 'development') {
@@ -59,9 +72,16 @@ export function MswInitializer() {
         color: 'white',
         fontSize: '12px',
         zIndex: 9999,
-        borderTopLeftRadius: '4px'
-      }}>
-        MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启动' : '启动失败'}
+        borderTopLeftRadius: '4px',
+        cursor: 'pointer'
+      }}
+      onClick={() => {
+        if (status === 'error') {
+          window.location.reload();
+        }
+      }}
+      >
+        MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启动' : '启动失败 (点击重试)'}
       </div>
     );
   }

@@ -58,6 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       try {
+        console.log('正在验证用户会话，token:', token.substring(0, 5) + '...');
         const response = await fetch('/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -65,10 +66,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
         
         if (!response.ok) {
-          throw new Error('认证失败');
+          if (response.status === 401) {
+            console.log('会话已过期或无效');
+            throw new Error('会话已过期');
+          } else {
+            console.log('验证请求失败:', response.status);
+            throw new Error('认证失败');
+          }
         }
         
         const user = await response.json();
+        console.log('会话验证成功，用户:', user.name);
         
         setState({
           isAuthenticated: true,
@@ -78,6 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           error: null,
         });
       } catch (error) {
+        console.error('会话验证失败:', error);
         localStorage.removeItem('token');
         setState({
           isAuthenticated: false,

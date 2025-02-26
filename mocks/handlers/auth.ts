@@ -203,13 +203,25 @@ export const authHandlers = [
   http.get('*/api/auth/me', async ({ request }) => {
     await delay(300);
     
+    console.log('收到 /api/auth/me 请求');
+    
     // 从请求头中获取令牌
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new HttpResponse(null, { status: 401 });
+      console.log('认证API: 未提供授权头或格式不正确');
+      return new HttpResponse(
+        JSON.stringify({ error: '未授权' }),
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
     
     const token = authHeader.split(' ')[1];
+    console.log(`认证API: 收到token: ${token}`);
     
     // 查找会话
     const session = db.session.findFirst({
@@ -221,14 +233,64 @@ export const authHandlers = [
     });
     
     if (!session) {
-      return new HttpResponse(null, { status: 401 });
+      console.log(`认证API: 未找到会话，token: ${token}`);
+      
+      // 如果是默认token，创建一个默认会话
+      if (token === 'default-token') {
+        console.log('认证API: 使用默认token，创建默认会话');
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
+        
+        db.session.create({
+          id: 'default-session',
+          userId: '1', // 管理员用户ID
+          token: 'default-token',
+          expiresAt: expiresAt.toISOString(),
+        });
+        
+        // 获取用户
+        const user = db.user.findFirst({
+          where: {
+            id: {
+              equals: '1',
+            },
+          },
+        });
+        
+        if (user) {
+          const { password: _, ...userWithoutPassword } = user;
+          console.log('认证API: 返回默认用户:', userWithoutPassword.name);
+          return HttpResponse.json(userWithoutPassword);
+        }
+      }
+      
+      return new HttpResponse(
+        JSON.stringify({ error: '会话不存在' }),
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
     
     // 验证会话是否过期
-    if (new Date(session.expiresAt) < new Date()) {
+    const expiresAt = new Date(session.expiresAt);
+    const now = new Date();
+    
+    console.log(`认证API: 会话过期时间: ${expiresAt.toISOString()}, 当前时间: ${now.toISOString()}`);
+    
+    if (expiresAt < now) {
+      console.log('认证API: 会话已过期');
       return new HttpResponse(
         JSON.stringify({ error: '会话已过期' }),
-        { status: 401 }
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
     }
     
@@ -242,10 +304,20 @@ export const authHandlers = [
     });
     
     if (!user) {
-      return new HttpResponse(null, { status: 404 });
+      console.log('认证API: 未找到用户');
+      return new HttpResponse(
+        JSON.stringify({ error: '用户不存在' }),
+        { 
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
     
     const { password: _, ...userWithoutPassword } = user;
+    console.log('认证API: 返回用户:', userWithoutPassword.name);
     
     return HttpResponse.json(userWithoutPassword);
   }),

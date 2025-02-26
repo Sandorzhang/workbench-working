@@ -45,11 +45,11 @@ const data = {
           url: "/dashboard",
         },
         {
-          title: "消息中心",
-          url: "#",
+          title: "我的日历",
+          url: "/calendar",
         },
         {
-          title: "通知设置",
+          title: "消息中心",
           url: "#",
         },
       ],
@@ -133,7 +133,7 @@ const data = {
     },
     {
       name: "校历管理",
-      url: "#",
+      url: "/calendar",
       icon: Calendar,
     },
     {
