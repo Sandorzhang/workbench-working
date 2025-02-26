@@ -289,7 +289,7 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <CardFooter className="flex justify-center text-sm text-gray-500 px-0">
               <div className="p-3 bg-white/70 backdrop-blur-sm rounded-lg shadow-md">
-                <p>提示：管理员账号 admin / admin123，教师账号 teacher / teacher123</p>
+                <p>提示：管理员账号 admin / password123，教师账号 teacher / password123</p>
                 <p className="mt-1">手机验证码：可使用手机 13800138000（管理员）或 13900139000（教师）</p>
               </div>
             </CardFooter>

@@ -98,6 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
+      console.log('开始账号密码登录请求...');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -112,19 +113,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       const data = await response.json();
+      console.log('登录成功，获取到token和用户数据');
       
+      // 先保存token，再更新状态
       localStorage.setItem('token', data.token);
       
-      setState({
-        isAuthenticated: true,
-        user: data.user,
-        token: data.token,
-        isLoading: false,
-        error: null,
-      });
-      
-      toast.success('登录成功');
+      // 使用setTimeout确保状态更新和导航不会冲突
+      setTimeout(() => {
+        setState({
+          isAuthenticated: true,
+          user: data.user,
+          token: data.token,
+          isLoading: false,
+          error: null,
+        });
+        
+        toast.success('登录成功');
+      }, 0);
     } catch (error: any) {
+      console.error('登录失败:', error);
       const errorMessage = error.message || '登录时发生错误';
       setState(prev => ({ 
         ...prev, 

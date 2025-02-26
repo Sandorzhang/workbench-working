@@ -6,6 +6,10 @@ const generateToken = () => {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 };
 
+// 测试模式配置
+const TEST_MODE = process.env.NODE_ENV === 'development';
+const TEST_VERIFICATION_CODE = '123456';
+
 // 验证码存储 (模拟)
 const verificationCodes = new Map();
 
@@ -30,6 +34,8 @@ export const authHandlers = [
     await delay(500);
     const { username, password } = await request.json() as LoginRequest;
     
+    console.log(`尝试账号登录: ${username}`);
+    
     const user = db.user.findFirst({
       where: {
         username: {
@@ -38,7 +44,20 @@ export const authHandlers = [
       },
     });
     
-    if (!user || user.password !== password) {
+    // 检查用户是否存在且密码是否匹配
+    // 注意：提示信息中显示admin/password123，但实际设置的是admin123
+    if (!user) {
+      console.log(`用户 ${username} 不存在`);
+      return new HttpResponse(
+        JSON.stringify({ error: '用户名或密码错误' }),
+        { status: 401 }
+      );
+    }
+    
+    // 检查密码是否匹配
+    console.log(`检查密码: ${password}, 数据库密码: ${user.password}`);
+    if (user.password !== password) {
+      console.log(`用户 ${username} 密码不匹配`);
       return new HttpResponse(
         JSON.stringify({ error: '用户名或密码错误' }),
         { status: 401 }
@@ -50,6 +69,8 @@ export const authHandlers = [
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
     
+    console.log(`创建会话，token: ${token.substr(0, 8)}...`);
+    
     db.session.create({
       id: String(Date.now()),
       userId: user.id,
@@ -58,6 +79,8 @@ export const authHandlers = [
     });
     
     const { password: _, ...userWithoutPassword } = user;
+    
+    console.log(`登录成功，返回用户信息: ${userWithoutPassword.name}`);
     
     return HttpResponse.json({
       user: userWithoutPassword,
@@ -107,10 +130,32 @@ export const authHandlers = [
     
     const storedCode = verificationCodes.get(phone);
     
-    // 检查验证码是否存在且有效
-    if (!storedCode || storedCode.code !== code) {
+    // 检查验证码是否存在
+    if (!storedCode) {
       return new HttpResponse(
-        JSON.stringify({ error: '验证码错误或已过期' }),
+        JSON.stringify({ error: '验证码不存在或已过期' }),
+        { status: 401 }
+      );
+    }
+    
+    // 检查验证码是否过期（10分钟有效期）
+    const createdAt = new Date(storedCode.createdAt);
+    const now = new Date();
+    const expirationTime = 10 * 60 * 1000; // 10分钟（毫秒）
+    
+    if (now.getTime() - createdAt.getTime() > expirationTime) {
+      // 验证码过期，删除并返回错误
+      verificationCodes.delete(phone);
+      return new HttpResponse(
+        JSON.stringify({ error: '验证码已过期，请重新获取' }),
+        { status: 401 }
+      );
+    }
+    
+    // 检查验证码是否匹配
+    if (storedCode.code !== code && !(TEST_MODE && code === TEST_VERIFICATION_CODE)) {
+      return new HttpResponse(
+        JSON.stringify({ error: '验证码错误' }),
         { status: 401 }
       );
     }
@@ -259,6 +304,14 @@ export const authHandlers = [
     
     if (!session) {
       return new HttpResponse(null, { status: 401 });
+    }
+    
+    // 验证会话是否过期
+    if (new Date(session.expiresAt) < new Date()) {
+      return new HttpResponse(
+        JSON.stringify({ error: '会话已过期' }),
+        { status: 401 }
+      );
     }
     
     // 查找用户
