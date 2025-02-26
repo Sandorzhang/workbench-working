@@ -10,79 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
-
-const VerificationCodeInput = ({ 
-  value, 
-  onChange, 
-  length = 6 
-}: { 
-  value: string; 
-  onChange: (value: string) => void; 
-  length?: number;
-}) => {
-  const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  
-  // 初始化refs数组
-  React.useEffect(() => {
-    inputRefs.current = inputRefs.current.slice(0, length);
-  }, [length]);
-  
-  // 当单个数字输入框值变化时
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const target = e.target;
-    let targetValue = target.value;
-    
-    // 确保只接受单个数字
-    targetValue = targetValue.replace(/[^0-9]/g, '');
-    
-    if (targetValue.length > 1) {
-      targetValue = targetValue[targetValue.length - 1];
-    }
-    
-    // 创建新的验证码字符串
-    const newCode = value.split('');
-    newCode[index] = targetValue;
-    const newCodeString = newCode.join('');
-    
-    // 调用父组件的onChange
-    onChange(newCodeString);
-    
-    // 聚焦下一个输入框
-    if (targetValue && index < length - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-  
-  // 处理键盘事件（退格键等）
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    // 如果是退格键并且当前输入框是空的，焦点移到前一个
-    if (e.key === 'Backspace' && !value[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-  
-  // 从验证码字符串中提取每个字符
-  const codeArray = value.padEnd(length, '').split('');
-  
-  return (
-    <div className="flex gap-2 justify-between">
-      {Array.from({ length }).map((_, index) => (
-        <Input
-          key={index}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          className="w-12 h-12 text-center text-xl"
-          value={codeArray[index] || ''}
-          onChange={(e) => handleChange(e, index)}
-          onKeyDown={(e) => handleKeyDown(e, index)}
-          ref={(el: HTMLInputElement | null) => (inputRefs.current[index] = el)}
-        />
-      ))}
-    </div>
-  );
-};
+import { Loader2, KeyRound, Smartphone, ArrowRight, User, ShieldCheck, Mail } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<string>('password');
@@ -136,10 +70,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="min-h-screen flex flex-col sm:flex-row overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
       {/* 左侧大图 */}
       <div className="hidden lg:block lg:w-1/2 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-600 opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 to-indigo-800/90" />
         <Image
           src="https://images.unsplash.com/photo-1627556704302-624286467c65?q=80&w=1887&auto=format&fit=crop"
           alt="教育背景"
@@ -148,125 +82,213 @@ export default function LoginPage() {
           priority
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-12">
-          <h1 className="text-4xl font-bold mb-4">教育管理平台</h1>
-          <p className="text-xl max-w-md text-center">
-            为教育工作者提供高效、便捷的管理工具，助力教育事业发展
-          </p>
+          <div className="bg-white/10 p-8 rounded-2xl backdrop-blur-sm border border-white/20 shadow-xl transform transition-all duration-500 hover:scale-105">
+            <h1 className="text-4xl font-bold mb-4 animate-fade-in">教育管理平台</h1>
+            <p className="text-xl max-w-md text-center text-white/90">
+              为教育工作者提供高效、便捷的管理工具，助力教育事业发展
+            </p>
+          </div>
         </div>
       </div>
       
       {/* 右侧登录面板 */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-gray-50">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">账号登录</CardTitle>
-            <CardDescription>
-              请选择登录方式进入系统
-            </CardDescription>
-          </CardHeader>
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center lg:hidden">
+            <h1 className="text-3xl font-bold text-gray-900">教育管理平台</h1>
+            <p className="mt-2 text-gray-600">登录以访问系统</p>
+          </div>
           
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          <Card className="w-full border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+            <CardHeader className="space-y-1 pb-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">欢迎回来</CardTitle>
+                  <CardDescription className="pt-1 text-gray-600">
+                    请选择登录方式进入系统
+                  </CardDescription>
+                </div>
+                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                  <User className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardHeader>
             
-            <Tabs defaultValue="password" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="password">用户名密码</TabsTrigger>
-                <TabsTrigger value="code">手机验证码</TabsTrigger>
-              </TabsList>
+            <CardContent>
+              {error && (
+                <Alert variant="destructive" className="mb-6 border-red-300 bg-red-50 text-red-800">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               
-              <TabsContent value="password">
-                <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">用户名</Label>
-                    <Input
-                      id="username"
-                      value={username}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
-                      placeholder="请输入用户名"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">密码</Label>
-                    </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                      placeholder="请输入密码"
-                      required
-                    />
-                  </div>
-                  
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        登录中
-                      </>
-                    ) : '登录'}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="code">
-                <form onSubmit={handleCodeSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">手机号</Label>
-                    <div className="flex gap-2">
+              <Tabs defaultValue="password" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-gray-100 rounded-lg">
+                  <TabsTrigger 
+                    value="password" 
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md rounded-md transition-all duration-200 py-2.5"
+                  >
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    用户名密码
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="code" 
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md rounded-md transition-all duration-200 py-2.5"
+                  >
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    手机验证码
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="password">
+                  <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
+                        <User className="h-4 w-4 text-gray-500" />
+                        用户名
+                      </Label>
                       <Input
-                        id="phone"
-                        value={phone}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
-                        placeholder="请输入手机号"
-                        maxLength={11}
+                        id="username"
+                        value={username}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                         required
-                        className="flex-1"
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleSendCode}
-                        disabled={isLoading || countdown > 0 || phone.length !== 11}
-                        className="whitespace-nowrap"
-                      >
-                        {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
-                      </Button>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="code">验证码</Label>
-                    <VerificationCodeInput
-                      value={verificationCode}
-                      onChange={setVerificationCode}
-                    />
-                  </div>
-                  
-                  <Button type="submit" className="w-full" disabled={isLoading || !codeSent || verificationCode.length < 6}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        登录中
-                      </>
-                    ) : '登录'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
+                          <ShieldCheck className="h-4 w-4 text-gray-500" />
+                          密码
+                        </Label>
+                        <a href="#" className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                          忘记密码?
+                        </a>
+                      </div>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                        placeholder="请输入密码"
+                        className="h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                        required
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 mt-4 font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg shadow-md hover:shadow-lg" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          登录中...
+                        </>
+                      ) : (
+                        <>
+                          登录
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="code">
+                  <form onSubmit={handleCodeSubmit} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-1.5">
+                        <Smartphone className="h-4 w-4 text-gray-500" />
+                        手机号
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="phone"
+                          value={phone}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+                          placeholder="请输入手机号"
+                          maxLength={11}
+                          required
+                          className="flex-1 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleSendCode}
+                          disabled={isLoading || countdown > 0 || phone.length !== 11}
+                          className="whitespace-nowrap h-12 min-w-28 transition-all rounded-lg border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+                        >
+                          {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="code" className="text-sm font-medium flex items-center gap-1.5">
+                        <Mail className="h-4 w-4 text-gray-500" />
+                        验证码
+                      </Label>
+                      <div className="flex justify-center py-3">
+                        <InputOTP
+                          maxLength={6}
+                          value={verificationCode}
+                          onChange={setVerificationCode}
+                          render={({ slots }) => (
+                            <InputOTPGroup className="gap-3">
+                              {slots.map((slot, index) => (
+                                <InputOTPSlot 
+                                  key={index} 
+                                  index={index}
+                                  className="rounded-md h-12 w-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 data-[active=true]:border-blue-500 data-[active=true]:ring-blue-500/20" 
+                                />
+                              ))}
+                            </InputOTPGroup>
+                          )}
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 mt-4 font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg shadow-md hover:shadow-lg"
+                      disabled={isLoading || !codeSent || verificationCode.length < 6}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          登录中...
+                        </>
+                      ) : (
+                        <>
+                          验证并登录
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+              
+              <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+                <span className="text-sm text-gray-500">没有账号? </span>
+                <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                  联系管理员
+                </a>
+              </div>
+            </CardContent>
+          </Card>
           
-          <CardFooter className="flex justify-center text-sm text-gray-500">
-            <p>提示：管理员账号 admin / password123，教师账号 teacher / password123</p>
-          </CardFooter>
-        </Card>
+          <div className="mt-8 text-center">
+            <CardFooter className="flex justify-center text-sm text-gray-500 px-0">
+              <div className="p-3 bg-white/70 backdrop-blur-sm rounded-lg shadow-md">
+                <p>提示：管理员账号 admin / password123，教师账号 teacher / password123</p>
+              </div>
+            </CardFooter>
+          </div>
+        </div>
       </div>
     </div>
   );
