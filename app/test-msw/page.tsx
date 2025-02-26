@@ -3,14 +3,21 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
 
 export default function TestMswPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [swStatus, setSwStatus] = useState<'checking' | 'registered' | 'not-found'>('checking');
+  const [pageUrl, setPageUrl] = useState<string>('');
+  const [userAgent, setUserAgent] = useState<string>('');
 
   useEffect(() => {
+    // 设置客户端信息，避免水合不匹配
+    setPageUrl(window.location.href);
+    setUserAgent(navigator.userAgent);
+
     // 检查Service Worker注册状态
     async function checkServiceWorker() {
       try {
@@ -133,6 +140,28 @@ export default function TestMswPage() {
                 <p>并重新加载页面</p>
               </div>
             )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>MSW诊断信息</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div>
+            <p className="font-bold">环境:</p>
+            <ul className="list-disc pl-5">
+              <li>NODE_ENV: {process.env.NODE_ENV}</li>
+              <li>Next.js 版本: {React.version}</li>
+              <li>页面URL: {pageUrl}</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-bold">浏览器信息:</p>
+            <pre className="text-xs bg-gray-100 p-2 rounded">
+              {userAgent}
+            </pre>
           </div>
         </CardContent>
       </Card>

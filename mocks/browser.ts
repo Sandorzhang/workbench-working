@@ -10,15 +10,24 @@ handlers.forEach((handler, index) => {
 // 创建worker
 export const worker = setupWorker(...handlers);
 
-// 添加事件监听
+// 添加事件监听，添加安全检查
 worker.events.on('request:start', ({ request }) => {
-  console.log(`🔶 MSW拦截到请求: ${request.method} ${request.url}`);
+  // 排除静态资源请求的日志
+  if (!request.url.includes('/_next/')) {
+    console.log(`🔶 MSW拦截到请求: ${request.method} ${request.url}`);
+  }
 });
 
 worker.events.on('request:end', ({ request, response }) => {
-  console.log(`✅ MSW已处理请求: ${request.method} ${request.url} (${response.status})`);
+  // 添加安全检查，确保response存在
+  if (response && !request.url.includes('/_next/')) {
+    console.log(`✅ MSW已处理请求: ${request.method} ${request.url} (${response.status})`);
+  }
 });
 
 worker.events.on('unhandled:request', ({ request }) => {
-  console.warn(`⚠️ MSW未拦截请求: ${request.method} ${request.url}`);
+  // 排除静态资源请求的警告
+  if (!request.url.includes('/_next/')) {
+    console.warn(`⚠️ MSW未拦截请求: ${request.method} ${request.url}`);
+  }
 }); 

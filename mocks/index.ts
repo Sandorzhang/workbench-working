@@ -12,10 +12,25 @@ export default async function initMocks() {
       // 浏览器环境
       const { worker } = await import('./browser');
       
-      // 不再自动清除旧的Service Worker，避免循环重载
-      // 只在开发环境中初始化MSW
+      // 更新worker启动配置
       await worker.start({
-        onUnhandledRequest: 'bypass',
+        // 使用"warn"而不是"bypass"可以减少未处理请求的警告
+        onUnhandledRequest: (request, print) => {
+          // 忽略静态资源和Next.js内部请求
+          if (
+            request.url.pathname.includes('/_next/') || 
+            request.url.pathname.includes('.css') ||
+            request.url.pathname.includes('.js') ||
+            request.url.pathname.includes('.png') ||
+            request.url.pathname.includes('.svg') ||
+            request.url.pathname.includes('.ico')
+          ) {
+            return;
+          }
+          
+          // 其他未处理的请求显示警告
+          print.warning();
+        },
         serviceWorker: {
           url: '/mockServiceWorker.js',
         },
