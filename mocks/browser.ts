@@ -18,14 +18,16 @@ worker.events.on('request:start', ({ request }) => {
   }
 });
 
-worker.events.on('request:end', ({ request, response }) => {
+// 新版MSW响应事件处理
+worker.events.on('response:mocked', ({ request, response }) => {
   // 添加安全检查，确保response存在
-  if (response && !request.url.includes('/_next/')) {
+  if (!request.url.includes('/_next/')) {
     console.log(`✅ MSW已处理请求: ${request.method} ${request.url} (${response.status})`);
   }
 });
 
-worker.events.on('unhandled:request', ({ request }) => {
+// 未处理请求事件
+worker.events.on('request:unhandled', ({ request }) => {
   // 排除静态资源请求的警告
   if (!request.url.includes('/_next/')) {
     console.warn(`⚠️ MSW未拦截请求: ${request.method} ${request.url}`);

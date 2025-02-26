@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, KeyRound, Smartphone, ArrowRight, User, ShieldCheck, Mail } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -115,27 +114,21 @@ export default function LoginPage() {
             </CardHeader>
             
             <CardContent>
-              {error && (
-                <Alert variant="destructive" className="mb-6 border-red-300 bg-red-50 text-red-800">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
               <Tabs defaultValue="password" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-gray-100 rounded-lg">
+                <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-gray-100 rounded-xl h-14">
                   <TabsTrigger 
                     value="password" 
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md rounded-md transition-all duration-200 py-2.5"
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md rounded-xl transition-all duration-200 py-3 flex items-center justify-center"
                   >
-                    <KeyRound className="h-4 w-4 mr-2" />
-                    用户名密码
+                    <KeyRound className="h-5 w-5 mr-2" />
+                    <span className="font-medium">用户名密码</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="code" 
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md rounded-md transition-all duration-200 py-2.5"
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md rounded-xl transition-all duration-200 py-3 flex items-center justify-center"
                   >
-                    <Smartphone className="h-4 w-4 mr-2" />
-                    手机验证码
+                    <Smartphone className="h-5 w-5 mr-2" />
+                    <span className="font-medium">手机验证码</span>
                   </TabsTrigger>
                 </TabsList>
                 
@@ -231,18 +224,19 @@ export default function LoginPage() {
                         <Mail className="h-4 w-4 text-gray-500" />
                         验证码
                       </Label>
-                      <div className="flex justify-center py-3">
+                      <div className="flex w-full">
                         <InputOTP
                           maxLength={6}
                           value={verificationCode}
                           onChange={setVerificationCode}
+                          className="w-full"
                         >
-                          <InputOTPGroup className="gap-3">
+                          <InputOTPGroup className="w-full grid grid-cols-6 gap-2 sm:gap-3">
                             {Array.from({ length: 6 }).map((_, index) => (
                               <InputOTPSlot 
                                 key={index} 
                                 index={index}
-                                className="rounded-md h-12 w-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 data-[active=true]:border-blue-500 data-[active=true]:ring-blue-500/20" 
+                                className="rounded-lg aspect-square w-full h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-lg font-medium" 
                               />
                             ))}
                           </InputOTPGroup>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { toast } from "sonner";
 
 // 用户类型
 interface User {
@@ -85,6 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isLoading: false,
           error: 'Session expired',
         });
+        toast.error('会话已过期，请重新登录');
       }
     };
     
@@ -120,12 +122,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+      
+      toast.success('登录成功');
     } catch (error: any) {
+      const errorMessage = error.message || '登录时发生错误';
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
-        error: error.message || '登录时发生错误' 
+        error: errorMessage
       }));
+      toast.error(errorMessage);
     }
   };
 
@@ -148,12 +154,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       setState(prev => ({ ...prev, isLoading: false }));
+      toast.success('验证码已发送');
     } catch (error: any) {
+      const errorMessage = error.message || '发送验证码时发生错误';
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
-        error: error.message || '发送验证码时发生错误' 
+        error: errorMessage
       }));
+      toast.error(errorMessage);
     }
   };
 
@@ -186,12 +195,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+      
+      toast.success('登录成功');
     } catch (error: any) {
+      const errorMessage = error.message || '登录时发生错误';
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
-        error: error.message || '登录时发生错误' 
+        error: errorMessage
       }));
+      toast.error(errorMessage);
     }
   };
 
@@ -221,6 +234,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
+      
+      toast.success('已成功退出登录');
     }
   };
 
