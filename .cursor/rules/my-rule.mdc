@@ -1,9 +1,14 @@
 ---
-description:
-globs:
+description: 整体遵循此文件
+globs: 
 ---
 
-# Your rule content
+# 规则文件
 
-- You can @ files here
-- You can use markdown but dont have to
+- 这个项目是基于shadcn、msw完成的一个纯前端项目。使用shadcn+next.js的框架完成前端。
+- 使用msw完成后端模拟。
+- 不允许在所有前端部分的实现代码里做任何形式的代码侵入，包括并不限于（使用静态数据....，在实现代码中以任何形式直接添加数据，在服务器端渲染时直接返回模拟数据，而不尝试进行网络请求,在代码中硬编码任何模拟数据) 不允许！
+- 所有的应用页面文件存储在src/app中，所有的组件文件存储在src/components中
+- API 路径策略需要统一
+- 数据结构需要一致
+- 为我提供可能需要终端运行的命令。例如更名、删除等操作
