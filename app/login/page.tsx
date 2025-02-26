@@ -236,18 +236,17 @@ export default function LoginPage() {
                           maxLength={6}
                           value={verificationCode}
                           onChange={setVerificationCode}
-                          render={({ slots }) => (
-                            <InputOTPGroup className="gap-3">
-                              {slots.map((slot, index) => (
-                                <InputOTPSlot 
-                                  key={index} 
-                                  index={index}
-                                  className="rounded-md h-12 w-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 data-[active=true]:border-blue-500 data-[active=true]:ring-blue-500/20" 
-                                />
-                              ))}
-                            </InputOTPGroup>
-                          )}
-                        />
+                        >
+                          <InputOTPGroup className="gap-3">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                              <InputOTPSlot 
+                                key={index} 
+                                index={index}
+                                className="rounded-md h-12 w-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 data-[active=true]:border-blue-500 data-[active=true]:ring-blue-500/20" 
+                              />
+                            ))}
+                          </InputOTPGroup>
+                        </InputOTP>
                       </div>
                     </div>
                     
