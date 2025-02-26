@@ -64,6 +64,16 @@ export default function LoginPage() {
 
   const handleCodeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // 如果验证码尚未发送，则触发发送验证码
+    if (!codeSent) {
+      if (phone.length === 11) {
+        await handleSendCode();
+      }
+      return;
+    }
+    
+    // 验证码已发送，执行登录
     if (!phone || !verificationCode || verificationCode.length < 6) return;
     await loginWithCode(phone, verificationCode);
   };
@@ -219,35 +229,37 @@ export default function LoginPage() {
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="code" className="text-sm font-medium flex items-center gap-1.5">
-                        <Mail className="h-4 w-4 text-gray-500" />
-                        验证码
-                      </Label>
-                      <div className="flex w-full">
-                        <InputOTP
-                          maxLength={6}
-                          value={verificationCode}
-                          onChange={setVerificationCode}
-                          className="w-full"
-                        >
-                          <InputOTPGroup className="w-full grid grid-cols-6 gap-2 sm:gap-3">
-                            {Array.from({ length: 6 }).map((_, index) => (
-                              <InputOTPSlot 
-                                key={index} 
-                                index={index}
-                                className="rounded-lg aspect-square w-full h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-lg font-medium" 
-                              />
-                            ))}
-                          </InputOTPGroup>
-                        </InputOTP>
+                    {codeSent && (
+                      <div className="space-y-2 animate-fadeIn">
+                        <Label htmlFor="code" className="text-sm font-medium flex items-center gap-1.5">
+                          <Mail className="h-4 w-4 text-gray-500" />
+                          验证码
+                        </Label>
+                        <div className="flex w-full">
+                          <InputOTP
+                            maxLength={6}
+                            value={verificationCode}
+                            onChange={setVerificationCode}
+                            className="w-full"
+                          >
+                            <InputOTPGroup className="w-full grid grid-cols-6 gap-2 sm:gap-3">
+                              {Array.from({ length: 6 }).map((_, index) => (
+                                <InputOTPSlot 
+                                  key={index} 
+                                  index={index}
+                                  className="rounded-lg aspect-square w-full h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-lg font-medium" 
+                                />
+                              ))}
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     
                     <Button 
                       type="submit" 
                       className="w-full h-12 mt-4 font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg shadow-md hover:shadow-lg"
-                      disabled={isLoading || !codeSent || verificationCode.length < 6}
+                      disabled={isLoading || (codeSent && verificationCode.length < 6) || (!codeSent && phone.length !== 11)}
                     >
                       {isLoading ? (
                         <>
@@ -256,7 +268,7 @@ export default function LoginPage() {
                         </>
                       ) : (
                         <>
-                          验证并登录
+                          {codeSent ? '验证并登录' : '下一步'}
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </>
                       )}
@@ -277,7 +289,8 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <CardFooter className="flex justify-center text-sm text-gray-500 px-0">
               <div className="p-3 bg-white/70 backdrop-blur-sm rounded-lg shadow-md">
-                <p>提示：管理员账号 admin / password123，教师账号 teacher / password123</p>
+                <p>提示：管理员账号 admin / admin123，教师账号 teacher / teacher123</p>
+                <p className="mt-1">手机验证码：可使用手机 13800138000（管理员）或 13900139000（教师）</p>
               </div>
             </CardFooter>
           </div>
