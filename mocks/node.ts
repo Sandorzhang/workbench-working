@@ -1,5 +1,5 @@
 import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
+import { handlers } from './handlers/index';
 import { seedDb } from './db';
 
 // 初始化模拟数据

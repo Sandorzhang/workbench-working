@@ -19,12 +19,18 @@ export function MswInitializer() {
 
       try {
         // 导入MSW模块
-        const mod = await import('../mocks');
+        const { worker } = await import('@/mocks');
         
         // 检查service worker注册
         if ('serviceWorker' in navigator) {
           // 尝试初始化MSW
-          await mod.default();
+          await worker.start({
+            // 使用"warn"而不是"bypass"可以减少未处理请求的警告
+            onUnhandledRequest: 'warn',
+            serviceWorker: {
+              url: '/mockServiceWorker.js',
+            },
+          });
           
           console.log('✅ MSW初始化成功');
           setStatus('success');

@@ -1,5 +1,5 @@
 import { setupWorker } from 'msw/browser';
-import { handlers } from './handlers';
+import { handlers } from './handlers/index';
 
 // 日志输出所有处理器，便于调试
 console.log('📊 MSW已载入以下handlers:', handlers.length);
