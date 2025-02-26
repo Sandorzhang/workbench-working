@@ -87,6 +87,14 @@ export default function DashboardPage() {
         icon: 'book',
         url: '/classroom-timemachine',
         roles: ['教师']
+      },
+      {
+        id: '3',
+        name: '单元教学设计',
+        description: '创建和管理单元教学设计方案',
+        icon: 'file',
+        url: '/unit-teaching-design',
+        roles: ['教师']
       }
     ];
     
