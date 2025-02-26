@@ -24,25 +24,11 @@ import { Badge } from "@/components/ui/badge"
 const schoolTenants = [
   {
     id: "1",
-    name: "第一实验中学",
-    logo: School,
-    type: "高中",
-    region: "北京市"
-  },
-  {
-    id: "2",
-    name: "育才小学",
-    logo: BookOpen,
-    type: "小学",
-    region: "上海市"
-  },
-  {
-    id: "3",
-    name: "未来教育集团",
+    name: "通用平台",
     logo: Building,
-    type: "教育集团",
-    region: "广州市"
-  },
+    type: "教育系统",
+    region: "全国"
+  }
 ]
 
 export function SchoolSwitcher() {

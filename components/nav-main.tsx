@@ -34,7 +34,7 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>通用</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           // 检查是否有子菜单项
