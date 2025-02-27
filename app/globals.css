@@ -186,6 +186,27 @@
   animation: fadeIn 0.3s ease-in-out forwards;
 }
 
+/* 动画延迟工具类 */
+.animate-delay-0 {
+  animation-delay: 0ms;
+}
+
+.animate-delay-75 {
+  animation-delay: 75ms;
+}
+
+.animate-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animate-delay-500 {
+  animation-delay: 500ms;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
