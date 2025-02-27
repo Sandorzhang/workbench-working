@@ -18,16 +18,23 @@ interface Conversation {
   lastMessage: string;
   lastUpdated: string;
   messages: Message[];
+  agentId?: string; // 添加智能体ID字段
 }
 
 // 请求类型定义
 interface ChatRequest {
   message: string;
   conversationId: string;
+  agentId?: string; // 添加智能体ID字段
 }
 
 interface RenameRequest {
   title: string;
+}
+
+interface CreateConversationRequest {
+  agentId?: string; // 创建会话时可以指定智能体ID
+  title?: string;   // 可以指定标题
 }
 
 // 预设对话示例
@@ -37,6 +44,7 @@ const conversations: Conversation[] = [
     title: "如何设计有效的课堂活动",
     lastMessage: "你可以尝试小组合作学习方式，这对培养学生的团队协作能力很有帮助。",
     lastUpdated: new Date(2023, 2, 15).toISOString(),
+    agentId: "1", // 智能教学助手ID
     messages: [
       {
         id: "m1",
@@ -69,6 +77,7 @@ const conversations: Conversation[] = [
     title: "学生评价系统建议",
     lastMessage: "多元化评价体系可以更全面地反映学生的综合素质...",
     lastUpdated: new Date(2023, 2, 10).toISOString(),
+    agentId: "1", // 智能教学助手ID
     messages: [
       {
         id: "m1",
@@ -89,42 +98,125 @@ const conversations: Conversation[] = [
     title: "个性化学习方案",
     lastMessage: "根据学生的学习风格和需求，我推荐以下个性化学习策略...",
     lastUpdated: new Date(2023, 2, 5).toISOString(),
+    agentId: "2", // 学科备课专家ID
     messages: []
+  },
+  {
+    id: "4",
+    title: "创新教学方法探讨",
+    lastMessage: "游戏化教学可以大大提高学生的参与度和学习效果...",
+    lastUpdated: new Date(2023, 3, 8).toISOString(),
+    agentId: "3", // 创意教学设计师ID
+    messages: [
+      {
+        id: "m1",
+        content: "你能介绍一些创新的教学方法吗？",
+        role: "user",
+        timestamp: new Date(2023, 3, 8, 9, 15).toISOString()
+      },
+      {
+        id: "m2",
+        content: "当然可以！以下是一些创新教学方法：\n\n1. **游戏化教学**：将学习内容融入游戏机制中，设置积分、徽章和排行榜等元素，增强学习动机\n\n2. **翻转课堂**：学生在课前通过视频等方式自学知识点，课堂时间用于讨论和解决问题\n\n3. **项目式学习**：围绕真实问题或挑战开展学习活动，培养解决问题的能力\n\n4. **STEAM教育**：融合科学、技术、工程、艺术和数学，强调跨学科学习\n\n5. **情境教学**：创设真实或模拟的情境，让学生在具体情境中学习和应用知识\n\n您对哪种教学方法特别感兴趣？我可以为您提供更详细的实施建议。",
+        role: "assistant",
+        timestamp: new Date(2023, 3, 8, 9, 18).toISOString()
+      }
+    ]
   }
 ];
 
 // AI助手的预设回复
-const presetResponses: Record<string, string> = {
-  "default": "我是智能教学助手，很高兴能帮助您解决教学相关问题。请问有什么我可以帮助您的吗？",
-  "greeting": "您好！我是您的智能教学助手，可以帮助您解决教学设计、课堂管理、学生评价等方面的问题。请问有什么我可以帮助您的？",
-  "class_activity": "设计课堂活动时，应考虑以下几个方面：\n\n1. 明确教学目标\n2. 了解学生特点和兴趣\n3. 设计多样化的互动环节\n4. 准备适当的教学资源\n5. 预留时间进行总结和反思\n\n不同学科可以采用不同的活动形式，如角色扮演、小组讨论、实践操作等。",
-  "student_evaluation": "现代学生评价应该是多元化的，建议从以下几个维度进行：\n\n1. 学业表现评价\n2. 课堂参与度评价\n3. 合作能力评价\n4. 创新思维评价\n5. 自我管理评价\n\n重要的是既关注结果也关注过程，既看到学生的优点也帮助学生改进不足。",
-  "classroom_management": "有效的课堂管理策略包括：\n\n1. 建立明确的课堂规则和流程\n2. 培养积极的师生关系\n3. 使用分层教学策略\n4. 设计吸引人的教学内容\n5. 及时处理问题行为\n6. 表扬和鼓励积极行为\n\n重要的是保持一致性并理解学生行为背后的原因。",
-  "teaching_resources": "优质教学资源的特点是：\n\n1. 与教学目标紧密相关\n2. 适合学生的认知水平\n3. 具有互动性和吸引力\n4. 可以根据需要灵活调整\n5. 促进深度思考和理解\n\n现代教学可以利用多媒体资源、在线平台、实物教具等多种资源类型。"
+const presetResponses: Record<string, Record<string, string>> = {
+  // 默认助手（通用）
+  "default": {
+    "greeting": "您好！我是您的智能教学助手，可以帮助您解决教学设计、课堂管理、学生评价等方面的问题。请问有什么我可以帮助您的？",
+    "class_activity": "设计课堂活动时，应考虑以下几个方面：\n\n1. 明确教学目标\n2. 了解学生特点和兴趣\n3. 设计多样化的互动环节\n4. 准备适当的教学资源\n5. 预留时间进行总结和反思\n\n不同学科可以采用不同的活动形式，如角色扮演、小组讨论、实践操作等。",
+    "student_evaluation": "现代学生评价应该是多元化的，建议从以下几个维度进行：\n\n1. 学业表现评价\n2. 课堂参与度评价\n3. 合作能力评价\n4. 创新思维评价\n5. 自我管理评价\n\n重要的是既关注结果也关注过程，既看到学生的优点也帮助学生改进不足。",
+    "classroom_management": "有效的课堂管理策略包括：\n\n1. 建立明确的课堂规则和流程\n2. 培养积极的师生关系\n3. 使用分层教学策略\n4. 设计吸引人的教学内容\n5. 及时处理问题行为\n6. 表扬和鼓励积极行为\n\n重要的是保持一致性并理解学生行为背后的原因。",
+    "teaching_resources": "优质教学资源的特点是：\n\n1. 与教学目标紧密相关\n2. 适合学生的认知水平\n3. 具有互动性和吸引力\n4. 可以根据需要灵活调整\n5. 促进深度思考和理解\n\n现代教学可以利用多媒体资源、在线平台、实物教具等多种资源类型。",
+    "fallback": "作为教育工作者，我建议综合考虑学生特点、教学目标和教学资源，采用多样化的教学方法，并根据实际教学效果进行调整和优化。您对这个方向有什么具体问题吗？"
+  },
+  // 智能教学助手 (ID: 1)
+  "1": {
+    "greeting": "您好！我是智能教学助手，专注于帮助教师设计课堂活动、解决教学难题，提供学生评价建议。请问今天有什么教学问题需要我协助解决？",
+    "class_activity": "针对课堂活动设计，我推荐：\n\n1. 目标导向：明确每个活动的教学目标\n2. 多样互动：设计师生、生生互动环节\n3. 节奏变化：交替使用不同类型的活动\n4. 差异化设计：照顾不同学习风格和能力的学生\n5. 结果导向：确保活动能产生可评估的学习成果\n\n我可以针对您的具体学科提供更详细的活动设计。",
+    "fallback": "作为智能教学助手，我建议您可以从教学设计、课堂管理和学生评价三个维度思考这个问题。每个班级和学生的情况不同，教学策略需要因地制宜。您需要我在哪个方面提供更具体的建议吗？"
+  },
+  // 学科备课专家 (ID: 2)
+  "2": {
+    "greeting": "您好！我是学科备课专家，专注于提供教案设计和知识点讲解。请问您需要哪个学科的备课支持？",
+    "teaching_plan": "一份优质的教案应包含以下要素：\n\n1. 明确的教学目标\n2. 教学重点与难点\n3. 详细的教学过程\n4. 教学资源清单\n5. 课堂练习和作业设计\n6. 教学反思部分\n\n我可以帮您设计特定学科和年级的教案，请告诉我您的具体需求。",
+    "fallback": "作为学科备课专家，我建议从教学目标、重点难点、教学策略和评价方式几个方面系统思考。不同的教学内容需要采用不同的教学方法。您希望我针对哪个具体知识点或教学单元提供备课建议？"
+  },
+  // 创意教学设计师 (ID: 3)
+  "3": {
+    "greeting": "您好！我是创意教学设计师，专注于提供创新教学方法和活动设计，激发学生学习兴趣。请问您想了解哪方面的创新教学？",
+    "creative_teaching": "创新教学的核心是突破传统教学模式的局限，以下是一些创意教学方法：\n\n1. 故事化教学：将知识点融入引人入胜的故事中\n2. 游戏化学习：设计教育游戏，增强学习体验\n3. 角色扮演：让学生通过扮演角色深入理解知识\n4. 创客教育：通过动手制作培养创新思维\n5. 跨学科整合：打破学科界限，促进知识迁移\n\n我可以为您的具体教学内容提供创意设计方案。",
+    "fallback": "作为创意教学设计师，我建议尝试突破常规思维，将艺术、游戏、技术等元素融入教学中。创新不一定是全新的方法，而是对现有方法的创造性改进。您希望我针对哪个具体场景设计创新教学活动？"
+  }
 };
 
-// 根据关键词生成AI回复
-const generateResponse = (message: string): string => {
-  if (message.includes("课堂活动") || message.includes("教学活动")) {
-    return presetResponses.class_activity;
+// 根据智能体ID和关键词生成AI回复
+const generateResponse = (message: string, agentId?: string): string => {
+  // 确定使用哪个智能体的回复模板
+  const responseSet = agentId && presetResponses[agentId] 
+    ? presetResponses[agentId] 
+    : presetResponses.default;
+
+  // 根据消息内容匹配回复
+  if (message.toLowerCase().includes("hello") || message.includes("你好")) {
+    return responseSet.greeting || presetResponses.default.greeting;
+  } else if (message.includes("课堂活动") || message.includes("教学活动")) {
+    return responseSet.class_activity || presetResponses.default.class_activity;
   } else if (message.includes("评价") || message.includes("考核")) {
-    return presetResponses.student_evaluation;
+    return responseSet.student_evaluation || presetResponses.default.student_evaluation;
   } else if (message.includes("课堂管理") || message.includes("学生行为")) {
-    return presetResponses.classroom_management;
+    return responseSet.classroom_management || presetResponses.default.classroom_management;
   } else if (message.includes("资源") || message.includes("教材")) {
-    return presetResponses.teaching_resources;
-  } else if (message.toLowerCase().includes("hello") || message.includes("你好")) {
-    return presetResponses.greeting;
+    return responseSet.teaching_resources || presetResponses.default.teaching_resources;
+  } else if (message.includes("教案") || message.includes("备课")) {
+    return responseSet.teaching_plan || presetResponses.default.teaching_resources;
+  } else if (message.includes("创新") || message.includes("创意")) {
+    return responseSet.creative_teaching || (responseSet.fallback || presetResponses.default.fallback);
   } else {
-    return `针对您的问题"${message}"，我的建议是：在教育教学中，我们应该关注学生的全面发展，结合理论和实践，采用多样化的教学方法，并根据学生的具体情况进行适当调整。您对这个方向有什么具体的问题吗？`;
+    return responseSet.fallback || presetResponses.default.fallback;
+  }
+};
+
+// 获取智能体名称
+const getAgentName = async (agentId: string): Promise<string> => {
+  try {
+    // 这里可以模拟从API获取智能体信息
+    const agentNames: Record<string, string> = {
+      "1": "智能教学助手",
+      "2": "学科备课专家",
+      "3": "创意教学设计师",
+      "4": "学习分析专家",
+      "5": "教育研究助手",
+      "6": "课程设计专家"
+    };
+    
+    return agentNames[agentId] || "智能助手";
+  } catch {
+    return "智能助手";
   }
 };
 
 // 处理程序
 export const aiAssistantHandlers = [
-  // 获取所有会话
-  http.get('*/api/ai-assistant/conversations', async () => {
+  // 获取所有会话（支持按智能体ID过滤）
+  http.get('*/api/ai-assistant/conversations', async ({ request }) => {
+    const url = new URL(request.url);
+    const agentId = url.searchParams.get('agentId');
+    
     await delay(500);
+    
+    if (agentId) {
+      // 如果提供了智能体ID，只返回该智能体的会话
+      const filteredConversations = conversations.filter(conv => conv.agentId === agentId);
+      return HttpResponse.json(filteredConversations);
+    }
+    
+    // 否则返回所有会话
     return HttpResponse.json(conversations);
   }),
   
@@ -142,13 +234,39 @@ export const aiAssistantHandlers = [
   }),
   
   // 创建新会话
-  http.post('*/api/ai-assistant/conversations', async () => {
+  http.post<any, CreateConversationRequest>('*/api/ai-assistant/conversations', async ({ request }) => {
+    let req: CreateConversationRequest = {};
+    
+    try {
+      req = await request.json() as CreateConversationRequest;
+    } catch (e) {
+      // 如果没有请求体，使用空对象
+      req = {};
+    }
+    
+    const { agentId, title } = req;
+    
+    // 如果提供了智能体ID，尝试获取智能体名称
+    let conversationTitle = title || "新的对话";
+    
+    if (agentId) {
+      try {
+        const agentName = await getAgentName(agentId);
+        if (!title) {
+          conversationTitle = `与${agentName}的对话`;
+        }
+      } catch (error) {
+        console.error("获取智能体名称失败", error);
+      }
+    }
+    
     const newConversation: Conversation = {
       id: generateId(),
-      title: "新的对话",
+      title: conversationTitle,
       lastMessage: "",
       lastUpdated: new Date().toISOString(),
-      messages: []
+      messages: [],
+      agentId
     };
     
     conversations.push(newConversation);
@@ -160,7 +278,7 @@ export const aiAssistantHandlers = [
   // 发送聊天消息并获取AI回复
   http.post<any, ChatRequest>('*/api/ai-assistant/chat', async ({ request }) => {
     const req = await request.json() as ChatRequest;
-    const { message, conversationId } = req;
+    const { message, conversationId, agentId } = req;
     
     const conversation = conversations.find(conv => conv.id === conversationId);
     if (!conversation) {
@@ -177,12 +295,12 @@ export const aiAssistantHandlers = [
     
     conversation.messages.push(userMessage);
     
-    // 生成AI回复
+    // 生成AI回复，优先使用对话绑定的agentId，其次使用请求中的agentId
     await delay(1000); // 模拟AI处理时间
     
     const aiResponse: Message = {
       id: generateId(),
-      content: generateResponse(message),
+      content: generateResponse(message, conversation.agentId || agentId),
       role: 'assistant',
       timestamp: new Date().toISOString()
     };
