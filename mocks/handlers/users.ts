@@ -18,7 +18,7 @@ const users = [
   },
 ];
 
-export const handlers = [
+export const userHandlers = [
   // 获取用户列表
   http.get('*/api/users', async () => {
     // 添加延迟模拟网络延迟

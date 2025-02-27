@@ -8,6 +8,7 @@ import {
   Plus,
   type LucideIcon,
 } from "lucide-react"
+import Link from "next/link"
 
 import {
   DropdownMenu,
@@ -79,9 +80,11 @@ export function NavProjects({
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <Plus className="text-sidebar-foreground/70" />
-            <span>新建智能体会话</span>
+          <SidebarMenuButton asChild className="text-sidebar-foreground/70">
+            <Link href="/ai-library">
+              <Plus className="text-sidebar-foreground/70" />
+              <span>智能体</span>
+            </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

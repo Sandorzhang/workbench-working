@@ -17,6 +17,7 @@ alwaysApply: false
 - 为MSW的handler按照具体功能命名
 - shadcn相关的安装命令为 npm shadcn@latest 而不是npm shadcn-ui@latest
 - 所有的页面添加skeleton加载
+- toast 使用sonner
 # MSW
 This page elaborates on the mental models that MSW and, by the extension, you adopt when approaching API mocking. This is a great page to share with people wondering what makes MSW unique on a conceptual level, and for those craving a more practical perspective, we have the Comparison page prepared.
 

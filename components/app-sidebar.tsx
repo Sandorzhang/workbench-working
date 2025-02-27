@@ -40,8 +40,8 @@ const data = {
   ],
   projects: [
     {
-      name: "教学助手",
-      url: "#",
+      name: "智能教学助手",
+      url: "/ai-teaching-assistant",
       icon: Bot,
     }
   ]
