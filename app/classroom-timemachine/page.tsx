@@ -27,6 +27,14 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  TitleSkeleton, 
+  CardSkeleton, 
+  ListSkeleton,
+  ContentSkeleton,
+  TabsSkeleton
+} from "@/components/ui/skeleton-loader";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // 模拟课堂记录数据
 const mockClassRecords = [
@@ -98,8 +106,51 @@ export default function ClassroomTimeMachinePage() {
   
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <div className="max-w-7xl mx-auto w-full animate-fadeIn">
+        <div className="flex justify-between items-start mb-8">
+          <TitleSkeleton />
+          <div className="flex space-x-2">
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+        </div>
+        
+        {/* 模拟视频播放器区域 */}
+        <div className="mb-8">
+          <Skeleton className="h-[400px] w-full rounded-lg" />
+        </div>
+        
+        {/* 模拟控制栏 */}
+        <div className="mb-8">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-36" />
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* 模拟标签页 */}
+        <TabsSkeleton tabCount={3} />
+        
+        {/* 模拟课程列表 */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+          <ListSkeleton count={3} />
+        </div>
       </div>
     );
   }

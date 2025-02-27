@@ -6,8 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { MentorList } from "./mentor-list";
 import { MentorDetail } from "./mentor-detail";
 import { Button } from "../ui/button";
-import { Mentor } from "@lib/types";
+import { Mentor } from "@/lib/types";
 import { Loader2 } from "lucide-react";
+import { 
+  TabsSkeleton, 
+  ListSkeleton,
+  DetailSkeleton 
+} from "../ui/skeleton-loader";
 
 export function MentorHub() {
   const [mentors, setMentors] = useState<Mentor[]>([]);
@@ -57,6 +62,48 @@ export function MentorHub() {
     setSelectedMentor(null);
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="animate-fadeIn">
+          <TabsSkeleton tabCount={3} className="mb-4" />
+          {selectedMentor ? <DetailSkeleton /> : <ListSkeleton count={6} />}
+        </div>
+      );
+    }
+    
+    if (error) {
+      return (
+        <div className="text-red-500 py-10 text-center">
+          <p>{error}</p>
+          <Button 
+            variant="outline" 
+            onClick={handleRetry} 
+            className="mt-4"
+          >
+            重试
+          </Button>
+        </div>
+      );
+    }
+    
+    if (selectedMentor) {
+      return (
+        <div>
+          <Button variant="outline" onClick={handleBackToList} className="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            返回列表
+          </Button>
+          <MentorDetail mentor={selectedMentor} />
+        </div>
+      );
+    }
+    
+    return <MentorList mentors={mentors} onSelectMentor={handleSelectMentor} />;
+  };
+
   return (
     <Card className="shadow-sm border border-gray-100">
       <CardContent className="p-0">
@@ -68,50 +115,41 @@ export function MentorHub() {
           </TabsList>
           
           <TabsContent value="all" className="p-4 pt-6">
+            {renderContent()}
+          </TabsContent>
+          
+          <TabsContent value="with-students" className="p-4 pt-6">
             {isLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="animate-fadeIn">
+                <ListSkeleton count={4} />
               </div>
             ) : error ? (
               <div className="text-red-500 py-10 text-center">
                 <p>{error}</p>
-                <Button 
-                  variant="outline" 
-                  onClick={handleRetry} 
-                  className="mt-4"
-                >
-                  重试
-                </Button>
-              </div>
-            ) : selectedMentor ? (
-              <div>
-                <Button variant="outline" onClick={handleBackToList} className="mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                    <path d="m15 18-6-6 6-6"/>
-                  </svg>
-                  返回列表
-                </Button>
-                <MentorDetail mentor={selectedMentor} />
+                <Button variant="outline" onClick={handleRetry} className="mt-4">重试</Button>
               </div>
             ) : (
-              <MentorList mentors={mentors} onSelectMentor={handleSelectMentor} />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="with-students" className="p-4 pt-6">
-            {!selectedMentor && !isLoading && !error && (
               <MentorList 
                 mentors={mentors.filter(mentor => mentor.students && mentor.students.length > 0)} 
-                onSelectMentor={handleSelectMentor}
+                onSelectMentor={handleSelectMentor} 
               />
             )}
           </TabsContent>
           
           <TabsContent value="without-students" className="p-4 pt-6">
-            {!selectedMentor && !isLoading && !error && (
+            {isLoading ? (
+              <div className="animate-fadeIn">
+                <ListSkeleton count={3} />
+              </div>
+            ) : error ? (
+              <div className="text-red-500 py-10 text-center">
+                <p>{error}</p>
+                <Button variant="outline" onClick={handleRetry} className="mt-4">重试</Button>
+              </div>
+            ) : (
               <MentorList 
                 mentors={mentors.filter(mentor => !mentor.students || mentor.students.length === 0)} 
-                onSelectMentor={handleSelectMentor}
+                onSelectMentor={handleSelectMentor} 
               />
             )}
           </TabsContent>
