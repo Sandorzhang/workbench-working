@@ -9,7 +9,7 @@ import {
   Loader2, BookOpen, Clock, Play, Pause, SkipBack, SkipForward, 
   Calendar, ChevronLeft, Video, Mic, Upload, Heart, ThumbsUp, Tag,
   ChevronRight, ChevronDown, ChevronUp, Film, RadioTower, School,
-  PenTool, FileAudio, BarChart, FileVideo, Bookmark, ArrowRight, X
+  PenTool, FileAudio, BarChart, FileVideo, Bookmark, ArrowRight, X, Share
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -43,8 +43,8 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 
 // 添加Memory图标组件
-const MemoryIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const MemoryIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M7 2h10M5 6c1-2 3-4 7-4 4 0 6 2 7 4 1 2 1 9-7 12-8-3-8-10-7-12Z"></path>
     <path d="M9 15c.1-3.25 6.739-2 8 0 1 1 1 4-3 4.5-4-.5-5-3.5-5-4.5Z"></path>
   </svg>
@@ -429,346 +429,310 @@ const FilmStripTimeline = ({
     return filmStrips.find(strip => strip.semester === selectedSemester) || filmStrips[0];
   }, [selectedSemester, filmStrips]);
   
+  // 滚动到左侧
+  const scrollLeft = () => {
+    if (timelineRef.current) {
+      timelineRef.current.scrollTo({
+        left: timelineRef.current.scrollLeft - 600,
+        behavior: 'smooth',
+      });
+    }
+  };
+  
+  // 滚动到右侧
+  const scrollRight = () => {
+    if (timelineRef.current) {
+      timelineRef.current.scrollTo({
+        left: timelineRef.current.scrollLeft + 600,
+        behavior: 'smooth',
+      });
+    }
+  };
+  
   // 渲染胶片帧
-  const renderFilmFrame = (moment: TeachingMoment) => {
+  const renderFilmFrame = (moment: TeachingMoment, semesterIndex: number = 0, momentIndex: number = 0, totalMoments: number = 1) => {
+    // 计算节点在时间轴上的相对位置
+    const positionPercent = selectedSemester 
+      ? ((momentIndex / (totalMoments - 1 || 1)) * 100) 
+      : ((semesterIndex + (momentIndex / totalMoments)) / filmStrips.length * 100);
+      
     return (
-      <motion.div 
-        key={moment.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ 
-          scale: 1.03, 
-          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)" 
-        }}
-        transition={{ duration: 0.2 }}
-        className="relative w-[280px] h-[220px] bg-white rounded-md overflow-hidden cursor-pointer group"
-        onClick={() => onMomentClick && onMomentClick(moment)}
-      >
-        {/* 胶片外观 - 顶部和底部的黑边 */}
-        <div className="absolute top-0 left-0 right-0 h-3 bg-black z-10"></div>
-        <div className="absolute bottom-0 left-0 right-0 h-3 bg-black z-10"></div>
-        
-        {/* 胶片内容区域 */}
-        <div className="absolute top-3 bottom-3 left-0 right-0 overflow-hidden">
-          {/* 胶片齿孔 - 左侧 */}
-          <div className="absolute top-0 bottom-0 left-0 w-7 bg-black z-10 flex flex-col justify-between py-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div 
-                key={`left-hole-${i}`} 
-                className="w-5 h-5 mx-1 rounded-full bg-gray-200 border-2 border-gray-800 flex items-center justify-center"
-              >
-                <div className="w-2 h-2 rounded-full bg-gray-800"></div>
-              </div>
-            ))}
-          </div>
-          
-          {/* 胶片齿孔 - 右侧 */}
-          <div className="absolute top-0 bottom-0 right-0 w-7 bg-black z-10 flex flex-col justify-between py-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div 
-                key={`right-hole-${i}`} 
-                className="w-5 h-5 mx-1 rounded-full bg-gray-200 border-2 border-gray-800 flex items-center justify-center"
-              >
-                <div className="w-2 h-2 rounded-full bg-gray-800"></div>
-              </div>
-            ))}
-          </div>
-          
-          {/* 内容区域 */}
-          <div className="absolute top-0 bottom-0 left-7 right-7 overflow-hidden">
-            <div className="relative h-full w-full bg-gray-100 group-hover:brightness-105 transition-all duration-300">
-              {/* 缩略图和背景 */}
-              <div className="absolute inset-0 z-0">
-                <img 
-                  src={moment.thumbnail} 
-                  alt={moment.title}
-                  className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-              </div>
-              
-              {/* 内容类型指示器 */}
-              <div className="absolute top-2 left-2 z-20">
-                {moment.type === 'note' && (
-                  <div className="flex items-center bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-md">
-                    <PenTool className="h-3 w-3 text-blue-600 mr-1" />
-                    <span className="text-xs font-medium text-gray-800">课堂笔记</span>
-                  </div>
-                )}
-                {moment.type === 'audio' && (
-                  <div className="flex items-center bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-md">
-                    <FileAudio className="h-3 w-3 text-purple-600 mr-1" />
-                    <span className="text-xs font-medium text-gray-800">语音记录</span>
-                  </div>
-                )}
-                {moment.type === 'homework' && (
-                  <div className="flex items-center bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-md">
-                    <BarChart className="h-3 w-3 text-amber-600 mr-1" />
-                    <span className="text-xs font-medium text-gray-800">作业评分</span>
-                  </div>
-                )}
-                {moment.type === 'video' && (
-                  <div className="flex items-center bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-md">
-                    <FileVideo className="h-3 w-3 text-rose-600 mr-1" />
-                    <span className="text-xs font-medium text-gray-800">课堂视频</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* 学科标签 */}
-              <div className="absolute top-2 right-2 z-20">
-                <Badge variant="outline" className={cn("backdrop-blur-sm bg-white/70 border shadow-sm", subjectColors[moment.subject])}>
-                  {moment.subject}
-                </Badge>
-              </div>
-              
-              {/* 根据类型显示不同的内容预览 */}
-              <div className="absolute inset-x-0 bottom-0 z-10">
-                {/* 笔记预览 - 手写效果 */}
-                {moment.type === 'note' && (
-                  <div className="px-3 py-2 bg-white/10 backdrop-blur-sm">
-                    <div className="flex items-center mb-2">
-                      <h4 className="text-sm font-medium text-white">{moment.title}</h4>
-                    </div>
-                    <div className="bg-blue-50/80 backdrop-blur-sm rounded-md p-2 mb-2 transform -rotate-1 shadow-sm">
-                      <p className="text-xs italic font-medium text-blue-900 line-clamp-2">{moment.description}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-white/80">{moment.date}</span>
-                      <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-0 h-6 px-2">
-                        查看笔记 <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                {/* 音频预览 - 波形图 */}
-                {moment.type === 'audio' && (
-                  <div className="px-3 py-2 bg-black/30 backdrop-blur-sm">
-                    <div className="flex items-center mb-2">
-                      <h4 className="text-sm font-medium text-white">{moment.title}</h4>
-                    </div>
-                    <div className="h-12 bg-black/40 rounded-md p-2 flex items-center justify-center mb-2">
-                      <div className="flex items-center space-x-0.5">
-                        {Array.from({ length: 30 }).map((_, i) => {
-                          // 创建波形效果
-                          const height = 2 + Math.sin(i * 0.5) * 10 + Math.random() * 5;
-                          return (
-                            <div 
-                              key={i} 
-                              className="w-1 bg-purple-400"
-                              style={{ height: `${height}px` }}
-                            ></div>
-                          );
-                        })}
-                      </div>
-                      <div className="absolute right-6 bottom-14">
-                        <div className="w-8 h-8 rounded-full bg-purple-600/80 flex items-center justify-center cursor-pointer hover:bg-purple-500 transition-colors">
-                          <Play className="h-4 w-4 text-white" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-white/80">{moment.date}</span>
-                      <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-0 h-6 px-2">
-                        播放录音 <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                {/* 作业预览 - 动态成长曲线 */}
-                {moment.type === 'homework' && (
-                  <div className="px-3 py-2 bg-black/30 backdrop-blur-sm">
-                    <div className="flex items-center mb-2">
-                      <h4 className="text-sm font-medium text-white">{moment.title}</h4>
-                    </div>
-                    <div className="h-12 bg-black/40 rounded-md mb-2 flex items-end justify-center p-2">
-                      <div className="flex items-end space-x-1 h-full">
-                        {[60, 65, 72, 68, 75, 80, 85, 82, 88, 92].map((score, i) => {
-                          const height = (score / 100) * 100 + '%';
-                          return (
-                            <div key={i} className="relative group">
-                              <div 
-                                className={cn(
-                                  "w-2 rounded-t-sm transition-all duration-500",
-                                  i < 5 ? "bg-amber-400" : "bg-green-400"
-                                )}
-                                style={{ height }}
-                              ></div>
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                {score}分
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-white/80">{moment.date}</span>
-                      <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-0 h-6 px-2">
-                        评分趋势 <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                {/* 视频预览 */}
-                {moment.type === 'video' && (
-                  <div className="px-3 py-2 bg-black/30 backdrop-blur-sm">
-                    <div className="flex items-center mb-2">
-                      <h4 className="text-sm font-medium text-white">{moment.title}</h4>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-white/80">{moment.date}</span>
-                      <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-0 h-6 px-2">
-                        观看视频 <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-white/30 group-hover:bg-rose-600/70 transition-colors duration-300">
-                        <Play className="h-7 w-7 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+      <div className="relative">
+        {/* 时间标识 - 连接到导轨 */}
+        <div className="absolute top-[-120px] left-1/2 transform -translate-x-1/2 z-20">
+          <div className="flex flex-col items-center">
+            <div className="w-0.5 h-[95px] bg-gray-300"></div>
+            <div className="absolute top-0 w-4 h-4 rounded-full bg-white border-2 border-primary transform -translate-x-1/2 left-1/2 shadow-sm"></div>
+            <div className="absolute top-8 rounded-full bg-white shadow-sm px-3 py-1 text-xs text-gray-700 font-medium border border-gray-100 transform -translate-x-1/2 left-1/2 whitespace-nowrap">
+              {moment.date}
             </div>
           </div>
         </div>
-      </motion.div>
+        
+        <motion.div 
+          key={moment.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ 
+            scale: 1.02, 
+            boxShadow: "0 8px 30px rgba(0,0,0,0.12)" 
+          }}
+          transition={{ duration: 0.2 }}
+          className="relative w-[280px] h-[220px] bg-white rounded-lg overflow-hidden cursor-pointer shadow-sm"
+          onClick={() => onMomentClick && onMomentClick(moment)}
+        >
+          {/* 缩略图背景 */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]"></div>
+            <motion.img 
+              src={moment.thumbnail} 
+              alt={moment.title}
+              className="w-full h-full object-cover opacity-90"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.5 }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+          </div>
+
+          {/* 顶部信息条 */}
+          <div className="absolute top-0 left-0 right-0 flex justify-between items-center p-3 z-20">
+            {/* 类型标签 - 简化设计 */}
+            <div className="flex items-center">
+              <div className="bg-white/90 backdrop-blur-md rounded-full h-6 pl-1.5 pr-2 py-0.5 flex items-center shadow-sm">
+                {moment.type === 'note' && <PenTool className="h-3 w-3 text-blue-600 mr-1" />}
+                {moment.type === 'audio' && <FileAudio className="h-3 w-3 text-purple-600 mr-1" />}
+                {moment.type === 'homework' && <BarChart className="h-3 w-3 text-amber-600 mr-1" />}
+                {moment.type === 'video' && <FileVideo className="h-3 w-3 text-rose-600 mr-1" />}
+                <span className="text-xs font-medium text-gray-800">
+                  {moment.type === 'note' && '笔记'}
+                  {moment.type === 'audio' && '录音'}
+                  {moment.type === 'homework' && '作业'}
+                  {moment.type === 'video' && '视频'}
+                </span>
+              </div>
+            </div>
+            
+            {/* 学科标签 - 简化设计 */}
+            <Badge variant="outline" className={cn("backdrop-blur-md bg-white/80 border-0 shadow-sm", subjectColors[moment.subject])}>
+              {moment.subject}
+            </Badge>
+          </div>
+          
+          {/* 中央播放按钮 - 仅针对视频和音频 */}
+          {(moment.type === 'video' || moment.type === 'audio') && (
+            <motion.div 
+              className="absolute inset-0 flex items-center justify-center z-10"
+              initial={{ opacity: 0.6 }}
+              whileHover={{ opacity: 1 }}
+            >
+              <motion.div 
+                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40 transition-colors duration-300"
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.3)" }}
+              >
+                <Play className={cn(
+                  "h-5 w-5",
+                  moment.type === 'video' ? "text-rose-500" : "text-purple-500"
+                )} />
+              </motion.div>
+            </motion.div>
+          )}
+          
+          {/* 底部信息 - 更简洁的设计 */}
+          <div className="absolute inset-x-0 bottom-0 z-20 p-3 bg-gradient-to-t from-black to-transparent pt-10">
+            <h4 className="text-base font-medium text-white mb-1 line-clamp-1">{moment.title}</h4>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-white/80">{moment.date}</span>
+              <motion.div whileHover={{ x: 3 }} transition={{ duration: 0.2 }}>
+                <ArrowRight className="h-3.5 w-3.5 text-white/80" />
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     );
   };
   
   return (
-    <div className="bg-gray-950 rounded-lg shadow-lg overflow-hidden">
-      {/* 顶部导航 - 整个学期时间轴 */}
-      <div className="bg-black px-6 py-4 flex items-center justify-between border-b border-gray-800">
-        <div className="flex items-center">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            BACK / 返回
-          </Button>
-        </div>
-        <div className="flex items-center">
-          <div className="text-xl font-bold text-white tracking-wider">
-            教师成长档案
-          </div>
-        </div>
-        <div className="text-gray-300 text-sm">
-          教学历程 2021年-2023年
-        </div>
-      </div>
-      
-      {/* 学期选择器 */}
-      <div className="bg-gray-900 p-4 flex items-center justify-center">
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            className={cn(
-              "text-xs rounded-none border-gray-700 text-gray-300",
-              !selectedSemester && "bg-white/10 text-white"
-            )}
-            onClick={() => setSelectedSemester(null)}
-          >
-            ALL / 全部
-          </Button>
-          
-          {/* 学期过滤按钮 */}
-          {filmStrips.map(strip => (
+    <div className="h-full w-full bg-white overflow-hidden flex flex-col">
+      {/* 学期选择器 - 设计优化 */}
+      <div className="border-b border-gray-100 py-3 px-6">
+        <div className="flex justify-center">
+          <div className="inline-flex p-1 bg-gray-50 rounded-lg shadow-sm">
             <Button 
-              key={strip.semester} 
-              variant="outline" 
+              variant="ghost" 
               size="sm"
               className={cn(
-                "text-xs rounded-none border-gray-700 text-gray-300",
-                selectedSemester === strip.semester && "bg-white/10 text-white"
+                "text-xs rounded-md h-7 text-gray-600 px-3 mx-0.5",
+                !selectedSemester && "bg-white text-gray-900 shadow-sm"
               )}
-              onClick={() => handleSelectSemester(strip.semester)}
+              onClick={() => setSelectedSemester(null)}
             >
-              {strip.semester}
+              全部学期
             </Button>
-          ))}
+            
+            {/* 学期过滤按钮 */}
+            {filmStrips.map(strip => (
+              <Button 
+                key={strip.semester} 
+                variant="ghost" 
+                size="sm"
+                className={cn(
+                  "text-xs rounded-md h-7 text-gray-600 px-3 mx-0.5",
+                  selectedSemester === strip.semester && "bg-white text-gray-900 shadow-sm"
+                )}
+                onClick={() => handleSelectSemester(strip.semester)}
+              >
+                {strip.semester}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
       
       {/* 胶片墙展示区域 */}
-      <div className="relative">
+      <div className="relative flex-1">
+        {/* 时间轴背景 - 固定导轨 */}
+        <div className="absolute left-0 right-0 top-[120px] h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 z-10 mx-10">
+          {/* 刻度线 */}
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div 
+              key={`tick-${i}`}
+              className="absolute top-[-4px] w-0.5 h-2 bg-gray-400"
+              style={{ left: `${(i / 19) * 100}%` }}
+            ></div>
+          ))}
+          
+          {/* 学期区域标识 */}
+          {!selectedSemester && filmStrips.map((strip, index, array) => (
+            <div 
+              key={`timeline-semester-${strip.semester}`} 
+              className="absolute top-[-10px] text-xs font-medium text-gray-500"
+              style={{ 
+                left: `${(index / array.length) * 100}%`, 
+                width: `${(1 / array.length) * 100}%` 
+              }}
+            >
+              <div className="flex items-center">
+                <div className="w-1 h-5 bg-gray-400 rounded-full"></div>
+                <div className="ml-2">{strip.semester}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
         <ScrollArea 
-          className="w-full h-[450px] rounded-md bg-gray-900 pt-6 pb-6" 
+          className="h-full w-full bg-gray-50/50 pt-12 pb-8" 
           ref={timelineRef}
         >
           <div className="flex px-10">
             {/* 如果没有选择特定学期，显示所有学期的胶片 */}
             {!selectedSemester ? (
-              filmStrips.map(strip => (
+              filmStrips.map((strip, stripIndex) => (
                 <div
                   key={strip.semester}
                   id={`filmstrip-semester-${strip.semester}`}
                   className="flex-none pr-8 last:pr-0"
                 >
-                  <div className="flex flex-col">
-                    {/* 学期标识 */}
-                    <div className="mb-4 text-center">
-                      <h3 className="text-white text-md font-semibold">{strip.semester}</h3>
-                      <p className="text-gray-400 text-xs">{strip.period}</p>
+                  <motion.div 
+                    className="flex flex-col"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* 学期标识 - 更精美的设计 */}
+                    <div className="mb-10 text-center">
+                      <div className="inline-block bg-white px-4 py-1.5 rounded-lg shadow-sm mb-2">
+                        <h3 className="text-primary font-medium">{strip.semester}</h3>
+                      </div>
+                      <p className="text-gray-500 text-xs">{strip.period}</p>
                     </div>
                     
                     {/* 胶片列表 */}
-                    <div className="flex space-x-6">
-                      {strip.moments.map(moment => renderFilmFrame(moment))}
+                    <div className="flex space-x-6 pt-8">
+                      {strip.moments.map((moment, momentIdx) => 
+                        renderFilmFrame(moment, stripIndex, momentIdx, strip.moments.length)
+                      )}
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               ))
             ) : (
               // 显示选中学期的胶片
-              <div className="w-full">
-                <div className="mb-4 text-center">
-                  <h3 className="text-white text-xl font-semibold">{selectedSemesterData.semester}</h3>
-                  <p className="text-gray-400 text-sm">{selectedSemesterData.period}</p>
+              <motion.div 
+                className="w-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="mb-12 text-center">
+                  <div className="inline-block bg-white px-5 py-2 rounded-lg shadow-sm mb-2">
+                    <h3 className="text-primary text-lg font-medium">{selectedSemesterData.semester}</h3>
+                  </div>
+                  <p className="text-gray-500 text-sm">{selectedSemesterData.period}</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-2">
-                  {selectedSemesterData.moments.map(moment => renderFilmFrame(moment))}
+                {/* 单学期时间轴 */}
+                <div className="relative mb-12">
+                  <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 z-10">
+                    {/* 刻度线 */}
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div 
+                        key={`semester-tick-${i}`}
+                        className="absolute top-[-4px] w-0.5 h-2 bg-gray-400"
+                        style={{ left: `${(i / 9) * 100}%` }}
+                      ></div>
+                    ))}
+                    
+                    {/* 单学期范围标记 */}
+                    <div className="absolute top-[-10px] text-xs font-medium text-gray-500 left-0">
+                      <div className="flex items-center">
+                        <div className="w-1 h-5 bg-gray-400 rounded-full"></div>
+                        <div className="ml-2">{selectedSemesterData.semester}开始</div>
+                      </div>
+                    </div>
+                    <div className="absolute top-[-10px] text-xs font-medium text-gray-500 right-0">
+                      <div className="flex items-center">
+                        <div className="w-1 h-5 bg-gray-400 rounded-full"></div>
+                        <div className="ml-2">{selectedSemesterData.semester}结束</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-2 pt-8">
+                  {selectedSemesterData.moments.map((moment, idx) => 
+                    renderFilmFrame(moment, 0, idx, selectedSemesterData.moments.length)
+                  )}
+                </div>
+              </motion.div>
             )}
           </div>
-          <ScrollBar orientation="horizontal" className="z-30" />
+          <ScrollBar orientation="horizontal" className="z-30 h-2.5 mt-4 bg-gray-200/50" />
         </ScrollArea>
         
-        {/* 左右导航按钮 */}
-        <button className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm z-30 text-white hover:bg-black/70 transition-colors">
+        {/* 左右导航按钮 - 放置在两侧 */}
+        <motion.button 
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 w-10 h-20 rounded-r-lg bg-white/70 flex items-center justify-center backdrop-blur-md z-30 text-gray-600 shadow-sm border border-gray-100"
+          whileHover={{ backgroundColor: "rgba(255,255,255,0.95)" }}
+          onClick={scrollLeft}
+        >
           <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm z-30 text-white hover:bg-black/70 transition-colors">
+        </motion.button>
+        <motion.button 
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 w-10 h-20 rounded-l-lg bg-white/70 flex items-center justify-center backdrop-blur-md z-30 text-gray-600 shadow-sm border border-gray-100"
+          whileHover={{ backgroundColor: "rgba(255,255,255,0.95)" }}
+          onClick={scrollRight}
+        >
           <ChevronRight className="h-5 w-5" />
-        </button>
+        </motion.button>
       </div>
       
-      {/* 内容详情 */}
-      {selectedSemester && selectedSemesterData.moments.length > 0 && (
-        <div className="bg-black px-8 py-6 text-center">
-          <h2 className="text-white text-2xl font-semibold mb-1">{selectedSemesterData.moments[0].title}</h2>
-          <p className="text-rose-500 text-sm">
-            {selectedSemesterData.moments[0].subject} - {selectedSemesterData.moments[0].date}
-          </p>
-        </div>
-      )}
-      
-      {/* 页脚 */}
-      <div className="bg-black px-6 py-3 flex items-center justify-between text-xs text-gray-500">
-        <div>© ALL RIGHTS RESERVED.</div>
-        <div className="flex space-x-2">
-          <span>FB</span>
-          <span>/</span>
-          <span>TW</span>
+      {/* 页脚 - 更简约的设计 */}
+      <div className="py-3 px-6 flex items-center justify-center text-xs text-gray-400 border-t border-gray-100">
+        <div className="flex space-x-4 items-center">
+          <span>© 教师成长档案</span>
+          <div className="h-3 w-px bg-gray-200"></div>
+          <span>回忆里的教学瞬间</span>
         </div>
       </div>
     </div>
@@ -867,33 +831,52 @@ export default function ClassroomTimeMachinePage() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-50 bg-black flex flex-col"
+          className="fixed inset-0 z-50 bg-white overflow-hidden flex flex-col"
         >
-          <div className="p-4 flex justify-between items-center bg-black/80 backdrop-blur-sm">
+          <div className="py-2 px-6 flex justify-between items-center border-b border-gray-200">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={handleCloseMemoryView}
-              className="text-white hover:bg-white/10"
+              className="text-gray-700 hover:bg-gray-100 rounded-md pl-2 pr-3"
             >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              返回
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              BACK / 返回
             </Button>
-            <h3 className="text-xl font-semibold text-white">记忆墙</h3>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleCloseMemoryView}
-              className="text-white hover:bg-white/10"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <h3 className="text-base font-medium text-gray-800">
+              教师成长档案
+            </h3>
+            <div className="text-gray-600 text-sm">
+              教学历程 2021年-2023年
+            </div>
           </div>
-          <div className="flex-1 overflow-auto">
-            <FilmStripTimeline 
-              filmStrips={mockFilmStrips} 
-              onMomentClick={handleMomentClick}
-            />
+          <div className="flex-1 overflow-hidden relative">
+            {/* 添加背景色和图案 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100 opacity-100"></div>
+            <div className="absolute inset-0 bg-grid-primary/5"></div>
+            {/* 内容包装器 */}
+            <div className="relative z-10 h-full overflow-hidden">
+              <FilmStripTimeline 
+                filmStrips={mockFilmStrips} 
+                onMomentClick={handleMomentClick}
+              />
+            </div>
+          </div>
+          <div className="py-2 px-6 bg-primary/10 border-t border-primary/20 flex justify-between items-center text-xs text-gray-600">
+            <div className="flex items-center">
+              <Film className="h-3 w-3 mr-1 text-primary" />
+              <span>共展示 {mockFilmStrips.reduce((total, strip) => total + strip.moments.length, 0)} 个教学瞬间</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10">
+                <Bookmark className="h-3 w-3 mr-1" />
+                收藏记忆墙
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10">
+                <Share className="h-3 w-3 mr-1" />
+                分享
+              </Button>
+            </div>
           </div>
         </motion.div>
       )}
@@ -927,12 +910,12 @@ export default function ClassroomTimeMachinePage() {
 
         {/* 主标签页 */}
         <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as 'myList' | 'schoolList')} className="mb-8">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="myList" className="flex items-center">
+          <TabsList className="inline-flex mb-6 rounded-lg p-1 bg-muted/20">
+            <TabsTrigger value="myList" className="flex items-center px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <BookOpen className="mr-2 h-4 w-4" />
               我的课堂列表
             </TabsTrigger>
-            <TabsTrigger value="schoolList" className="flex items-center">
+            <TabsTrigger value="schoolList" className="flex items-center px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <School className="mr-2 h-4 w-4" />
               全校时光
             </TabsTrigger>
@@ -940,12 +923,169 @@ export default function ClassroomTimeMachinePage() {
 
           {/* 我的课堂列表 - 保持原有内容 */}
           <TabsContent value="myList" className="animate-fadeIn">
-            {/* 这里保持现有的我的课堂列表JSX */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <div className="w-1.5 h-5 bg-sky-500 rounded-full mr-2"></div>
+                  我的课堂
+                </h3>
+                
+                <div className="flex gap-2">
+                  {/* 这里可以添加学科筛选按钮 */}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {mockClassRecords.filter(record => record.isMine).map((record) => (
+                  <Card 
+                    key={record.id} 
+                    className={cn(
+                      "overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 border border-gray-200",
+                      selectedRecord === record.id ? "ring-2 ring-primary shadow-md" : "hover:translate-y-[-4px]"
+                    )}
+                    onClick={() => handleSelectRecord(record.id)}
+                  >
+                    <div className="relative h-32 w-full group">
+                      <img 
+                        src={record.thumbnail} 
+                        alt={record.title} 
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <Badge className="bg-sky-600 hover:bg-sky-700 text-xs">{record.class}</Badge>
+                            {record.isMine && (
+                              <Badge variant="secondary" className="bg-sky-100 text-sky-800 hover:bg-sky-200 text-xs">我的</Badge>
+                            )}
+                            {topLikedRecords.includes(record.id) && (
+                              <Badge variant="secondary" className="bg-rose-100 text-rose-800 hover:bg-rose-200 text-xs">
+                                <ThumbsUp className="h-3 w-3 mr-1" />
+                                热门
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className="text-sm font-semibold text-white line-clamp-1">{record.title}</h3>
+                        </div>
+                      </div>
+                      
+                      {/* 学科标签 */}
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="outline" className={cn("border px-2 py-0.5 text-xs", subjectColors[record.subject])}>
+                          {record.subject}
+                        </Badge>
+                      </div>
+                    </div>
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-center text-xs">
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 text-gray-500 mr-1" />
+                          <span className="text-gray-500">{record.duration}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Calendar className="h-3 w-3 text-gray-500 mr-1" />
+                          <span className="text-gray-500">{record.date}</span>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs">
+                        <div className="flex items-center">
+                          <Avatar className="h-5 w-5 mr-1">
+                            <AvatarFallback>{record.teacher.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{record.teacher}</span>
+                        </div>
+                        <div className="flex items-center text-rose-500">
+                          <Heart className="h-3 w-3 mr-1 fill-rose-500" />
+                          <span>{record.likes}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </TabsContent>
 
           {/* 全校时光 - 保持原有内容 */}
           <TabsContent value="schoolList" className="animate-fadeIn">
-            {/* 这里保持现有的全校时光JSX */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <div className="w-1.5 h-5 bg-indigo-500 rounded-full mr-2"></div>
+                  全校精彩课堂
+                </h3>
+                
+                <div className="flex gap-2">
+                  {/* 这里可以添加学科/教师筛选按钮 */}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {mockClassRecords.filter(record => !record.isMine).map((record) => (
+                  <Card 
+                    key={record.id}
+                    className={cn(
+                      "overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 border border-gray-200",
+                      selectedRecord === record.id ? "ring-2 ring-primary shadow-md" : "hover:translate-y-[-4px]"
+                    )}
+                    onClick={() => handleSelectRecord(record.id)}
+                  >
+                    <div className="relative h-32 w-full group">
+                      <img 
+                        src={record.thumbnail}
+                        alt={record.title}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <Badge className="bg-indigo-600 hover:bg-indigo-700 text-xs">{record.class}</Badge>
+                            {topLikedRecords.includes(record.id) && (
+                              <Badge variant="secondary" className="bg-rose-100 text-rose-800 hover:bg-rose-200 text-xs">
+                                <ThumbsUp className="h-3 w-3 mr-1" />
+                                热门
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className="text-sm font-semibold text-white line-clamp-1">{record.title}</h3>
+                        </div>
+                      </div>
+                      
+                      {/* 学科标签 */}
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="outline" className={cn("border px-2 py-0.5 text-xs", subjectColors[record.subject])}>
+                          {record.subject}
+                        </Badge>
+                      </div>
+                    </div>
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-center text-xs">
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 text-gray-500 mr-1" />
+                          <span className="text-gray-500">{record.duration}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Calendar className="h-3 w-3 text-gray-500 mr-1" />
+                          <span className="text-gray-500">{record.date}</span>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs">
+                        <div className="flex items-center">
+                          <Avatar className="h-5 w-5 mr-1">
+                            <AvatarFallback>{record.teacher.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{record.teacher}</span>
+                        </div>
+                        <div className="flex items-center text-rose-500">
+                          <Heart className="h-3 w-3 mr-1 fill-rose-500" />
+                          <span>{record.likes}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
