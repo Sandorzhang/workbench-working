@@ -18,6 +18,22 @@ alwaysApply: false
 - shadcn相关的安装命令为 npm shadcn@latest 而不是npm shadcn-ui@latest
 - 所有的页面添加skeleton加载
 - toast 使用sonner
+- UI设计使用现代极简主义、适应功能美学。
+- 设计规范：
+1.极简主义 (Minimalism)
+​干净界面：大量留白、无冗余装饰，减少视觉干扰，突出内容本身。
+​中性色调：以黑白灰为主色，搭配柔和的低饱和度色彩（如浅蓝、浅粉）作为点缀。
+​圆角与柔和阴影：按钮、卡片等元素采用圆角设计，搭配轻微阴影，营造轻盈的层次感。
+2.功能性导向
+​模块化设计：通过“块”（Blocks）系统自由组合内容（文本、表格、图片等），类似拼图式操作。
+​统一性：所有功能（数据库、日历、看板）保持一致的交互逻辑，降低学习成本。
+3.克制的美学
+​无衬线字体：使用简洁的 Inter 或 Helvetica 字体，确保可读性。
+​扁平化图标：图标设计去除了复杂细节，仅保留核心符号，符合现代扁平化趋势。
+4.​线性风格 (Line Icons)：
+图标以单线条勾勒，线条粗细一致，边缘平滑（如文档、数据库、表情符号图标）。
+​极简抽象：用最简单的图形表达功能（例如“加号”表示新建，“齿轮”表示设置）。
+​中性配色：默认黑白灰，激活状态时辅以柔和的蓝色或黄色高亮，避免视觉疲劳。
 # MSW
 This page elaborates on the mental models that MSW and, by the extension, you adopt when approaching API mocking. This is a great page to share with people wondering what makes MSW unique on a conceptual level, and for those craving a more practical perspective, we have the Comparison page prepared.
 
