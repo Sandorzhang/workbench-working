@@ -1,1095 +1,514 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Loader2, BookOpen, Clock, Play, Pause, SkipBack, SkipForward, 
-  Calendar, ChevronLeft, Video, Mic, Upload, Heart, ThumbsUp, Tag,
-  ChevronRight, ChevronDown, ChevronUp, Film, RadioTower, School,
-  PenTool, FileAudio, BarChart, FileVideo, Bookmark, ArrowRight, X, Share
-} from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { AppSidebar } from "@/components/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import {
-  Tabs, TabsContent, TabsList, TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { 
-  TitleSkeleton, 
-  CardSkeleton, 
-  ListSkeleton,
-  ContentSkeleton,
-  TabsSkeleton
-} from "@/components/ui/skeleton-loader";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { motion } from "framer-motion";
-
-// 添加Memory图标组件
-const MemoryIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M7 2h10M5 6c1-2 3-4 7-4 4 0 6 2 7 4 1 2 1 9-7 12-8-3-8-10-7-12Z"></path>
-    <path d="M9 15c.1-3.25 6.739-2 8 0 1 1 1 4-3 4.5-4-.5-5-3.5-5-4.5Z"></path>
-  </svg>
-);
-
-// 定义课堂记录类型
-type ClassRecord = {
-  id: string;
-  title: string;
-  date: string;
-  duration: string;
-  teacher: string;
-  class: string;
-  thumbnail: string;
-  isMine: boolean;
-  subject: string;
-  likes: number;
-};
-
-// 定义胶片类型
-type FilmStrip = {
-  semester: string; // 修改为学期
-  period: string; // 添加时间段描述
-  moments: TeachingMoment[];
-};
-
-type TeachingMoment = {
-  id: string;
-  type: 'note' | 'audio' | 'homework' | 'video';
-  title: string;
-  date: string;
-  thumbnail: string;
-  description: string;
-  subjectColor: string;
-  subject: string;
-};
-
-// 模拟课堂记录数据
-const mockClassRecords: ClassRecord[] = [
-  {
-    id: '1',
-    title: '高中物理 - 牛顿第二定律',
-    date: '2023-11-15',
-    duration: '45分钟',
-    teacher: '张老师',
-    class: '高二(3)班',
-    thumbnail: 'https://images.unsplash.com/photo-1610116306796-6fea9f4fae38?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8cGh5c2ljc3xlbnwwfHwwfHx8MA%3D%3D',
-    isMine: true,
-    subject: '物理',
-    likes: 24,
-  },
-  {
-    id: '2',
-    title: '初中数学 - 二次函数',
-    date: '2023-11-10',
-    duration: '40分钟',
-    teacher: '张老师',
-    class: '初三(2)班',
-    thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWF0aHxlbnwwfHwwfHx8MA%3D%3D',
-    isMine: true,
-    subject: '数学',
-    likes: 32,
-  },
-  {
-    id: '3',
-    title: '高中语文 - 红楼梦赏析',
-    date: '2023-11-05',
-    duration: '50分钟',
-    teacher: '李老师',
-    class: '高一(1)班',
-    thumbnail: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2hpbmVzZSUyMGxpdGVyYXR1cmV8ZW58MHx8MHx8fDA%3D',
-    isMine: false,
-    subject: '语文',
-    likes: 45,
-  },
-  {
-    id: '4',
-    title: '初中英语 - 现在完成时',
-    date: '2023-11-03',
-    duration: '45分钟',
-    teacher: '王老师',
-    class: '初二(4)班',
-    thumbnail: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZW5nbGlzaHxlbnwwfHwwfHx8MA%3D%3D',
-    isMine: false,
-    subject: '英语',
-    likes: 18,
-  },
-  {
-    id: '5',
-    title: '高中化学 - 元素周期表',
-    date: '2023-11-01',
-    duration: '50分钟',
-    teacher: '张老师',
-    class: '高一(2)班',
-    thumbnail: 'https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2hlbWlzdHJ5fGVufDB8fDB8fHww',
-    isMine: true,
-    subject: '化学',
-    likes: 15,
-  },
-];
-
-// 模拟胶片数据
-const mockFilmStrips: FilmStrip[] = [
-  {
-    semester: '2023-秋',
-    period: '2023年9月-2024年1月',
-    moments: [
-      {
-        id: 'note1',
-        type: 'note',
-        title: '物理课知识点笔记',
-        date: '2023-10-15',
-        thumbnail: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bm90ZXN8ZW58MHx8MHx8fDA%3D',
-        description: '牛顿第二定律公式推导笔记',
-        subjectColor: 'blue',
-        subject: '物理',
-      },
-      {
-        id: 'audio1',
-        type: 'audio',
-        title: '课堂提问录音',
-        date: '2023-11-20',
-        thumbnail: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YXVkaW8lMjB3YXZlfGVufDB8fDB8fHww',
-        description: '学生关于牛顿定律的问答',
-        subjectColor: 'blue',
-        subject: '物理',
-      },
-      {
-        id: 'video1',
-        type: 'video',
-        title: '课堂教学视频',
-        date: '2023-12-15',
-        thumbnail: 'https://images.unsplash.com/photo-1576097492152-4687fcb6b81b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xhc3Nyb29tJTIwdGVhY2hpbmd8ZW58MHx8MHx8fDA%3D',
-        description: '物理课堂精彩片段',
-        subjectColor: 'blue',
-        subject: '物理',
-      },
-    ],
-  },
-  {
-    semester: '2023-春',
-    period: '2023年2月-2023年6月',
-    moments: [
-      {
-        id: 'note2',
-        type: 'note',
-        title: '数学课读书笔记',
-        date: '2023-03-05',
-        thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWF0aHxlbnwwfHwwfHx8MA%3D%3D',
-        description: '二次函数公式推导笔记',
-        subjectColor: 'purple',
-        subject: '数学',
-      },
-      {
-        id: 'homework1',
-        type: 'homework',
-        title: '数学作业成绩趋势',
-        date: '2023-04-10',
-        thumbnail: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Z3JhcGglMjBjaGFydHxlbnwwfHwwfHx8MA%3D%3D',
-        description: '二次函数单元测试成绩走势',
-        subjectColor: 'purple',
-        subject: '数学',
-      },
-      {
-        id: 'audio2',
-        type: 'audio',
-        title: '课堂讲解录音',
-        date: '2023-05-25',
-        thumbnail: 'https://images.unsplash.com/photo-1546708470-deacc8735a08?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YXVkaW8lMjByZWNvcmRpbmd8ZW58MHx8MHx8fDA%3D',
-        description: '数学公式讲解',
-        subjectColor: 'purple',
-        subject: '数学',
-      },
-    ],
-  },
-  {
-    semester: '2022-秋',
-    period: '2022年9月-2023年1月',
-    moments: [
-      {
-        id: 'note3',
-        type: 'note',
-        title: '语文课读书笔记',
-        date: '2022-10-05',
-        thumbnail: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2hpbmVzZSUyMGxpdGVyYXR1cmV8ZW58MHx8MHx8fDA%3D',
-        description: '《红楼梦》人物关系笔记',
-        subjectColor: 'red',
-        subject: '语文',
-      },
-      {
-        id: 'audio3',
-        type: 'audio',
-        title: '朗读录音',
-        date: '2022-11-15',
-        thumbnail: 'https://images.unsplash.com/photo-1546708470-deacc8735a08?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YXVkaW8lMjByZWNvcmRpbmd8ZW58MHx8MHx8fDA%3D',
-        description: '经典文学作品朗读',
-        subjectColor: 'red',
-        subject: '语文',
-      },
-      {
-        id: 'homework2',
-        type: 'homework',
-        title: '语文作业评分',
-        date: '2022-12-01',
-        thumbnail: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZW5nbGlzaCUyMGdyYWRlfGVufDB8fDB8fHww',
-        description: '语文写作能力提升曲线',
-        subjectColor: 'red',
-        subject: '语文',
-      },
-    ],
-  },
-  {
-    semester: '2022-春',
-    period: '2022年2月-2022年6月',
-    moments: [
-      {
-        id: 'note4',
-        type: 'note',
-        title: '英语课笔记',
-        date: '2022-03-10',
-        thumbnail: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZW5nbGlzaHxlbnwwfHwwfHx8MA%3D%3D',
-        description: '现在完成时用法笔记',
-        subjectColor: 'yellow',
-        subject: '英语',
-      },
-      {
-        id: 'audio4',
-        type: 'audio',
-        title: '口语练习录音',
-        date: '2022-04-25',
-        thumbnail: 'https://images.unsplash.com/photo-1461784180009-27c427be5bab?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8YXVkaW8lMjB3YXZlfGVufDB8fDB8fHww',
-        description: '英语口语对话练习',
-        subjectColor: 'yellow',
-        subject: '英语',
-      },
-      {
-        id: 'video2',
-        type: 'video',
-        title: '课堂活动视频',
-        date: '2022-05-20',
-        thumbnail: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2xhc3Nyb29tJTIwdGVhY2hpbmd8ZW58MHx8MHx8fDA%3D',
-        description: '英语口语课堂活动',
-        subjectColor: 'yellow',
-        subject: '英语',
-      },
-    ],
-  },
-  {
-    semester: '2021-秋',
-    period: '2021年9月-2022年1月',
-    moments: [
-      {
-        id: 'note5',
-        type: 'note',
-        title: '化学实验记录',
-        date: '2021-10-10',
-        thumbnail: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2hlbWlzdHJ5JTIwbm90ZXN8ZW58MHx8MHx8fDA%3D',
-        description: '元素周期表实验记录',
-        subjectColor: 'green',
-        subject: '化学',
-      },
-      {
-        id: 'homework3',
-        type: 'homework',
-        title: '化学作业评分',
-        date: '2021-11-15',
-        thumbnail: 'https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2hlbWlzdHJ5fGVufDB8fDB8fHww',
-        description: '化学实验报告评分',
-        subjectColor: 'green',
-        subject: '化学',
-      },
-      {
-        id: 'video3',
-        type: 'video',
-        title: '实验演示视频',
-        date: '2021-12-05',
-        thumbnail: 'https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2hlbWlzdHJ5fGVufDB8fDB8fHww',
-        description: '化学反应实验演示',
-        subjectColor: 'green',
-        subject: '化学',
-      },
-    ],
-  },
-];
-
-// 学科颜色映射
-const subjectColors: Record<string, string> = {
-  '语文': 'text-red-500 border-red-200',
-  '数学': 'text-purple-500 border-purple-200',
-  '英语': 'text-blue-500 border-blue-200',
-  '物理': 'text-sky-500 border-sky-200',
-  '化学': 'text-green-500 border-green-200',
-  '生物': 'text-emerald-500 border-emerald-200',
-  '历史': 'text-amber-500 border-amber-200',
-  '地理': 'text-rose-500 border-rose-200',
-  '政治': 'text-indigo-500 border-indigo-200',
-};
-
-// 获取最高点赞的课堂记录
-const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] => {
-  return [...records].sort((a, b) => b.likes - a.likes).slice(0, count);
-};
-
-const topLikedRecords = getTopLikedRecords(mockClassRecords, 2).map(record => record.id);
-
-// 获取类型对应的图标
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case 'note':
-      return <BookOpen className="h-3 w-3" />;
-    case 'audio':
-      return <Mic className="h-3 w-3" />;
-    case 'homework':
-      return <BookOpen className="h-3 w-3" />;
-    case 'video':
-      return <Video className="h-3 w-3" />;
-    default:
-      return <BookOpen className="h-3 w-3" />;
-  }
-};
-
-// 获取类型对应的颜色
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'note':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'audio':
-      return 'bg-purple-100 text-purple-800 border-purple-200';
-    case 'homework':
-      return 'bg-amber-100 text-amber-800 border-amber-200';
-    case 'video':
-      return 'bg-rose-100 text-rose-800 border-rose-200';
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-  }
-};
-
-// 获取主题色背景
-const getSubjectBackground = (subject: string) => {
-  switch (subject) {
-    case '物理':
-      return 'from-blue-500/20 to-transparent';
-    case '数学':
-      return 'from-purple-500/20 to-transparent';
-    case '语文':
-      return 'from-red-500/20 to-transparent';
-    case '英语':
-      return 'from-yellow-500/20 to-transparent';
-    case '化学':
-      return 'from-green-500/20 to-transparent';
-    default:
-      return 'from-gray-500/20 to-transparent';
-  }
-};
-
-// 添加新的时光胶片组件
-const FilmStripTimeline = ({
-  filmStrips,
-  onMomentClick
-}: {
-  filmStrips: FilmStrip[];
-  onMomentClick?: (moment: TeachingMoment) => void;
-}) => {
-  const [selectedSemester, setSelectedSemester] = useState<string | null>(null);
-  const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
-  const timelineRef = useRef<HTMLDivElement>(null);
-  
-  // 选择学期 - 修改为只滚动到对应学期，不改变展示模式
-  const handleSelectSemester = (semester: string) => {
-    setSelectedSemester(semester);
-    // 滚动到选定的学期内容
-    const semesterElement = document.getElementById(`filmstrip-semester-${semester}`);
-    if (semesterElement && timelineRef.current) {
-      timelineRef.current.scrollTo({
-        left: semesterElement.offsetLeft - 100,
-        behavior: 'smooth',
-      });
-    }
-  };
-  
-  // 滚动到左侧
-  const scrollLeft = () => {
-    if (timelineRef.current) {
-      timelineRef.current.scrollTo({
-        left: timelineRef.current.scrollLeft - 600,
-        behavior: 'smooth',
-      });
-    }
-  };
-  
-  // 滚动到右侧
-  const scrollRight = () => {
-    if (timelineRef.current) {
-      timelineRef.current.scrollTo({
-        left: timelineRef.current.scrollLeft + 600,
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  // 处理节点或卡片点击
-  const handleMomentClick = (moment: TeachingMoment) => {
-    setSelectedMomentId(moment.id === selectedMomentId ? null : moment.id);
-    if (onMomentClick) {
-      onMomentClick(moment);
-    }
-  };
-
-  // 处理节点点击
-  const handleNodeClick = (moment: TeachingMoment, e: React.MouseEvent) => {
-    e.stopPropagation(); // 防止冒泡到卡片
-    setSelectedMomentId(moment.id === selectedMomentId ? null : moment.id);
-    if (onMomentClick) {
-      onMomentClick(moment);
-    }
-  };
-  
-  // 渲染胶片帧
-  const renderFilmFrame = (moment: TeachingMoment, semesterIndex: number = 0, momentIndex: number = 0, totalMoments: number = 1) => {
-    // 计算节点在时间轴上的精确位置
-    const isSelected = selectedMomentId === moment.id;
-    
-    return (
-      <div className="relative mb-32">
-        {/* 卡片内容 */}
-      <motion.div 
-        key={moment.id}
-        initial={{ opacity: 0, y: 10 }}
-          animate={{ 
-            opacity: 1, 
-            y: 0,
-            scale: isSelected ? 1.05 : 1,
-            boxShadow: isSelected ? "0 10px 40px rgba(0,0,0,0.2)" : "0 4px 6px rgba(0,0,0,0.05)"
-          }}
-        whileHover={{ 
-            scale: 1.02, 
-            boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-            y: -5
-        }}
-          whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.2 }}
-          className={cn(
-            "relative w-[280px] h-[220px] bg-white rounded-lg overflow-hidden cursor-pointer",
-            isSelected ? "ring-4 ring-rose-200" : ""
-          )}
-          onClick={() => handleMomentClick(moment)}
-        >
-          {/* 缩略图背景 */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]"></div>
-            <motion.img 
-                  src={moment.thumbnail} 
-                  alt={moment.title}
-              className="w-full h-full object-cover opacity-90"
-              animate={{ scale: isSelected ? 1.08 : 1 }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.5 }}
-                />
-            <div className={cn(
-              "absolute inset-0 bg-gradient-to-t via-black/40 to-transparent",
-              isSelected ? "from-rose-900/80" : "from-black/70"
-            )}></div>
-              </div>
-              
-          {/* 顶部信息条 */}
-          <div className="absolute top-0 left-0 right-0 flex justify-between items-center p-3 z-20">
-            {/* 类型标签 - 简化设计 */}
-            <div className="flex items-center">
-              <motion.div 
-                className={cn(
-                  "bg-white/90 backdrop-blur-md rounded-full h-6 pl-1.5 pr-2 py-0.5 flex items-center shadow-sm",
-                  isSelected ? "bg-rose-50/90" : ""
-                )}
-                whileHover={{ x: 2 }}
-              >
-                {moment.type === 'note' && <PenTool className={cn("h-3 w-3 mr-1", isSelected ? "text-rose-600" : "text-blue-600")} />}
-                {moment.type === 'audio' && <FileAudio className={cn("h-3 w-3 mr-1", isSelected ? "text-rose-600" : "text-purple-600")} />}
-                {moment.type === 'homework' && <BarChart className={cn("h-3 w-3 mr-1", isSelected ? "text-rose-600" : "text-amber-600")} />}
-                {moment.type === 'video' && <FileVideo className={cn("h-3 w-3 mr-1", isSelected ? "text-rose-600" : "text-rose-600")} />}
-                <span className={cn("text-xs font-medium", isSelected ? "text-rose-800" : "text-gray-800")}>
-                  {moment.type === 'note' && '笔记'}
-                  {moment.type === 'audio' && '录音'}
-                  {moment.type === 'homework' && '作业'}
-                  {moment.type === 'video' && '视频'}
-                </span>
-              </motion.div>
-              </div>
-              
-            {/* 学科标签 - 简化设计 */}
-            <Badge variant="outline" className={cn(
-              "backdrop-blur-md bg-white/80 border-0 shadow-sm", 
-              isSelected ? "bg-rose-50/80 text-rose-500 border-rose-200" : subjectColors[moment.subject]
-            )}>
-                  {moment.subject}
-                </Badge>
-              </div>
-              
-          {/* 中央播放按钮 - 仅针对视频和音频 */}
-          {(moment.type === 'video' || moment.type === 'audio') && (
-            <motion.div 
-              className="absolute inset-0 flex items-center justify-center z-10"
-              initial={{ opacity: 0.6 }}
-              whileHover={{ opacity: 1 }}
-            >
-              <motion.div 
-                className={cn(
-                  "w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center border border-white/40 transition-colors duration-300",
-                  isSelected ? "bg-rose-400/30" : "bg-white/20"
-                )}
-                whileHover={{ scale: 1.1, backgroundColor: isSelected ? "rgba(244, 63, 94, 0.4)" : "rgba(255,255,255,0.3)" }}
-                animate={isSelected ? { scale: [1, 1.2, 1.1], rotate: [0, 5, 0] } : {}}
-                transition={{ duration: 0.3 }}
-              >
-                <Play className={cn(
-                  "h-5 w-5",
-                  isSelected ? "text-white" : (moment.type === 'video' ? "text-rose-500" : "text-purple-500")
-                )} />
-              </motion.div>
-            </motion.div>
-          )}
-          
-          {/* 底部信息 - 更简洁的设计 */}
-          <div className="absolute inset-x-0 bottom-0 z-20 p-3 bg-gradient-to-t from-black to-transparent pt-10">
-            <h4 className="text-base font-medium text-white mb-1 line-clamp-1">{moment.title}</h4>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-white/80">{moment.date}</span>
-              <motion.div 
-                whileHover={{ x: 3 }} 
-                animate={isSelected ? { x: [0, 5, 3] } : {}}
-                transition={{ duration: 0.3 }}
-              >
-                <ArrowRight className={cn("h-3.5 w-3.5", isSelected ? "text-rose-300" : "text-white/80")} />
-              </motion.div>
-                    </div>
-                  </div>
-        </motion.div>
-
-        {/* 连接线从卡片延伸到导轨圆环 */}
-        <div className="absolute top-[220px] left-1/2 transform -translate-x-1/2 z-10">
-          {/* 连接线，长度根据卡片底部到导轨的距离计算 */}
-          <div className="w-0.5 bg-gray-300/70" style={{ height: 'calc(150px - 220px + 67px)' }}></div>
-                    </div>
-        
-        {/* 节点圆环，放在导轨上 - 导轨位于top-[150px] */}
-        <motion.div 
-                                className={cn(
-            "w-5 h-5 rounded-full bg-white border-2 absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-sm cursor-pointer z-30",
-            isSelected ? "border-rose-500" : "border-primary"
-          )}
-          style={{ top: '150px' }}
-          onClick={(e) => handleNodeClick(moment, e)}
-          whileHover={{ scale: 1.2 }}
-          whileTap={{ scale: 0.9 }}
-          animate={isSelected ? { 
-            scale: [1, 1.3, 1.2],
-            borderColor: ["rgb(59, 130, 246)", "rgb(244, 63, 94)", "rgb(244, 63, 94)"],
-            boxShadow: "0 0 15px rgba(244, 63, 94, 0.5)"
-          } : {}}
-          transition={{ duration: 0.3 }}
-        ></motion.div>
-        
-        {/* 日期标签位于导轨下方 */}
-        <motion.div 
-          className={cn(
-            "absolute rounded-full bg-white shadow-sm px-3 py-1 text-xs font-medium border transform -translate-x-1/2 left-1/2 whitespace-nowrap cursor-pointer",
-            isSelected ? "text-rose-600 border-rose-200" : "text-gray-700 border-gray-100"
-          )}
-          style={{ top: 'calc(150px + 15px)' }}
-          whileHover={{ y: -2 }}
-          onClick={(e) => handleNodeClick(moment, e)}
-        >
-          {moment.date}
-      </motion.div>
-      </div>
-    );
-  };
-  
-  return (
-    <div className="h-full w-full bg-white overflow-hidden flex flex-col">
-      {/* 学期选择器 - 设计优化，移除"全部学期"按钮 */}
-      <div className="border-b border-gray-100 py-3 px-6">
-        <div className="flex justify-center">
-          <div className="inline-flex p-1 bg-gray-50 rounded-lg shadow-sm">
-          {/* 学期过滤按钮 */}
-          {filmStrips.map(strip => (
-            <Button 
-              key={strip.semester} 
-                variant="ghost" 
-              size="sm"
-              className={cn(
-                  "text-xs rounded-md h-7 text-gray-600 px-3 mx-0.5",
-                  selectedSemester === strip.semester && "bg-white text-gray-900 shadow-sm"
-              )}
-              onClick={() => handleSelectSemester(strip.semester)}
-            >
-              {strip.semester}
-            </Button>
-          ))}
-          </div>
-        </div>
-      </div>
-      
-      {/* 胶片墙展示区域 - 始终使用全部学期的视图 */}
-      <div className="relative flex-1">
-        {/* 时间轴背景 - 固定导轨 */}
-        <div className="absolute left-0 right-0 top-[150px] h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 z-10 mx-10">
-          {/* 在导轨上添加学期标识 */}
-          {filmStrips.map((strip, index) => (
-            <div 
-              key={strip.semester}
-              className="absolute bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100 z-20 cursor-pointer"
-              style={{ 
-                left: `${(index + 0.5) * (100 / filmStrips.length)}%`,
-                transform: 'translateX(-50%)',
-                top: '-40px'  // 固定在导轨上方40px
-              }}
-              onClick={() => handleSelectSemester(strip.semester)}
-            >
-              <span className={cn(
-                "text-xs font-medium",
-                selectedSemester === strip.semester ? "text-rose-500" : "text-primary"
-              )}>
-                {strip.semester}
-              </span>
-            </div>
-          ))}
-        </div>
-        
-        <ScrollArea 
-          className="h-full w-full bg-gray-50/50 pt-24 pb-8" 
-          ref={timelineRef}
-        >
-          <div className="flex px-10">
-            {/* 始终显示所有学期的胶片 */}
-            {filmStrips.map((strip, stripIndex) => (
-                <div
-                  key={strip.semester}
-                  id={`filmstrip-semester-${strip.semester}`}
-                  className="flex-none pr-8 last:pr-0"
-                style={{
-                  width: stripIndex === 0 || stripIndex === filmStrips.length - 1 
-                    ? 'auto' 
-                    : `${100 / (filmStrips.length - 1)}%`
-                }}
-              >
-                <motion.div 
-                  className="flex flex-col"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {/* 胶片列表 - 调整顶部边距确保不与导轨重叠 */}
-                  <div className="flex space-x-16 pt-28 mt-4 justify-center">
-                    {strip.moments.map((moment, momentIdx) => 
-                      renderFilmFrame(moment, stripIndex, momentIdx, strip.moments.length)
-                    )}
-                    </div>
-                </motion.div>
-                    </div>
-            ))}
-                  </div>
-          <ScrollBar orientation="horizontal" className="z-30 h-2.5 mt-4 bg-gray-200/50" />
-        </ScrollArea>
-        
-        {/* 左右导航按钮 - 放置在两侧 */}
-        <motion.button 
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 w-10 h-20 rounded-r-lg bg-white/70 flex items-center justify-center backdrop-blur-md z-30 text-gray-600 shadow-sm border border-gray-100"
-          whileHover={{ backgroundColor: "rgba(255,255,255,0.95)", x: 2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={scrollLeft}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </motion.button>
-        <motion.button 
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 w-10 h-20 rounded-l-lg bg-white/70 flex items-center justify-center backdrop-blur-md z-30 text-gray-600 shadow-sm border border-gray-100"
-          whileHover={{ backgroundColor: "rgba(255,255,255,0.95)", x: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={scrollRight}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </motion.button>
-      </div>
-      
-      {/* 页脚 - 更简约的设计 */}
-      <div className="py-3 px-6 flex items-center justify-center text-xs text-gray-400 border-t border-gray-100">
-        <div className="flex space-x-4 items-center">
-          <span>© 教师成长档案</span>
-          <div className="h-3 w-px bg-gray-200"></div>
-          <span>回忆里的教学瞬间</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+  SearchX, SearchIcon, Filter, Clock, Heart, Bookmark, User, 
+  ChevronLeft, ChevronRight, Star, Calendar, Smile, Camera
+} from 'lucide-react';
+import { ClassRecord, FilmStrip, TeachingMoment } from '@/mocks/handlers/classroom-timemachine';
+import { Timeline } from '@/components/classroom-timemachine/timeline';
+import RecordCard from '@/components/classroom-timemachine/record-card';
+import MomentDetail from '@/components/classroom-timemachine/moment-detail';
+import MemoryIcon from '@/components/classroom-timemachine/memory-icon';
+import { motion } from 'framer-motion';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Card } from '@/components/ui/card';
 
 export default function ClassroomTimeMachinePage() {
+  // 状态
+  const [activeTab, setActiveTab] = useState('timeline');
+  const [records, setRecords] = useState<ClassRecord[]>([]);
+  const [filmStrips, setFilmStrips] = useState<FilmStrip[]>([]);
+  const [selectedRecord, setSelectedRecord] = useState<ClassRecord | null>(null);
+  const [selectedMoment, setSelectedMoment] = useState<TeachingMoment | undefined>(undefined);
+  const [loadingRecords, setLoadingRecords] = useState(true);
+  const [loadingFilmStrips, setLoadingFilmStrips] = useState(true);
+  const [loadingMoment, setLoadingMoment] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterSubject, setFilterSubject] = useState<string | null>(null);
+  
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedRecord, setSelectedRecord] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [mainTab, setMainTab] = useState<'myList' | 'schoolList'>('myList');
-  const [selectedMoment, setSelectedMoment] = useState<TeachingMoment | null>(null);
-  const [showMemoryView, setShowMemoryView] = useState(false);
-  const memoryViewRef = useRef<HTMLDivElement>(null);
   
-  // 处理URL参数
+  // 初始化数据
   useEffect(() => {
-    const recordId = searchParams.get('recordId');
-    if (recordId) {
-      // 检查记录是否存在
-      const recordExists = mockClassRecords.some(record => record.id === recordId);
-      if (recordExists) {
-        setSelectedRecord(recordId);
-      } else {
-        console.warn(`记录ID ${recordId} 不存在`);
+    const fetchInitialData = async () => {
+      // 获取课堂记录
+      await fetchClassroomRecords();
+      
+      // 获取胶片条
+      await fetchFilmStrips();
+      
+      // 检查URL参数，加载指定的时刻或记录
+      const momentId = searchParams.get('moment');
+      const recordId = searchParams.get('record');
+      
+      if (momentId) {
+        await fetchMomentDetail(momentId);
+        setActiveTab('timeline');
+      } else if (recordId) {
+        const record = records.find(r => r.id === recordId);
+        if (record) {
+          setSelectedRecord(record);
+        }
+        setActiveTab('records');
       }
+    };
+    
+    fetchInitialData();
+  }, []);
+  
+  // 获取热门记录
+  const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] => {
+    return [...records].sort((a, b) => b.likes - a.likes).slice(0, count);
+  };
+  
+  // 获取课堂记录
+  const fetchClassroomRecords = async () => {
+    setLoadingRecords(true);
+    try {
+      const response = await fetch('/api/classroom-timemachine/records');
+      if (!response.ok) throw new Error('获取课堂记录失败');
+      const data = await response.json();
+      setRecords(data);
+    } catch (error) {
+      console.error('获取课堂记录错误:', error);
+      toast.error('获取课堂记录失败');
+    } finally {
+      setLoadingRecords(false);
     }
-    setIsLoading(false);
-  }, [searchParams]);
-  
-  const handleUploadRecording = () => {
-    // 实现上传功能，后续可以添加具体逻辑
-    console.log('上传课堂实录');
-    // 这里可以添加显示上传对话框的逻辑
-  };
-
-  const handleOpenMemoryView = () => {
-    setShowMemoryView(true);
-  };
-
-  const handleCloseMemoryView = () => {
-    setShowMemoryView(false);
   };
   
-  const handleSelectRecord = (id: string) => {
-    setSelectedRecord(id);
-    // 更新URL，但不触发页面刷新
-    const url = new URL(window.location.href);
-    url.searchParams.set('recordId', id);
-    window.history.pushState({}, '', url);
+  // 获取胶片条
+  const fetchFilmStrips = async () => {
+    setLoadingFilmStrips(true);
+    try {
+      const response = await fetch('/api/classroom-timemachine/filmstrips');
+      if (!response.ok) throw new Error('获取胶片条失败');
+      const data = await response.json();
+      setFilmStrips(data);
+    } catch (error) {
+      console.error('获取胶片条错误:', error);
+      toast.error('获取胶片条失败');
+    } finally {
+      setLoadingFilmStrips(false);
+    }
   };
   
+  // 获取教学时刻详情
+  const fetchMomentDetail = async (momentId: string) => {
+    setLoadingMoment(true);
+    try {
+      const response = await fetch(`/api/classroom-timemachine/moments/${momentId}`);
+      if (!response.ok) throw new Error('获取教学时刻失败');
+      const data = await response.json();
+      setSelectedMoment(data);
+      
+      // 更新URL参数但不重新加载页面
+      router.push(`/classroom-timemachine?moment=${momentId}`, { scroll: false });
+    } catch (error) {
+      console.error('获取教学时刻错误:', error);
+      toast.error('获取教学时刻失败');
+    } finally {
+      setLoadingMoment(false);
+    }
+  };
+  
+  // 处理时刻点击
   const handleMomentClick = (moment: TeachingMoment) => {
-    setSelectedMoment(moment);
-    // 可以在这里处理点击事件，比如显示详情弹窗等
-    console.log("Clicked on moment:", moment);
+    fetchMomentDetail(moment.id);
   };
   
-  if (isLoading) {
-    // 保持现有加载状态的JSX不变
-    return (
-      <div className="max-w-7xl mx-auto w-full animate-fadeIn">
-        {/* 现有的加载状态JSX */}
-      </div>
-    );
-  }
-  
-  // 如果有选中的记录，显示记录详情
-  if (selectedRecord) {
-    const record = mockClassRecords.find(r => r.id === selectedRecord);
-    
-    if (!record) {
-  return (
-        <div className="max-w-7xl mx-auto py-6">
-          {/* 现有的未找到记录JSX */}
-        </div>
-      );
+  // 处理记录点击
+  const handleRecordClick = (recordId: string) => {
+    const record = records.find(r => r.id === recordId);
+    if (record) {
+      setSelectedRecord(record);
+      
+      // 更新URL参数但不重新加载页面
+      router.push(`/classroom-timemachine?record=${recordId}`, { scroll: false });
     }
-    
-    return (
-          <div className="max-w-7xl mx-auto w-full">
-        {/* 现有的记录详情JSX */}
-              </div>
-    );
-  }
+  };
   
-  // 否则显示记录列表和胶片墙
-  return (
-    <>
-      {/* 全屏记忆墙视图 */}
-      {showMemoryView && (
-        <motion.div 
-          ref={memoryViewRef}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-50 bg-white overflow-hidden flex flex-col"
-        >
-          <div className="py-2 px-6 flex justify-between items-center border-b border-gray-200">
-                      <Button 
-              variant="ghost" 
-                        size="sm"
-              onClick={handleCloseMemoryView}
-              className="text-gray-700 hover:bg-gray-100 rounded-md pl-2 pr-3"
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              BACK / 返回
-                      </Button>
-            <h3 className="text-base font-medium text-gray-800">
-              教师成长档案
-                  </h3>
-            <div className="text-gray-600 text-sm">
-              教学历程 2021年-2023年
-                  </div>
-          </div>
-          <div className="flex-1 overflow-hidden relative">
-            {/* 添加背景色和图案 */}
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100 opacity-100"></div>
-            <div className="absolute inset-0 bg-grid-primary/5"></div>
-            {/* 内容包装器 */}
-            <div className="relative z-10 h-full overflow-hidden">
-              <FilmStripTimeline 
-                filmStrips={mockFilmStrips} 
-                onMomentClick={handleMomentClick}
-              />
-                    </div>
-                  </div>
-          <div className="py-2 px-6 bg-primary/10 border-t border-primary/20 flex justify-between items-center text-xs text-gray-600">
-            <div className="flex items-center">
-              <Film className="h-3 w-3 mr-1 text-primary" />
-              <span>共展示 {mockFilmStrips.reduce((total, strip) => total + strip.moments.length, 0)} 个教学瞬间</span>
-                    </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10">
-                <Bookmark className="h-3 w-3 mr-1" />
-                收藏记忆墙
-                      </Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10">
-                <Share className="h-3 w-3 mr-1" />
-                分享
-                      </Button>
-                    </div>
-                  </div>
-        </motion.div>
-      )}
+  // 过滤记录
+  const filteredRecords = useMemo(() => {
+    return records
+      .filter(record => 
+        (searchQuery ? record.title.toLowerCase().includes(searchQuery.toLowerCase()) : true) &&
+        (filterSubject ? record.subject === filterSubject : true)
+      );
+  }, [records, searchQuery, filterSubject]);
+  
+  // 提取所有可用的学科
+  const availableSubjects = useMemo(() => {
+    const subjects = new Set<string>();
+    records.forEach(record => subjects.add(record.subject));
+    return Array.from(subjects);
+  }, [records]);
+  
+  // 获取顶部喜欢的记录IDs
+  const topLikedRecords = useMemo(() => {
+    return getTopLikedRecords(records, 2).map(record => record.id);
+  }, [records]);
 
-    <div className="max-w-7xl mx-auto w-full">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">课堂时光机</h2>
-          <p className="mt-1 text-sm text-gray-500">记录和回放课堂教学过程，辅助教学分析</p>
+  // 提取所有重要回忆
+  const memoryMoments = useMemo(() => {
+    const allMoments = filmStrips.flatMap(strip => strip.moments);
+    // 过滤出有较多喜欢或评论的教学时刻
+    return allMoments
+      .filter(moment => (moment.likes && moment.likes > 30) || (moment.comments && moment.comments.length > 0))
+      .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+      .slice(0, 4);
+  }, [filmStrips]);
+
+  const getTypeIcon = (type: string) => {
+    switch(type) {
+      case 'note': return <Bookmark className="h-4 w-4" />;
+      case 'audio': return <Smile className="h-4 w-4" />;
+      case 'video': return <Camera className="h-4 w-4" />;
+      case 'homework': return <Star className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      {/* 页面标题 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <MemoryIcon size="lg" className="mr-3" />
+          <div>
+            <h1 className="text-3xl font-bold">课堂时光机</h1>
+            <p className="text-muted-foreground">收集、整理和回顾您的教学时刻</p>
+          </div>
         </div>
         
-          <div className="mt-4 md:mt-0 flex gap-2">
-            <Button 
-              onClick={handleOpenMemoryView}
-              className="bg-rose-500 text-white hover:bg-rose-600"
-              size="sm"
-            >
-              <MemoryIcon />
-              <span className="ml-2">回忆</span>
-            </Button>
-          <Button 
-            onClick={handleUploadRecording}
-            className="bg-primary text-white hover:bg-primary/90"
-            size="sm"
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            上传课堂实录
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <Filter className="h-4 w-4 mr-2" />
+            筛选
           </Button>
+          <Button>新建记录</Button>
         </div>
       </div>
-
-      {/* 主标签页 */}
-        <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as 'myList' | 'schoolList')} className="mb-8">
-          <TabsList className="inline-flex mb-6 rounded-lg p-1 bg-muted/20">
-            <TabsTrigger value="myList" className="flex items-center px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <BookOpen className="mr-2 h-4 w-4" />
-            我的课堂列表
-          </TabsTrigger>
-            <TabsTrigger value="schoolList" className="flex items-center px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <School className="mr-2 h-4 w-4" />
-            全校时光
-          </TabsTrigger>
-        </TabsList>
-
-          {/* 我的课堂列表 - 保持原有内容 */}
-        <TabsContent value="myList" className="animate-fadeIn">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-800 flex items-center">
-                <div className="w-1.5 h-5 bg-sky-500 rounded-full mr-2"></div>
-                我的课堂
-              </h3>
-              
-              <div className="flex gap-2">
-                {/* 这里可以添加学科筛选按钮 */}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {mockClassRecords.filter(record => record.isMine).map((record) => (
-                <Card 
-                    key={record.id} 
-                  className={cn(
-                    "overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 border border-gray-200",
-                    selectedRecord === record.id ? "ring-2 ring-primary shadow-md" : "hover:translate-y-[-4px]"
-                  )}
-                    onClick={() => handleSelectRecord(record.id)}
-                  >
-                  <div className="relative h-32 w-full group">
-                      <img 
-                        src={record.thumbnail} 
-                        alt={record.title} 
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                      <div className="absolute bottom-2 left-2 right-2">
-                        <div className="flex items-center gap-1 mb-1">
-                          <Badge className="bg-sky-600 hover:bg-sky-700 text-xs">{record.class}</Badge>
-                          {record.isMine && (
-                            <Badge variant="secondary" className="bg-sky-100 text-sky-800 hover:bg-sky-200 text-xs">我的</Badge>
-                          )}
-                          {topLikedRecords.includes(record.id) && (
-                            <Badge variant="secondary" className="bg-rose-100 text-rose-800 hover:bg-rose-200 text-xs">
-                              <ThumbsUp className="h-3 w-3 mr-1" />
-                              热门
-                            </Badge>
-                          )}
-                      </div>
-                        <h3 className="text-sm font-semibold text-white line-clamp-1">{record.title}</h3>
-                    </div>
-                      </div>
-                    
-                    {/* 学科标签 */}
-                    <div className="absolute top-2 right-2">
-                      <Badge variant="outline" className={cn("border px-2 py-0.5 text-xs", subjectColors[record.subject])}>
-                        {record.subject}
-                      </Badge>
-                    </div>
-                  </div>
-                  <CardContent className="p-3">
-                    <div className="flex justify-between items-center text-xs">
-                        <div className="flex items-center">
-                        <Clock className="h-3 w-3 text-gray-500 mr-1" />
-                        <span className="text-gray-500">{record.duration}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 text-gray-500 mr-1" />
-                        <span className="text-gray-500">{record.date}</span>
-                      </div>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-xs">
-                      <div className="flex items-center">
-                        <Avatar className="h-5 w-5 mr-1">
-                            <AvatarFallback>{record.teacher.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                        <span className="font-medium">{record.teacher}</span>
-                        </div>
-                      <div className="flex items-center text-rose-500">
-                        <Heart className="h-3 w-3 mr-1 fill-rose-500" />
-                        <span>{record.likes}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                ))}
-              </div>
-          </div>
-        </TabsContent>
-
-          {/* 全校时光 - 保持原有内容 */}
-        <TabsContent value="schoolList" className="animate-fadeIn">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-800 flex items-center">
-                <div className="w-1.5 h-5 bg-indigo-500 rounded-full mr-2"></div>
-                全校精彩课堂
-              </h3>
-              
-              <div className="flex gap-2">
-                {/* 这里可以添加学科/教师筛选按钮 */}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {mockClassRecords.filter(record => !record.isMine).map((record) => (
-                <Card 
-                  key={record.id}
-                  className={cn(
-                    "overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 border border-gray-200",
-                    selectedRecord === record.id ? "ring-2 ring-primary shadow-md" : "hover:translate-y-[-4px]"
-                  )}
-                  onClick={() => handleSelectRecord(record.id)}
-                >
-                  <div className="relative h-32 w-full group">
-                    <img 
-                      src={record.thumbnail}
-                      alt={record.title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                      <div className="absolute bottom-2 left-2 right-2">
-                        <div className="flex items-center gap-1 mb-1">
-                          <Badge className="bg-indigo-600 hover:bg-indigo-700 text-xs">{record.class}</Badge>
-                          {topLikedRecords.includes(record.id) && (
-                            <Badge variant="secondary" className="bg-rose-100 text-rose-800 hover:bg-rose-200 text-xs">
-                              <ThumbsUp className="h-3 w-3 mr-1" />
-                              热门
-                            </Badge>
-            )}
-          </div>
-                        <h3 className="text-sm font-semibold text-white line-clamp-1">{record.title}</h3>
+      
+      {/* 回忆集锦 */}
+      <div className="w-full">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">教学回忆集</h2>
+          <Button variant="ghost" size="sm">
+            查看全部回忆
+          </Button>
         </div>
-                    </div>
-                    
-                    {/* 学科标签 */}
-                    <div className="absolute top-2 right-2">
-                      <Badge variant="outline" className={cn("border px-2 py-0.5 text-xs", subjectColors[record.subject])}>
-                        {record.subject}
-                      </Badge>
+        
+        {loadingFilmStrips ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-40 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : memoryMoments.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {memoryMoments.map((moment) => (
+              <motion.div
+                key={moment.id}
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card 
+                  className="overflow-hidden cursor-pointer h-40 group"
+                  onClick={() => handleMomentClick(moment)}
+                >
+                  <div className="relative h-full w-full">
+                    <img 
+                      src={moment.thumbnail || '/placeholder-image.jpg'} 
+                      alt={moment.title}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-3 flex flex-col justify-end">
+                      <div className="flex items-center mb-1">
+                        <Badge className="text-xs px-1.5 py-0.5 bg-white/90 text-foreground">
+                          <span className="flex items-center gap-1">
+                            {getTypeIcon(moment.type)}
+                            {moment.type === 'note' && '笔记'}
+                            {moment.type === 'audio' && '音频'}
+                            {moment.type === 'video' && '视频'}
+                            {moment.type === 'homework' && '作业'}
+                            {moment.type === 'other' && '其他'}
+                          </span>
+                        </Badge>
+                        <span className="ml-2 text-xs text-white flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {moment.date}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-medium text-white line-clamp-1">{moment.title}</h3>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-white/80">{moment.teacher}</span>
+                        <span className="text-xs text-white/80 flex items-center">
+                          <Heart className="h-3 w-3 mr-1 fill-rose-500 text-rose-500" />
+                          {moment.likes || 0}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <CardContent className="p-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center">
-                        <Clock className="h-3 w-3 text-gray-500 mr-1" />
-                        <span className="text-gray-500">{record.duration}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 text-gray-500 mr-1" />
-                        <span className="text-gray-500">{record.date}</span>
-                      </div>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-xs">
-                      <div className="flex items-center">
-                        <Avatar className="h-5 w-5 mr-1">
-                          <AvatarFallback>{record.teacher.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{record.teacher}</span>
-                      </div>
-                      <div className="flex items-center text-rose-500">
-                        <Heart className="h-3 w-3 mr-1 fill-rose-500" />
-                        <span>{record.likes}</span>
-                      </div>
-                    </div>
-                  </CardContent>
                 </Card>
-              ))}
-            </div>
+              </motion.div>
+            ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        ) : (
+          <div className="border rounded-lg p-8 text-center">
+            <MemoryIcon size="lg" className="mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium">暂无回忆收藏</h3>
+            <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+              您的珍贵教学回忆将在这里显示。点击时间线上的任意时刻可将其添加到回忆集中。
+            </p>
+          </div>
+        )}
+      </div>
+      
+      {/* 主要内容 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 左侧: 时间线或记录列表 */}
+        <div className="md:col-span-2">
+          {/* 标签切换 */}
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="w-full">
+              <TabsTrigger value="timeline" className="flex-1">
+                <Clock className="h-4 w-4 mr-2" />
+                时间线视图
+              </TabsTrigger>
+              <TabsTrigger value="records" className="flex-1">
+                <Bookmark className="h-4 w-4 mr-2" />
+                课堂记录
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* 时间线视图 */}
+            <TabsContent value="timeline" className="mt-6">
+              {loadingFilmStrips ? (
+                <div className="w-full h-[500px] rounded-lg border">
+                  <Skeleton className="w-full h-full" />
+                </div>
+              ) : (
+                <Timeline 
+                  filmStrips={filmStrips} 
+                  onMomentClick={handleMomentClick}
+                />
+              )}
+              
+              {filmStrips.length > 0 && (
+                <div className="mt-4 text-sm text-muted-foreground text-center">
+                  <p>您的时间线包含 {filmStrips.length} 个学期, 共 {filmStrips.reduce((acc, strip) => acc + strip.moments.length, 0)} 个教学时刻</p>
+                  <p className="mt-1">点击时间线上的任意节点，查看详细内容</p>
+                </div>
+              )}
+            </TabsContent>
+            
+            {/* 课堂记录视图 */}
+            <TabsContent value="records" className="mt-6 space-y-4">
+              {/* 搜索和过滤 */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="搜索课堂记录..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                
+                <ScrollArea className="w-full sm:w-auto">
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant={filterSubject === null ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterSubject(null)}
+                    >
+                      全部
+                    </Button>
+                    {availableSubjects.map(subject => (
+                      <Button
+                        key={subject}
+                        variant={filterSubject === subject ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setFilterSubject(subject)}
+                      >
+                        {subject}
+                      </Button>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+              
+              {/* 记录列表 */}
+              {loadingRecords ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-64 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : filteredRecords.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {filteredRecords.map((record) => (
+                    <RecordCard
+                      key={record.id}
+                      record={record}
+                      isSelected={selectedRecord?.id === record.id}
+                      isTopLiked={topLikedRecords.includes(record.id)}
+                      onClick={handleRecordClick}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full py-12 flex flex-col items-center justify-center text-center">
+                  <SearchX className="h-16 w-16 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">未找到匹配的记录</h3>
+                  <p className="text-muted-foreground mt-2 max-w-md">
+                    尝试使用不同的搜索词或筛选条件，或者清除所有筛选器查看所有课堂记录。
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilterSubject(null);
+                    }}
+                  >
+                    清除所有筛选
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        {/* 右侧: 详细信息面板 */}
+        <div className="relative">
+          <div className="sticky top-4">
+            <motion.div
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {activeTab === 'timeline' ? (
+                <MomentDetail
+                  moment={selectedMoment}
+                  isLoading={loadingMoment}
+                />
+              ) : (
+                <div className="w-full rounded-lg border border-border bg-card overflow-hidden">
+                  {selectedRecord ? (
+                    <div className="flex flex-col h-full">
+                      <div className="relative h-48 w-full overflow-hidden">
+                        <img 
+                          src={selectedRecord.thumbnail} 
+                          alt={selectedRecord.title} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+                          <div className="absolute bottom-4 left-4 right-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge>
+                                {selectedRecord.class}
+                              </Badge>
+                              {selectedRecord.isMine && (
+                                <Badge variant="secondary" className="bg-sky-100 text-sky-800">
+                                  我的
+                                </Badge>
+                              )}
+                            </div>
+                            <h2 className="text-xl font-bold text-white">{selectedRecord.title}</h2>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 space-y-4 flex-grow">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{selectedRecord.teacher}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span>{selectedRecord.duration}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <h3 className="font-semibold">课堂详情</h3>
+                            <Badge variant="outline">
+                              {selectedRecord.subject}
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="p-3 rounded-lg bg-slate-50">
+                              <div className="text-muted-foreground mb-1">日期</div>
+                              <div className="font-medium">{selectedRecord.date}</div>
+                            </div>
+                            <div className="p-3 rounded-lg bg-slate-50">
+                              <div className="text-muted-foreground mb-1">时长</div>
+                              <div className="font-medium">{selectedRecord.duration}</div>
+                            </div>
+                            <div className="p-3 rounded-lg bg-slate-50">
+                              <div className="text-muted-foreground mb-1">班级</div>
+                              <div className="font-medium">{selectedRecord.class}</div>
+                            </div>
+                            <div className="p-3 rounded-lg bg-slate-50">
+                              <div className="text-muted-foreground mb-1">喜欢</div>
+                              <div className="font-medium flex items-center">
+                                <Heart className="h-3 w-3 text-rose-500 fill-rose-500 mr-1" />
+                                {selectedRecord.likes}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <p className="text-muted-foreground text-sm mt-4">
+                            通过时光机功能，您可以回顾这节课的关键教学时刻。点击左侧的"时间线视图"以查看此课的教学时刻。
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 border-t">
+                        <Button className="w-full">
+                          查看完整课堂记录
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-[600px] flex items-center justify-center p-6">
+                      <div className="text-center">
+                        <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium">选择一个课堂记录</h3>
+                        <p className="text-muted-foreground mt-2">
+                          从左侧列表中选择一个课堂记录以查看详细信息
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </div>
+      </div>
     </div>
-    </>
   );
 } 

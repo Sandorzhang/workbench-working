@@ -5,6 +5,7 @@ import { calendarHandlers } from './calendar';
 import { mentorHandlers } from './mentor';
 import { aiAssistantHandlers } from './ai-assistant';
 import { aiLibraryHandlers } from './ai-library';
+import { classroomTimemachineHandlers } from './classroom-timemachine';
 // 导入其他处理器...
 
 export const handlers = [
@@ -15,5 +16,6 @@ export const handlers = [
   ...mentorHandlers,
   ...aiAssistantHandlers,
   ...aiLibraryHandlers,
+  ...classroomTimemachineHandlers,
   // 其他处理器...
 ]; 
