@@ -32,6 +32,9 @@ import {
   TableSkeleton, 
   TabsSkeleton 
 } from "@/components/ui/skeleton-loader";
+import { PageContainer } from "@/components/ui/page-container";
+import { SectionContainer } from "@/components/ui/section-container";
+import { CardContainer } from "@/components/ui/card-container";
 
 // 定义类型
 interface Teacher {
@@ -152,32 +155,22 @@ export default function UsersPage() {
   };
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">师生信息管理</h1>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <FileDown className="h-4 w-4 mr-2" />
-            导出数据
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleImport}>
-            <FileUp className="h-4 w-4 mr-2" />
-            导入数据
-          </Button>
-        </div>
-      </div>
-      
-      {isLoading ? (
-        <div className="animate-fadeIn">
-          <TitleSkeleton className="mb-4" />
-          <TabsSkeleton tabCount={2} className="mb-4" />
-          <div className="flex justify-between items-center mb-4">
-            <div className="w-1/3"><div className="h-10 bg-gray-200 rounded animate-pulse"></div></div>
-            <div className="w-24"><div className="h-10 bg-gray-200 rounded animate-pulse"></div></div>
+    <PageContainer loading={isLoading}>
+      <SectionContainer>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">师生信息管理</h1>
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <FileDown className="h-4 w-4 mr-2" />
+              导出数据
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleImport}>
+              <FileUp className="h-4 w-4 mr-2" />
+              导入数据
+            </Button>
           </div>
-          <TableSkeleton rowCount={6} columnCount={7} />
         </div>
-      ) : (
+        
         <Tabs defaultValue="teachers" className="space-y-4 w-full" onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="teachers">教师管理</TabsTrigger>
@@ -202,7 +195,7 @@ export default function UsersPage() {
               </Button>
             </div>
             
-            <Card className="overflow-hidden">
+            <CardContainer className="overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-lg">教师列表</CardTitle>
               </CardHeader>
@@ -267,7 +260,7 @@ export default function UsersPage() {
                   </TableBody>
                 </Table>
               </CardContent>
-            </Card>
+            </CardContainer>
           </TabsContent>
           
           <TabsContent value="students" className="space-y-4">
@@ -288,7 +281,7 @@ export default function UsersPage() {
               </Button>
             </div>
             
-            <Card className="overflow-hidden">
+            <CardContainer className="overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-lg">学生列表</CardTitle>
               </CardHeader>
@@ -353,12 +346,12 @@ export default function UsersPage() {
                   </TableBody>
                 </Table>
               </CardContent>
-            </Card>
+            </CardContainer>
           </TabsContent>
         </Tabs>
-      )}
+      </SectionContainer>
       
       {/* 对话框组件 - 实际实现中需要添加 */}
-    </div>
+    </PageContainer>
   );
 } 

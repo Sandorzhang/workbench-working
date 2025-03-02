@@ -45,6 +45,10 @@ import {
   TabsSkeleton
 } from "@/components/ui/skeleton-loader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/components/ui/page-container";
+import { SectionContainer } from "@/components/ui/section-container";
+import { CardContainer } from "@/components/ui/card-container";
+import { ResponsiveGrid } from "@/components/ui/responsive-grid";
 
 // 模拟单元教学设计数据
 const mockUnitDesign = {
@@ -405,47 +409,48 @@ const TeachingPlanCarousel = ({ isOpen, onClose, design }: TeachingPlanCarouselP
 };
 
 export default function UnitTeachingDesignPage() {
-  const [currentDesign, setCurrentDesign] = useState<typeof mockDesigns[0] | null>(null);
-  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
-  const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredDesigns, setFilteredDesigns] = useState(mockDesigns);
+  const [designs, setDesigns] = useState<typeof mockDesigns>([]);
+  const [isCarouselOpen, setIsCarouselOpen] = useState(false);
+  const [currentDesign, setCurrentDesign] = useState<typeof mockDesigns[0] | null>(null);
   
-  // 模拟加载数据
   useEffect(() => {
-    // 模拟网络请求延迟
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    // 模拟API请求
+    const fetchDesigns = async () => {
+      try {
+        // 在实际应用中，这里会从API获取数据
+        const response = await fetch('/api/teaching-designs');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setDesigns(data);
+        }
+      } catch (error) {
+        console.error('Error fetching designs:', error);
+      } finally {
+        // 延迟设置加载状态以展示骨架屏效果
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
+      }
+    };
     
-    return () => clearTimeout(timer);
+    fetchDesigns();
   }, []);
-
-  // 处理点击设计卡片
-  const handleDesignClick = (design: typeof mockDesigns[0]) => {
+  
+  const handleViewDesign = (design: typeof mockDesigns[0]) => {
     setCurrentDesign(design);
     setIsCarouselOpen(true);
   };
-
-  const nextLesson = () => {
-    setCurrentLessonIndex((prev) => 
-      prev === mockUnitDesign.lessons.length - 1 ? prev : prev + 1
-    );
-  };
-
-  const previousLesson = () => {
-    setCurrentLessonIndex((prev) => prev === 0 ? prev : prev - 1);
-  };
-
+  
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
-        return <Badge className="bg-green-50 text-green-700 border-green-200">已发布</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">已发布</Badge>;
       case 'draft':
-        return <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">草稿</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">草稿</Badge>;
       case 'archived':
-        return <Badge className="bg-gray-50 text-gray-700 border-gray-200">已归档</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">已归档</Badge>;
       default:
         return null;
     }
@@ -457,171 +462,284 @@ export default function UnitTeachingDesignPage() {
     return 'bg-yellow-500';
   };
 
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto w-full px-4 py-6 animate-fadeIn">
-        <div className="flex justify-between items-start mb-8">
-          <TitleSkeleton />
-          <div className="flex space-x-2">
-            <Skeleton className="h-9 w-9" />
-            <Skeleton className="h-9 w-9" />
-          </div>
-        </div>
-        
-        {/* 搜索和筛选骨架 */}
-        <div className="flex items-center space-x-2 mb-6">
-          <Skeleton className="h-10 flex-grow" />
-          <Skeleton className="h-10 w-10" />
-          <Skeleton className="h-10 w-10" />
-          <Skeleton className="h-10 w-28" />
-        </div>
-        
-        {/* 标签页骨架 */}
-        <TabsSkeleton tabCount={3} className="mb-8" />
-        
-        {/* 设计卡片骨架 */}
-        <CardGridSkeleton count={6} />
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto w-full">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">单元教学设计</h2>
-          <p className="mt-1 text-sm text-gray-500">管理和创建单元教学设计方案</p>
-        </div>
-        
-        <div className="mt-4 md:mt-0 flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.location.href = '/dashboard'}
-          >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            返回工作台
-          </Button>
-          <Button size="sm" className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
-            <Plus className="mr-2 h-4 w-4" />
-            新建设计
-          </Button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 space-x-0 md:space-x-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="搜索单元教学设计..."
-                  className="pl-10 w-full md:max-w-[400px]"
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" className="border-dashed">
-                <Filter className="mr-2 h-4 w-4" />
-                筛选
-              </Button>
-              <Button variant="outline" size="sm" className="border-dashed">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                排序
-              </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <Button variant="outline" size="sm" className="border-dashed">
-                <Upload className="mr-2 h-4 w-4" />
-                导入
-              </Button>
-              <Button variant="outline" size="sm" className="border-dashed">
-                <Download className="mr-2 h-4 w-4" />
-                导出
-              </Button>
+    <PageContainer loading={isLoading}>
+      <SectionContainer
+        title="单元教学设计"
+        description="管理和创建单元教学设计方案"
+        className="mb-6"
+        actions={
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.location.href = '/dashboard'}
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              返回工作台
+            </Button>
+            <Button size="sm" className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
+              <Plus className="mr-2 h-4 w-4" />
+              新建设计
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 space-x-0 md:space-x-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="搜索单元教学设计..."
+                className="pl-10 w-full md:max-w-[400px]"
+              />
             </div>
           </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" className="border-dashed">
+              <Filter className="mr-2 h-4 w-4" />
+              筛选
+            </Button>
+            <Button variant="outline" size="sm" className="border-dashed">
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              排序
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <Button variant="outline" size="sm" className="border-dashed">
+              <Upload className="mr-2 h-4 w-4" />
+              导入
+            </Button>
+            <Button variant="outline" size="sm" className="border-dashed">
+              <Download className="mr-2 h-4 w-4" />
+              导出
+            </Button>
+          </div>
+        </div>
 
-          <Tabs defaultValue="all" className="space-y-4">
-            <TabsList className="bg-muted/5 p-1">
-              <TabsTrigger value="all" className="data-[state=active]:bg-white">全部设计</TabsTrigger>
-              <TabsTrigger value="draft" className="data-[state=active]:bg-white">草稿箱</TabsTrigger>
-              <TabsTrigger value="published" className="data-[state=active]:bg-white">已发布</TabsTrigger>
-              <TabsTrigger value="archived" className="data-[state=active]:bg-white">已归档</TabsTrigger>
-            </TabsList>
-            <TabsContent value="all" className="space-y-4">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {mockDesigns.map((design) => (
-                  <Card 
-                    key={design.id}
-                    className="group border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
-                    onClick={() => handleDesignClick(design)}
-                  >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <div className="space-y-1">
-                        <CardTitle className="text-sm font-medium">
-                          {design.subject} - {design.unit}
-                        </CardTitle>
+        <Tabs defaultValue="all" className="space-y-4">
+          <TabsList className="bg-muted/5 p-1">
+            <TabsTrigger value="all" className="data-[state=active]:bg-white">全部设计</TabsTrigger>
+            <TabsTrigger value="draft" className="data-[state=active]:bg-white">草稿箱</TabsTrigger>
+            <TabsTrigger value="published" className="data-[state=active]:bg-white">已发布</TabsTrigger>
+            <TabsTrigger value="archived" className="data-[state=active]:bg-white">已归档</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all" className="space-y-4">
+            <ResponsiveGrid xs={1} sm={1} md={2} lg={3} gap="md">
+              {designs.map((design) => (
+                <CardContainer 
+                  key={design.id}
+                  elevated
+                  clickable
+                  onClick={() => handleViewDesign(design)}
+                  className="h-full hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-medium text-lg">{design.title}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{design.subject} · {design.unit}</p>
+                        </div>
                         {getStatusBadge(design.status)}
                       </div>
-                      <BookOpen className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div>
-                          <div className="text-xl font-bold group-hover:text-primary transition-colors">
-                            {design.title}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {design.description}
-                          </p>
+                      
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{design.description}</p>
+                      
+                      <div className="mt-auto">
+                        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+                          <span>完成度</span>
+                          <span>{design.progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${getProgressColor(design.progress)}`}
+                            style={{ width: `${design.progress}%` }}
+                          ></div>
                         </div>
                         
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">完成进度</span>
-                            <span className="font-medium">{design.progress}%</span>
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            <span>更新于 {design.lastModified}</span>
                           </div>
-                          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getProgressColor(design.progress)} transition-all duration-300`}
-                              style={{ width: `${design.progress}%` }}
-                            />
+                          <div className="flex items-center">
+                            <Button variant="ghost" size="sm" className="h-8 px-2">
+                              查看详情
+                            </Button>
                           </div>
-                        </div>
-
-                        <div className="pt-2 flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            最后修改：{design.lastModified}
-                          </span>
-                          <Button variant="ghost" size="sm" className="hover:bg-primary/5">
-                            查看详情 →
-                          </Button>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-            <TabsContent value="draft" className="space-y-4">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* 草稿箱内容 */}
-              </div>
-            </TabsContent>
-            <TabsContent value="published" className="space-y-4">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* 已发布内容 */}
-              </div>
-            </TabsContent>
-            <TabsContent value="archived" className="space-y-4">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* 已归档内容 */}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                    </div>
+                  </CardContent>
+                </CardContainer>
+              ))}
+            </ResponsiveGrid>
+          </TabsContent>
+          
+          <TabsContent value="draft" className="space-y-4">
+            <ResponsiveGrid xs={1} sm={1} md={2} lg={3} gap="md">
+              {/* 草稿箱内容 */}
+              {designs.filter(d => d.status === 'draft').map((design) => (
+                <CardContainer 
+                  key={design.id}
+                  elevated
+                  clickable
+                  onClick={() => handleViewDesign(design)}
+                  className="h-full hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-medium text-lg">{design.title}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{design.subject} · {design.unit}</p>
+                        </div>
+                        {getStatusBadge(design.status)}
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{design.description}</p>
+                      
+                      <div className="mt-auto">
+                        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+                          <span>完成度</span>
+                          <span>{design.progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${getProgressColor(design.progress)}`}
+                            style={{ width: `${design.progress}%` }}
+                          ></div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            <span>更新于 {design.lastModified}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Button variant="ghost" size="sm" className="h-8 px-2">
+                              查看详情
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </CardContainer>
+              ))}
+            </ResponsiveGrid>
+          </TabsContent>
+          
+          <TabsContent value="published" className="space-y-4">
+            <ResponsiveGrid xs={1} sm={1} md={2} lg={3} gap="md">
+              {/* 已发布内容 */}
+              {designs.filter(d => d.status === 'published').map((design) => (
+                <CardContainer 
+                  key={design.id}
+                  elevated
+                  clickable
+                  onClick={() => handleViewDesign(design)}
+                  className="h-full hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-medium text-lg">{design.title}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{design.subject} · {design.unit}</p>
+                        </div>
+                        {getStatusBadge(design.status)}
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{design.description}</p>
+                      
+                      <div className="mt-auto">
+                        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+                          <span>完成度</span>
+                          <span>{design.progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${getProgressColor(design.progress)}`}
+                            style={{ width: `${design.progress}%` }}
+                          ></div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            <span>更新于 {design.lastModified}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Button variant="ghost" size="sm" className="h-8 px-2">
+                              查看详情
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </CardContainer>
+              ))}
+            </ResponsiveGrid>
+          </TabsContent>
+          
+          <TabsContent value="archived" className="space-y-4">
+            <ResponsiveGrid xs={1} sm={1} md={2} lg={3} gap="md">
+              {/* 已归档内容 */}
+              {designs.filter(d => d.status === 'archived').map((design) => (
+                <CardContainer 
+                  key={design.id}
+                  elevated
+                  clickable
+                  onClick={() => handleViewDesign(design)}
+                  className="h-full hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-medium text-lg">{design.title}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{design.subject} · {design.unit}</p>
+                        </div>
+                        {getStatusBadge(design.status)}
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{design.description}</p>
+                      
+                      <div className="mt-auto">
+                        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+                          <span>完成度</span>
+                          <span>{design.progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${getProgressColor(design.progress)}`}
+                            style={{ width: `${design.progress}%` }}
+                          ></div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            <span>更新于 {design.lastModified}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Button variant="ghost" size="sm" className="h-8 px-2">
+                              查看详情
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </CardContainer>
+              ))}
+            </ResponsiveGrid>
+          </TabsContent>
+        </Tabs>
+      </SectionContainer>
       
       {/* 教学计划轮播图 */}
       {currentDesign && (
@@ -635,6 +753,6 @@ export default function UnitTeachingDesignPage() {
           design={currentDesign}
         />
       )}
-    </div>
+    </PageContainer>
   );
 } 
