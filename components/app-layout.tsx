@@ -79,36 +79,42 @@ export function AppLayout({ children }: AppLayoutProps) {
   
   return (
     <SidebarProvider defaultOpen={sidebarState === undefined ? true : sidebarState}>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                {pageInfo.parent && (
-                  <>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href={pageInfo.parent.path}>
-                        {pageInfo.parent.title}
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                  </>
-                )}
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{pageInfo.title}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-        
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 mx-auto w-full max-w-7xl overflow-x-auto">
-          {children}
+      <div className="flex overflow-hidden" style={{ height: '100vh' }}>
+        <AppSidebar />
+        <div className="flex-1 flex flex-col" style={{ height: '100vh' }}>
+          {/* 顶部面包屑栏 - 总是占满整个宽度 */}
+          <header className="flex h-16 shrink-0 items-center bg-white border-b border-gray-100/80 px-6 shadow-sm w-full">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="text-gray-500 hover:text-gray-700 transition-colors" />
+              <Separator orientation="vertical" className="mx-4 h-5" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {pageInfo.parent && (
+                    <>
+                      <BreadcrumbItem className="hidden md:block">
+                        <BreadcrumbLink href={pageInfo.parent.path} className="text-gray-500 hover:text-gray-900 font-medium">
+                          {pageInfo.parent.title}
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator className="hidden md:block text-gray-400" />
+                    </>
+                  )}
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-gray-900 font-semibold">{pageInfo.title}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          
+          {/* 主内容区域 - 在1920px宽屏下填满，更大屏幕居中 */}
+          <main className="flex-1 overflow-hidden w-full" style={{ height: 'calc(100vh - 64px)' }}>
+            <div className="h-full mx-auto py-6 px-6 w-full bg-gradient-to-b from-[#f8f9fc] to-[#f3f5fa]" style={{ maxWidth: '1840px' }}>
+              {children}
+            </div>
+          </main>
         </div>
-      </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 } 

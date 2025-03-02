@@ -1,19 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  SearchX, SearchIcon, Filter, Clock, Heart, Bookmark, User, 
-  ChevronLeft, ChevronRight, Star, Calendar, Smile, Camera
+  Clock, Heart, User, Calendar, Plus, Image, 
+  BookOpen, Network, HelpCircle, ListChecks
 } from 'lucide-react';
 import { ClassRecord, FilmStrip, TeachingMoment } from '@/mocks/handlers/classroom-timemachine';
-import { Timeline } from '@/components/classroom-timemachine/timeline';
-import RecordCard from '@/components/classroom-timemachine/record-card';
 import MomentDetail from '@/components/classroom-timemachine/moment-detail';
 import MemoryIcon from '@/components/classroom-timemachine/memory-icon';
 import { motion } from 'framer-motion';
@@ -21,10 +17,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
+import VerticalTimeline from '@/components/classroom-timemachine/vertical-timeline';
 
 export default function ClassroomTimeMachinePage() {
   // 状态
-  const [activeTab, setActiveTab] = useState('timeline');
   const [records, setRecords] = useState<ClassRecord[]>([]);
   const [filmStrips, setFilmStrips] = useState<FilmStrip[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<ClassRecord | null>(null);
@@ -32,8 +28,7 @@ export default function ClassroomTimeMachinePage() {
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [loadingFilmStrips, setLoadingFilmStrips] = useState(true);
   const [loadingMoment, setLoadingMoment] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterSubject, setFilterSubject] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("teaching");
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,13 +48,11 @@ export default function ClassroomTimeMachinePage() {
       
       if (momentId) {
         await fetchMomentDetail(momentId);
-        setActiveTab('timeline');
       } else if (recordId) {
         const record = records.find(r => r.id === recordId);
         if (record) {
           setSelectedRecord(record);
         }
-        setActiveTab('records');
       }
     };
     
@@ -67,10 +60,10 @@ export default function ClassroomTimeMachinePage() {
   }, []);
   
   // 获取热门记录
-  const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] => {
-    return [...records].sort((a, b) => b.likes - a.likes).slice(0, count);
-  };
-  
+const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] => {
+  return [...records].sort((a, b) => b.likes - a.likes).slice(0, count);
+};
+
   // 获取课堂记录
   const fetchClassroomRecords = async () => {
     setLoadingRecords(true);
@@ -79,6 +72,9 @@ export default function ClassroomTimeMachinePage() {
       if (!response.ok) throw new Error('获取课堂记录失败');
       const data = await response.json();
       setRecords(data);
+      if (data.length > 0 && !selectedRecord) {
+        setSelectedRecord(data[0]);
+      }
     } catch (error) {
       console.error('获取课堂记录错误:', error);
       toast.error('获取课堂记录失败');
@@ -138,373 +134,307 @@ export default function ClassroomTimeMachinePage() {
     }
   };
   
-  // 过滤记录
-  const filteredRecords = useMemo(() => {
-    return records
-      .filter(record => 
-        (searchQuery ? record.title.toLowerCase().includes(searchQuery.toLowerCase()) : true) &&
-        (filterSubject ? record.subject === filterSubject : true)
-      );
-  }, [records, searchQuery, filterSubject]);
-  
-  // 提取所有可用的学科
-  const availableSubjects = useMemo(() => {
-    const subjects = new Set<string>();
-    records.forEach(record => subjects.add(record.subject));
-    return Array.from(subjects);
-  }, [records]);
-  
   // 获取顶部喜欢的记录IDs
   const topLikedRecords = useMemo(() => {
     return getTopLikedRecords(records, 2).map(record => record.id);
   }, [records]);
 
-  // 提取所有重要回忆
-  const memoryMoments = useMemo(() => {
-    const allMoments = filmStrips.flatMap(strip => strip.moments);
-    // 过滤出有较多喜欢或评论的教学时刻
-    return allMoments
-      .filter(moment => (moment.likes && moment.likes > 30) || (moment.comments && moment.comments.length > 0))
-      .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-      .slice(0, 4);
-  }, [filmStrips]);
+  // 渲染内容占位符
+  const renderPlaceholder = (title: string, description: string, icon: React.ReactNode) => (
+    <div className="flex h-full items-center justify-center">
+      <div className="text-center p-8 max-w-md">
+        <div className="mx-auto h-16 w-16 text-gray-300 mb-4 flex items-center justify-center">
+          {icon}
+        </div>
+        <h3 className="text-lg font-medium text-gray-700">{title}</h3>
+        <p className="mt-2 text-gray-500 text-sm">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
 
-  const getTypeIcon = (type: string) => {
-    switch(type) {
-      case 'note': return <Bookmark className="h-4 w-4" />;
-      case 'audio': return <Smile className="h-4 w-4" />;
-      case 'video': return <Camera className="h-4 w-4" />;
-      case 'homework': return <Star className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
-    }
-  };
+  // 计算内容区高度，确保在任何分辨率下都能正确显示
+  const contentHeight = "calc(100% - 64px)"; // 减去标题部分的高度
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="h-full flex flex-col">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6 flex-shrink-0">
         <div className="flex items-center">
-          <MemoryIcon size="lg" className="mr-3" />
+          <div className="bg-white p-4 shadow-sm rounded-2xl mr-6 border border-gray-100/80">
+            <MemoryIcon size="lg" className="text-primary" />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold">课堂时光机</h1>
-            <p className="text-muted-foreground">收集、整理和回顾您的教学时刻</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            筛选
-          </Button>
-          <Button>新建记录</Button>
-        </div>
-      </div>
-      
-      {/* 回忆集锦 */}
-      <div className="w-full">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">教学回忆集</h2>
-          <Button variant="ghost" size="sm">
-            查看全部回忆
-          </Button>
-        </div>
-        
-        {loadingFilmStrips ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : memoryMoments.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {memoryMoments.map((moment) => (
-              <motion.div
-                key={moment.id}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Card 
-                  className="overflow-hidden cursor-pointer h-40 group"
-                  onClick={() => handleMomentClick(moment)}
-                >
-                  <div className="relative h-full w-full">
-                    <img 
-                      src={moment.thumbnail || '/placeholder-image.jpg'} 
-                      alt={moment.title}
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-3 flex flex-col justify-end">
-                      <div className="flex items-center mb-1">
-                        <Badge className="text-xs px-1.5 py-0.5 bg-white/90 text-foreground">
-                          <span className="flex items-center gap-1">
-                            {getTypeIcon(moment.type)}
-                            {moment.type === 'note' && '笔记'}
-                            {moment.type === 'audio' && '音频'}
-                            {moment.type === 'video' && '视频'}
-                            {moment.type === 'homework' && '作业'}
-                            {moment.type === 'other' && '其他'}
-                          </span>
-                        </Badge>
-                        <span className="ml-2 text-xs text-white flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {moment.date}
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-medium text-white line-clamp-1">{moment.title}</h3>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-white/80">{moment.teacher}</span>
-                        <span className="text-xs text-white/80 flex items-center">
-                          <Heart className="h-3 w-3 mr-1 fill-rose-500 text-rose-500" />
-                          {moment.likes || 0}
-                        </span>
-                      </div>
-                    </div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">课堂时光机</h1>
+            <p className="text-gray-500 mt-1.5 text-sm font-normal">收集、整理和回顾您的教学时刻</p>
                   </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="border rounded-lg p-8 text-center">
-            <MemoryIcon size="lg" className="mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium">暂无回忆收藏</h3>
-            <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-              您的珍贵教学回忆将在这里显示。点击时间线上的任意时刻可将其添加到回忆集中。
-            </p>
-          </div>
-        )}
-      </div>
-      
-      {/* 主要内容 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 左侧: 时间线或记录列表 */}
-        <div className="md:col-span-2">
-          {/* 标签切换 */}
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            className="w-full"
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <Button 
+            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
           >
-            <TabsList className="w-full">
-              <TabsTrigger value="timeline" className="flex-1">
-                <Clock className="h-4 w-4 mr-2" />
-                时间线视图
-              </TabsTrigger>
-              <TabsTrigger value="records" className="flex-1">
-                <Bookmark className="h-4 w-4 mr-2" />
-                课堂记录
-              </TabsTrigger>
-            </TabsList>
+            <Plus className="h-4 w-4 mr-2" />
+            新建记录
+          </Button>
+        </div>
+      </div>
+
+      {/* 三列布局 */}
+      <div className="grid grid-cols-24 gap-5 flex-1 overflow-hidden" style={{ height: contentHeight }}>
+        {/* 左侧: 垂直时间线 */}
+        <div className="col-span-4 overflow-hidden">
+          <div className="sticky top-6 h-full max-h-full">
+            {loadingFilmStrips ? (
+              <Skeleton className="w-full h-full rounded-2xl" />
+            ) : (
+              <VerticalTimeline 
+                filmStrips={filmStrips}
+                onMomentClick={handleMomentClick}
+                selectedMomentId={selectedMoment?.id}
+              />
+            )}
+              </div>
+            </div>
             
-            {/* 时间线视图 */}
-            <TabsContent value="timeline" className="mt-6">
-              {loadingFilmStrips ? (
-                <div className="w-full h-[500px] rounded-lg border">
-                  <Skeleton className="w-full h-full" />
-                </div>
-              ) : (
-                <Timeline 
-                  filmStrips={filmStrips} 
-                  onMomentClick={handleMomentClick}
-                />
-              )}
-              
-              {filmStrips.length > 0 && (
-                <div className="mt-4 text-sm text-muted-foreground text-center">
-                  <p>您的时间线包含 {filmStrips.length} 个学期, 共 {filmStrips.reduce((acc, strip) => acc + strip.moments.length, 0)} 个教学时刻</p>
-                  <p className="mt-1">点击时间线上的任意节点，查看详细内容</p>
-                </div>
-              )}
-            </TabsContent>
-            
-            {/* 课堂记录视图 */}
-            <TabsContent value="records" className="mt-6 space-y-4">
-              {/* 搜索和过滤 */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="搜索课堂记录..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
+        {/* 中间: 课堂内容区域 */}
+        <div className="col-span-14 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
+            {selectedMoment ? (
+              <>
+                <div className="p-6 border-b border-gray-100 flex-shrink-0">
+                  <div className="mb-3">
+                    <h2 className="text-2xl font-semibold text-gray-900">{selectedMoment.title}</h2>
+                    <p className="text-sm text-gray-500 mt-1.5">{selectedMoment.date} · {selectedMoment.subject}</p>
+                  </div>
+                  
+                  {/* 四个模块的标签页 */}
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid grid-cols-4 mt-4">
+                      <TabsTrigger 
+                        value="teaching" 
+                        className="flex items-center gap-2 text-sm py-3 font-medium transition-all duration-200"
+                      >
+                        <BookOpen className="h-4 w-4" />
+                        <span>教学环节</span>
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="knowledge" 
+                        className="flex items-center gap-2 text-sm py-3 font-medium transition-all duration-200"
+                      >
+                        <Network className="h-4 w-4" />
+                        <span>知识结构</span>
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="questions" 
+                        className="flex items-center gap-2 text-sm py-3 font-medium transition-all duration-200"
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                        <span>问题链</span>
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="tasks" 
+                        className="flex items-center gap-2 text-sm py-3 font-medium transition-all duration-200"
+                      >
+                        <ListChecks className="h-4 w-4" />
+                        <span>任务链</span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
                 
-                <ScrollArea className="w-full sm:w-auto">
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant={filterSubject === null ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterSubject(null)}
-                    >
-                      全部
-                    </Button>
-                    {availableSubjects.map(subject => (
-                      <Button
-                        key={subject}
-                        variant={filterSubject === subject ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setFilterSubject(subject)}
-                      >
-                        {subject}
-                      </Button>
-                    ))}
+                <div className="flex-1 overflow-auto bg-gray-50/50">
+                  <Tabs value={activeTab} className="h-full">
+                    {/* 教学环节还原 */}
+                    <TabsContent value="teaching" className="p-0 h-full data-[state=active]:flex data-[state=active]:flex-col">
+                      <div className="flex-1 flex items-center justify-center bg-white rounded-xl border border-gray-100 m-6 shadow-sm">
+                        <div className="text-center p-10">
+                          <div className="mb-5 bg-gray-50 rounded-full p-5 inline-block">
+                            <BookOpen className="h-16 w-16 text-gray-300" />
+                      </div>
+                          <h3 className="text-2xl font-medium text-gray-800">教学环节还原</h3>
+                          <p className="mt-3 text-gray-500 max-w-2xl mx-auto text-base">
+                            此区域将呈现课堂教学环节的时序还原，包括导入、讲解、练习等环节的时间分布与内容概要。
+                          </p>
+                    </div>
+                      </div>
+                    </TabsContent>
+                    
+                    {/* 知识结构还原 */}
+                    <TabsContent value="knowledge" className="p-0 h-full data-[state=active]:flex data-[state=active]:flex-col">
+                      <div className="flex-1 flex items-center justify-center bg-white rounded-xl border border-gray-100 m-6 shadow-sm">
+                        <div className="text-center p-10">
+                          <div className="mb-5 bg-gray-50 rounded-full p-5 inline-block">
+                            <Network className="h-16 w-16 text-gray-300" />
+                    </div>
+                          <h3 className="text-2xl font-medium text-gray-800">知识结构还原</h3>
+                          <p className="mt-3 text-gray-500 max-w-2xl mx-auto text-base">
+                            此区域将通过知识图谱展现课堂中涉及的知识点及其关联关系，帮助教师理解知识结构的完整性。
+                          </p>
                   </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-              </div>
-              
-              {/* 记录列表 */}
-              {loadingRecords ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-64 w-full rounded-lg" />
-                  ))}
+                      </div>
+                    </TabsContent>
+                    
+                    {/* 问题链还原 */}
+                    <TabsContent value="questions" className="p-0 h-full data-[state=active]:flex data-[state=active]:flex-col">
+                      <div className="flex-1 flex items-center justify-center bg-white rounded-xl border border-gray-100 m-6 shadow-sm">
+                        <div className="text-center p-10">
+                          <div className="mb-5 bg-gray-50 rounded-full p-5 inline-block">
+                            <HelpCircle className="h-16 w-16 text-gray-300" />
+                          </div>
+                          <h3 className="text-2xl font-medium text-gray-800">问题链还原</h3>
+                          <p className="mt-3 text-gray-500 max-w-2xl mx-auto text-base">
+                            此区域将展示课堂中提出的问题序列，包括教师提问和学生问题，帮助分析问题设计的逻辑性和有效性。
+                          </p>
+                        </div>
+                      </div>
+                    </TabsContent>
+                    
+                    {/* 任务链还原 */}
+                    <TabsContent value="tasks" className="p-0 h-full data-[state=active]:flex data-[state=active]:flex-col">
+                      <div className="flex-1 flex items-center justify-center bg-white rounded-xl border border-gray-100 m-6 shadow-sm">
+                        <div className="text-center p-10">
+                          <div className="mb-5 bg-gray-50 rounded-full p-5 inline-block">
+                            <ListChecks className="h-16 w-16 text-gray-300" />
+                    </div>
+                          <h3 className="text-2xl font-medium text-gray-800">任务链还原</h3>
+                          <p className="mt-3 text-gray-500 max-w-2xl mx-auto text-base">
+                            此区域将呈现课堂任务的设计链条，展示从简单到复杂、从浅层到深层的任务进阶过程。
+                          </p>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
-              ) : filteredRecords.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {filteredRecords.map((record) => (
-                    <RecordCard
-                      key={record.id}
-                      record={record}
-                      isSelected={selectedRecord?.id === record.id}
-                      isTopLiked={topLikedRecords.includes(record.id)}
-                      onClick={handleRecordClick}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="w-full py-12 flex flex-col items-center justify-center text-center">
-                  <SearchX className="h-16 w-16 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium">未找到匹配的记录</h3>
-                  <p className="text-muted-foreground mt-2 max-w-md">
-                    尝试使用不同的搜索词或筛选条件，或者清除所有筛选器查看所有课堂记录。
+              </>
+            ) : (
+              <div className="flex h-full items-center justify-center bg-gray-50/30">
+                <div className="text-center p-10">
+                  <div className="mb-5 bg-white rounded-full p-6 inline-block shadow-sm border border-gray-100">
+                    <Image className="h-20 w-20 text-gray-300" />
+                  </div>
+                  <h3 className="text-2xl font-medium text-gray-800">请从左侧时间线选择教学时刻</h3>
+                  <p className="mt-3 text-gray-500 max-w-lg mx-auto text-base">
+                    点击左侧时间线上的任意时刻点，此处将显示对应的课堂内容
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setFilterSubject(null);
-                    }}
-                  >
-                    清除所有筛选
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        {/* 右侧: 详细信息面板 */}
-        <div className="relative">
-          <div className="sticky top-4">
+                    </div>
+              </div>
+            )}
+              </div>
+            </div>
+            
+        {/* 右侧: 课堂信息面板 */}
+        <div className="col-span-6 overflow-hidden">
+          <div className="sticky top-6 h-full">
             <motion.div
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              className="h-full"
             >
-              {activeTab === 'timeline' ? (
-                <MomentDetail
-                  moment={selectedMoment}
-                  isLoading={loadingMoment}
-                />
-              ) : (
-                <div className="w-full rounded-lg border border-border bg-card overflow-hidden">
-                  {selectedRecord ? (
-                    <div className="flex flex-col h-full">
-                      <div className="relative h-48 w-full overflow-hidden">
-                        <img 
-                          src={selectedRecord.thumbnail} 
-                          alt={selectedRecord.title} 
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
-                          <div className="absolute bottom-4 left-4 right-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge>
-                                {selectedRecord.class}
-                              </Badge>
-                              {selectedRecord.isMine && (
-                                <Badge variant="secondary" className="bg-sky-100 text-sky-800">
-                                  我的
-                                </Badge>
-                              )}
-                            </div>
-                            <h2 className="text-xl font-bold text-white">{selectedRecord.title}</h2>
-                          </div>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full overflow-y-auto">
+                {loadingMoment ? (
+                  <div className="p-7 space-y-5">
+                    <Skeleton className="h-6 w-2/3" />
+                    <Skeleton className="h-5 w-1/2" />
+                    <Skeleton className="h-44 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                  </div>
+                ) : selectedMoment ? (
+                  <MomentDetail
+                    moment={selectedMoment}
+                    isLoading={false}
+                  />
+                ) : selectedRecord ? (
+                  <div className="flex flex-col h-full">
+                    <div className="relative h-64 w-full overflow-hidden">
+                      <img 
+                        src={selectedRecord.thumbnail} 
+                        alt={selectedRecord.title} 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                        <div className="absolute bottom-7 left-7 right-7">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge className="bg-primary text-white px-3 py-1 rounded-md font-medium">
+                              {selectedRecord.class}
+                            </Badge>
+                            {selectedRecord.isMine && (
+                              <Badge variant="secondary" className="bg-blue-50 text-blue-600 hover:bg-blue-50 rounded-md px-3 py-1 font-medium">
+                                我的
+                            </Badge>
+            )}
+          </div>
+                          <h2 className="text-2xl font-bold text-white">{selectedRecord.title}</h2>
                         </div>
+        </div>
+                    </div>
+                    
+                    <div className="p-7 space-y-8 flex-grow overflow-y-auto">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2.5 bg-gray-50 rounded-full">
+                            <User className="h-5 w-5 text-gray-500" />
+                          </div>
+                          <span className="font-medium text-gray-900 text-base">{selectedRecord.teacher}</span>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2.5 bg-gray-50 rounded-full">
+                            <Clock className="h-5 w-5 text-gray-500" />
+                    </div>
+                          <span className="text-gray-700 text-base">{selectedRecord.duration}</span>
+                  </div>
                       </div>
                       
-                      <div className="p-4 space-y-4 flex-grow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{selectedRecord.teacher}</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>{selectedRecord.duration}</span>
-                          </div>
+                      <div className="space-y-5">
+                        <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                          <h3 className="font-semibold text-lg text-gray-900">课堂详情</h3>
+                          <Badge variant="outline" className="rounded-lg bg-gray-50 text-gray-700 border-gray-200 px-3.5 py-1.5">
+                            {selectedRecord.subject}
+                          </Badge>
                         </div>
                         
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <h3 className="font-semibold">课堂详情</h3>
-                            <Badge variant="outline">
-                              {selectedRecord.subject}
-                            </Badge>
+                        <div className="grid grid-cols-2 gap-5 text-sm">
+                          <div className="p-5 rounded-xl bg-gray-50/80 hover:bg-gray-50 transition-colors duration-200">
+                            <div className="text-gray-500 mb-1.5 text-xs font-medium">日期</div>
+                            <div className="font-medium text-gray-900 text-base">{selectedRecord.date}</div>
                           </div>
-                          
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="p-3 rounded-lg bg-slate-50">
-                              <div className="text-muted-foreground mb-1">日期</div>
-                              <div className="font-medium">{selectedRecord.date}</div>
-                            </div>
-                            <div className="p-3 rounded-lg bg-slate-50">
-                              <div className="text-muted-foreground mb-1">时长</div>
-                              <div className="font-medium">{selectedRecord.duration}</div>
-                            </div>
-                            <div className="p-3 rounded-lg bg-slate-50">
-                              <div className="text-muted-foreground mb-1">班级</div>
-                              <div className="font-medium">{selectedRecord.class}</div>
-                            </div>
-                            <div className="p-3 rounded-lg bg-slate-50">
-                              <div className="text-muted-foreground mb-1">喜欢</div>
-                              <div className="font-medium flex items-center">
-                                <Heart className="h-3 w-3 text-rose-500 fill-rose-500 mr-1" />
-                                {selectedRecord.likes}
-                              </div>
+                          <div className="p-5 rounded-xl bg-gray-50/80 hover:bg-gray-50 transition-colors duration-200">
+                            <div className="text-gray-500 mb-1.5 text-xs font-medium">时长</div>
+                            <div className="font-medium text-gray-900 text-base">{selectedRecord.duration}</div>
+                          </div>
+                          <div className="p-5 rounded-xl bg-gray-50/80 hover:bg-gray-50 transition-colors duration-200">
+                            <div className="text-gray-500 mb-1.5 text-xs font-medium">班级</div>
+                            <div className="font-medium text-gray-900 text-base">{selectedRecord.class}</div>
+                          </div>
+                          <div className="p-5 rounded-xl bg-gray-50/80 hover:bg-gray-50 transition-colors duration-200">
+                            <div className="text-gray-500 mb-1.5 text-xs font-medium">喜欢</div>
+                            <div className="font-medium text-gray-900 flex items-center text-base">
+                              <Heart className="h-4 w-4 text-rose-500 fill-rose-500 mr-1.5" />
+                              {selectedRecord.likes}
                             </div>
                           </div>
-                          
-                          <p className="text-muted-foreground text-sm mt-4">
-                            通过时光机功能，您可以回顾这节课的关键教学时刻。点击左侧的"时间线视图"以查看此课的教学时刻。
-                          </p>
                         </div>
                       </div>
-                      
-                      <div className="p-4 border-t">
-                        <Button className="w-full">
-                          查看完整课堂记录
-                        </Button>
-                      </div>
                     </div>
-                  ) : (
-                    <div className="h-[600px] flex items-center justify-center p-6">
-                      <div className="text-center">
-                        <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-medium">选择一个课堂记录</h3>
-                        <p className="text-muted-foreground mt-2">
-                          从左侧列表中选择一个课堂记录以查看详细信息
-                        </p>
                       </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center p-10">
+                    <div className="text-center">
+                      <div className="mb-6 bg-gray-50 rounded-full p-6 inline-block">
+                        <Clock className="h-16 w-16 text-gray-300" />
+                      </div>
+                      <h3 className="text-2xl font-medium text-gray-800 mb-3">等待选择</h3>
+                      <p className="text-gray-500 text-base max-w-sm mx-auto">
+                        从左侧时间线选择一个教学时刻以查看详细信息
+                      </p>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+            </div>
             </motion.div>
           </div>
         </div>
