@@ -17,6 +17,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -64,10 +65,12 @@ function getSidebarStateFromCookie() {
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const [sidebarState, setSidebarState] = useState<boolean | undefined>(undefined);
+  const [mounted, setMounted] = useState(false);
   
   // 在客户端加载时读取cookie
   useEffect(() => {
     setSidebarState(getSidebarStateFromCookie());
+    setMounted(true);
   }, []);
   
   // 登录页不使用此布局
@@ -79,10 +82,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   
   return (
     <SidebarProvider defaultOpen={sidebarState === undefined ? true : sidebarState}>
-      <div className="flex overflow-hidden" style={{ height: '100vh' }}>
+      <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
-        <div className="flex-1 flex flex-col" style={{ height: '100vh' }}>
-          {/* 顶部面包屑栏 - 总是占满整个宽度 */}
+        <div className="flex-1 flex flex-col h-screen w-full overflow-hidden">
+          {/* 顶部面包屑栏 - 保持不变 */}
           <header className="flex h-16 shrink-0 items-center bg-white border-b border-gray-100/80 px-6 shadow-sm w-full">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="text-gray-500 hover:text-gray-700 transition-colors" />
@@ -107,10 +110,30 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </header>
           
-          {/* 主内容区域 - 在1920px宽屏下填满，更大屏幕居中 */}
-          <main className="flex-1 overflow-hidden w-full" style={{ height: 'calc(100vh - 64px)' }}>
-            <div className="h-full mx-auto py-6 px-6 w-full bg-gradient-to-b from-[#f8f9fc] to-[#f3f5fa]" style={{ maxWidth: '1840px' }}>
-              {children}
+          {/* 优化后的主内容区域 */}
+          <main 
+            className={cn(
+              "flex-1 w-full overflow-auto", 
+              !mounted && "opacity-0", // 在客户端挂载前隐藏内容，避免闪烁
+              mounted && "animate-fadeIn"
+            )}
+            style={{ 
+              height: 'calc(100vh - 64px)',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(0,0,0,0.1) transparent'
+            }}
+          >
+            <div className="min-h-full w-full bg-gradient-to-b from-[#f8f9fc] to-[#f3f5fa]">
+              {/* 自适应容器 */}
+              <div 
+                className={cn(
+                  "mx-auto w-full transition-all duration-300 ease-in-out px-4 sm:px-6 md:px-8 py-6",
+                  // 在不同断点下调整max-width
+                  "max-w-full lg:max-w-[1280px] xl:max-w-[1536px] 2xl:max-w-[1840px]",
+                )}
+              >
+                {children}
+              </div>
             </div>
           </main>
         </div>
