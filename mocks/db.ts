@@ -13,6 +13,8 @@ export const db = factory({
     password: String,
     phone: String,
     role: String, // 'admin' or 'teacher'
+    tenant: String, // 用户所属租户
+    tenantType: String, // 租户类型
   },
   // 用户会话模型
   session: {
@@ -90,6 +92,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13800138000',
     role: 'admin',
+    tenant: '北京第一中学',
+    tenantType: '九年一贯制'
   });
   
   db.user.create({
@@ -102,6 +106,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13900139000',
     role: 'teacher',
+    tenant: '通用平台',
+    tenantType: '完全中学'
   });
   
   // 添加应用示例数据

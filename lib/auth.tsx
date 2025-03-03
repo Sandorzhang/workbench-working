@@ -12,6 +12,8 @@ interface User {
   email: string;
   avatar: string;
   role: string;
+  tenant?: string; // 用户所属租户
+  tenantType?: string; // 租户类型
 }
 
 // 认证上下文状态
