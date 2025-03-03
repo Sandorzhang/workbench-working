@@ -18,6 +18,13 @@ alwaysApply: false
 - shadcn相关的安装命令为 npm shadcn@latest 而不是npm shadcn-ui@latest
 - 所有的页面添加skeleton加载
 - toast 使用sonner
+- mocks/index.ts - The main entry point that initializes MSW
+mocks/browser.ts - Browser-specific MSW setup
+mocks/node.ts - Node.js-specific MSW setup
+mocks/db.ts - Database setup for MSW
+mocks/handlers/ - Directory containing all API handlers organized by feature:
+mocks/handlers/index.ts - Aggregates all handlers
+Various feature-specific handler files (auth.ts, user.ts, etc.)
 - UI设计使用现代极简主义、适应功能美学。
 - 设计规范：
 1.极简主义 (Minimalism)
