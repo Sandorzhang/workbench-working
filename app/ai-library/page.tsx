@@ -73,6 +73,11 @@ const AILibraryPage = () => {
             ...agent,
             isAdded: userAgents.some((ua: AIAgent) => ua.id === agent.id)
           }));
+          
+          // 触发一次智能体列表更新事件，确保侧边栏同步
+          const event = new CustomEvent('agent-list-updated');
+          window.dispatchEvent(event);
+          console.log('智能体库页面加载完成，触发列表更新事件');
         }
         
         setAgents(agentData);
@@ -113,6 +118,7 @@ const AILibraryPage = () => {
       const response = await fetch(url, { method });
       
       if (response.ok) {
+        // 更新本地状态
         if (isAdded) {
           setUserAgentIds(prev => prev.filter(id => id !== agentId));
         } else {
@@ -127,6 +133,24 @@ const AILibraryPage = () => {
               : agent
           )
         );
+        
+        // 找到当前智能体完整数据
+        const currentAgent = agents.find(agent => agent.id === agentId);
+        
+        // 触发自定义事件，通知其他组件更新智能体列表
+        // 传递完整的操作信息，而不仅仅是通知刷新
+        const eventData = {
+          action: isAdded ? 'remove' : 'add',
+          agent: currentAgent,
+          timestamp: new Date().getTime()
+        };
+        
+        const event = new CustomEvent('agent-list-updated', { 
+          detail: eventData 
+        });
+        
+        window.dispatchEvent(event);
+        console.log(`已触发智能体列表更新事件（从AI库${isAdded ? '移除' : '添加'}）:`, eventData);
         
         // 如果是添加新的智能体，可以选择性地导航
         if (!isAdded) {
