@@ -9,11 +9,11 @@ import { mentorHandlers } from './mentor';
 import { imageHandlers } from './image';
 import { teachingPlanHandlers } from './teaching-plans';
 import { agentHandlers } from './agents';
-import { workbenchHandlers } from './workbench';
 import { classroomTimemachineHandlers } from './classroom-timemachine';
 import { educationHandlers } from './education';
 import { academicStandardsHandlers } from './academic-standards';
 import { aiAssistantHandlers } from './ai-assistant';
+import { conceptMapHandlers } from './concept-map';
 // 导入其他处理器...
 
 export const handlers = [
@@ -26,11 +26,11 @@ export const handlers = [
   ...imageHandlers,
   ...teachingPlanHandlers,
   ...agentHandlers,
-  ...workbenchHandlers,
   ...classroomTimemachineHandlers,
   ...educationHandlers,
   ...academicStandardsHandlers,
   ...aiAssistantHandlers,
+  ...conceptMapHandlers,
   // 其他处理器...
   
   // 处理教学设计API

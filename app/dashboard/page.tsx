@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { 
   BookOpen, Users, FileText, Calendar, 
   Sparkles, TrendingUp, Activity, Clock,
-  Database, Loader2
+  Database, Loader2, Network
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
@@ -48,6 +48,7 @@ const iconComponents: Record<string, any> = {
   'calendar': Calendar,
   'database': Database,
   'fileText': FileText, // 考试管理使用文档图标
+  'network': Network,    // 概念地图使用网络图标
 };
 
 // 卡片颜色映射 - 使用更多生动的渐变色
@@ -173,6 +174,14 @@ export default function DashboardPage() {
             icon: 'book',
             url: '/academic-standards',
             roles: ['教师', '管理员']
+          },
+          {
+            id: '8',
+            name: '大概念地图',
+            description: '查看不同学科的概念节点和关系，了解知识体系结构',
+            icon: 'network',
+            url: '/concept-map',
+            roles: ['教师', '管理员', '学生']
           }
         ];
         

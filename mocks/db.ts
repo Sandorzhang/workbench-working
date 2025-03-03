@@ -100,6 +100,26 @@ export const db = factory({
     content: String,
     type: String, // 'knowledge', 'skill', 'attitude'
   },
+  // 概念模型 - 用于概念地图
+  concept: {
+    id: primaryKey(String),
+    name: String,
+    description: String,
+    type: String, // 'big' for 大概念, 'small' for 小概念
+    targets: Array, // 三维目标：知识、技能、情感 (可多选)
+    subject: String, // 所属学科
+    createdAt: String,
+    updatedAt: String,
+  },
+  // 概念关系模型
+  conceptRelation: {
+    id: primaryKey(String),
+    sourceId: String, // 源概念ID
+    targetId: String, // 目标概念ID
+    relationType: Number, // 关系类型(1-12)
+    createdAt: String,
+    updatedAt: String,
+  },
   // 可以添加更多模型
 });
 
@@ -587,6 +607,222 @@ export function seedDb() {
     startTime: '2024-03-25T09:00:00',
     endTime: '2024-03-25T11:00:00',
     status: 'published',
+  });
+  
+  // 添加概念示例数据 - 数学学科
+  db.concept.create({
+    id: 'c001',
+    name: '数与代数',
+    description: '研究数量关系和数的结构的数学分支',
+    type: 'big', // 大概念
+    targets: ['知识', '技能'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c002',
+    name: '数的认识',
+    description: '理解数的含义、表示方法和基本性质',
+    type: 'big',
+    targets: ['知识'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c003',
+    name: '整数',
+    description: '不含小数部分的数',
+    type: 'small',
+    targets: ['知识'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c004',
+    name: '小数',
+    description: '包含小数部分的数',
+    type: 'small',
+    targets: ['知识'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c005',
+    name: '分数',
+    description: '表示部分与整体关系的数',
+    type: 'small',
+    targets: ['知识'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c006',
+    name: '运算',
+    description: '对数进行加减乘除等数学操作',
+    type: 'big',
+    targets: ['知识', '技能'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c007',
+    name: '加法',
+    description: '将两个或多个数合并为一个数的运算',
+    type: 'small',
+    targets: ['知识', '技能'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c008',
+    name: '减法',
+    description: '求两个数的差的运算',
+    type: 'small',
+    targets: ['知识', '技能'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c009',
+    name: '几何',
+    description: '研究形状、大小、空间位置及其关系的数学分支',
+    type: 'big',
+    targets: ['知识', '技能', '情感'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c010',
+    name: '平面图形',
+    description: '二维空间中的几何图形',
+    type: 'small',
+    targets: ['知识', '技能'],
+    subject: '数学',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  // 添加物理学科的概念
+  db.concept.create({
+    id: 'c011',
+    name: '力学',
+    description: '研究物体运动和相互作用的物理学分支',
+    type: 'big',
+    targets: ['知识', '技能'],
+    subject: '物理',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.concept.create({
+    id: 'c012',
+    name: '牛顿定律',
+    description: '描述物体运动与力的关系的基本定律',
+    type: 'big',
+    targets: ['知识', '技能'],
+    subject: '物理',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  // 添加概念关系示例数据
+  db.conceptRelation.create({
+    id: 'r001',
+    sourceId: 'c001', // 数与代数
+    targetId: 'c002', // 数的认识
+    relationType: 1, // 关系类型1
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r002',
+    sourceId: 'c002', // 数的认识
+    targetId: 'c003', // 整数
+    relationType: 2, // 关系类型2
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r003',
+    sourceId: 'c002', // 数的认识
+    targetId: 'c004', // 小数
+    relationType: 2, // 关系类型2
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r004',
+    sourceId: 'c002', // 数的认识
+    targetId: 'c005', // 分数
+    relationType: 2, // 关系类型2
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r005',
+    sourceId: 'c001', // 数与代数
+    targetId: 'c006', // 运算
+    relationType: 3, // 关系类型3
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r006',
+    sourceId: 'c006', // 运算
+    targetId: 'c007', // 加法
+    relationType: 4, // 关系类型4
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r007',
+    sourceId: 'c006', // 运算
+    targetId: 'c008', // 减法
+    relationType: 4, // 关系类型4
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r008',
+    sourceId: 'c009', // 几何
+    targetId: 'c010', // 平面图形
+    relationType: 5, // 关系类型5
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  db.conceptRelation.create({
+    id: 'r009',
+    sourceId: 'c011', // 力学
+    targetId: 'c012', // 牛顿定律
+    relationType: 6, // 关系类型6
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   });
   
   // 添加更多初始数据...

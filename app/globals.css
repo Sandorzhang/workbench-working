@@ -260,3 +260,77 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* SigmaJS 相关样式 */
+.sigma-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sigma-scene, .sigma-layers, .sigma-mouse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sigma-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.sigma-node {
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.sigma-node:hover {
+  opacity: 0.9;
+  transform: scale(1.1);
+}
+
+.sigma-edge {
+  pointer-events: none;
+}
+
+.sigma-hovers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* 概念地图特定样式 */
+.concept-map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.concept-detail-panel {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.concept-detail-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.concept-detail-panel::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.concept-detail-panel::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.05);
+}
