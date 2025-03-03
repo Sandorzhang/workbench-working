@@ -2,9 +2,21 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
+import type { SetupWorkerApi, StartOptions } from 'msw/browser';
 
 interface MswInitializerProps {
   onInitialized?: () => void;
+}
+
+// MSW request and print types
+interface MswRequest extends Request {
+  url: string;
+  method: string;
+}
+
+interface MswPrint {
+  warning: () => void;
+  error: () => void;
 }
 
 export function MswInitializer({ onInitialized }: MswInitializerProps) {
@@ -20,11 +32,12 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
     initAttemptedRef.current = true;
 
     const initMsw = async () => {
-      if (process.env.NODE_ENV !== 'development') {
-        setStatus('success');
-        onInitialized?.();
-        return;
-      }
+      // 始终在开发环境中启用MSW
+      // if (process.env.NODE_ENV !== 'development') {
+      //   setStatus('success');
+      //   onInitialized?.();
+      //   return;
+      // }
 
       const tryInit = async (): Promise<void> => {
         try {
@@ -35,11 +48,32 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
           
           // 检查service worker注册
           if ('serviceWorker' in navigator) {
+            console.log('浏览器支持 Service Worker, 开始初始化 MSW...');
+            
             // 尝试初始化MSW
             await worker.start({
-              onUnhandledRequest: 'warn',
+              onUnhandledRequest: (request: MswRequest, print: MswPrint) => {
+                // 忽略静态资源请求
+                if (
+                  request.url.includes('/_next/') || 
+                  request.url.includes('.svg') || 
+                  request.url.includes('.png') || 
+                  request.url.includes('.jpg') || 
+                  request.url.includes('.ico') ||
+                  request.url.includes('favicon')
+                ) {
+                  return;
+                }
+                
+                // 记录未处理的请求
+                console.warn(`[MSW] 未处理的请求: ${request.method} ${request.url}`);
+                print.warning();
+              },
               serviceWorker: {
                 url: '/mockServiceWorker.js',
+                options: {
+                  scope: '/',
+                },
               },
             });
             
@@ -50,14 +84,15 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
               localStorage.setItem('token', 'default-token');
             }
             
-            console.log('✅ MSW初始化成功');
+            console.log('MSW 初始化成功!');
             setStatus('success');
             onInitialized?.();
           } else {
-            throw new Error('浏览器不支持Service Worker');
+            console.error('浏览器不支持 Service Worker, MSW 无法初始化');
+            setStatus('error');
           }
         } catch (error) {
-          console.error(`❌ MSW初始化失败 (尝试 ${retryCountRef.current + 1}/${MAX_RETRIES}):`, error);
+          console.error(`MSW 初始化失败 (尝试 ${retryCountRef.current + 1}/${MAX_RETRIES}):`, error);
           
           if (retryCountRef.current < MAX_RETRIES - 1) {
             retryCountRef.current++;
@@ -66,31 +101,26 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
             return tryInit();
           }
           
+          console.error('MSW 初始化失败，已达到最大重试次数');
           setStatus('error');
-          toast.error('API模拟服务初始化失败，请刷新页面重试');
-          throw error;
         }
       };
-
-      try {
-        await tryInit();
-      } catch (error) {
-        console.error('MSW初始化最终失败:', error);
-      }
+      
+      await tryInit();
     };
-
+    
     initMsw();
   }, [onInitialized]);
-
-  // 仅在开发环境中的调试信息
-  if (process.env.NODE_ENV === 'development') {
-    return (
-      <div style={{ 
-        position: 'fixed', 
-        bottom: 0, 
-        right: 0, 
+  
+  // 显示MSW状态
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        right: 0,
         padding: '4px 8px',
-        background: status === 'success' ? '#4caf50' : status === 'error' ? '#f44336' : '#2196f3',
+        background: status === 'pending' ? '#2196f3' : status === 'success' ? '#4caf50' : '#f44336',
         color: 'white',
         fontSize: '12px',
         zIndex: 9999,
@@ -100,19 +130,8 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
         alignItems: 'center',
         gap: '4px'
       }}
-      onClick={() => {
-        if (status === 'error') {
-          window.location.reload();
-        }
-      }}
-      >
-        <span>MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启动' : '启动失败'}</span>
-        {status === 'error' && (
-          <span style={{ fontSize: '10px' }}>(点击重试)</span>
-        )}
-      </div>
-    );
-  }
-
-  return null;
+    >
+      <span>MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启用' : '初始化失败'}</span>
+    </div>
+  );
 } 

@@ -34,7 +34,7 @@ export const authHandlers = [
     await delay(500);
     const { username, password } = await request.json() as LoginRequest;
     
-    console.log(`尝试账号登录: ${username}`);
+    console.log(`尝试账号登录: ${username}, 请求URL: ${request.url}`);
     
     const user = db.user.findFirst({
       where: {

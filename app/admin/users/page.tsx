@@ -26,7 +26,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Edit, Trash2, UserPlus, FileDown, FileUp, MoreHorizontal, Plus, GraduationCap, Users } from "lucide-react";
+import { 
+  Search, 
+  Edit, 
+  Trash2, 
+  UserPlus, 
+  FileDown, 
+  FileUp, 
+  MoreHorizontal, 
+  Plus, 
+  GraduationCap, 
+  Users,
+  School,
+  FolderPlus,
+  BookOpen,
+  UserCog 
+} from "lucide-react";
 import { 
   TitleSkeleton, 
   TableSkeleton, 
@@ -36,6 +51,14 @@ import { PageContainer } from "@/components/ui/page-container";
 import { SectionContainer } from "@/components/ui/section-container";
 import { CardContainer } from "@/components/ui/card-container";
 import { toast } from "sonner";
+import {
+  AddGradeDialog,
+  AddClassesDialog,
+  AddTeacherDialog,
+  AddStudentDialog,
+  AssignTeachersDialog,
+  AssignStudentsDialog
+} from "@/components/education";
 
 // 定义类型
 interface Teacher {
@@ -63,17 +86,48 @@ interface Student {
   status: string;
 }
 
+interface Grade {
+  id: string;
+  name: string;
+  year: string;
+  description?: string;
+}
+
+interface Class {
+  id: string;
+  name: string;
+  gradeId: string;
+  grade?: Grade;
+  headTeacherId?: string;
+  teacherIds: string[];
+  studentIds: string[];
+  roomNumber?: string;
+  description?: string;
+  studentCount?: number;
+}
+
 export default function UsersPage() {
   // 状态控制
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('teachers');
+  
+  // 弹窗状态
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddGradeDialogOpen, setIsAddGradeDialogOpen] = useState(false);
+  const [isAddClassesDialogOpen, setIsAddClassesDialogOpen] = useState(false);
+  const [isAddTeacherDialogOpen, setIsAddTeacherDialogOpen] = useState(false);
+  const [isAddStudentDialogOpen, setIsAddStudentDialogOpen] = useState(false);
+  const [isAssignTeachersDialogOpen, setIsAssignTeachersDialogOpen] = useState(false);
+  const [isAssignStudentsDialogOpen, setIsAssignStudentsDialogOpen] = useState(false);
   
   // 初始化数据
   useEffect(() => {
@@ -88,9 +142,19 @@ export default function UsersPage() {
         const studentsResponse = await fetch('/api/students');
         const studentsData = await studentsResponse.json();
         setStudents(studentsData);
+
+        // 获取年级数据
+        const gradesResponse = await fetch('/api/grades');
+        const gradesData = await gradesResponse.json();
+        setGrades(gradesData);
+
+        // 获取班级数据
+        const classesResponse = await fetch('/api/classes');
+        const classesData = await classesResponse.json();
+        setClasses(classesData);
       } catch (error) {
         console.error('Error fetching data:', error);
-        toast.error('无法加载师生数据');
+        toast.error('无法加载数据');
       } finally {
         // 模拟加载延迟
         setTimeout(() => {
@@ -101,6 +165,37 @@ export default function UsersPage() {
     
     fetchData();
   }, []);
+  
+  // 刷新数据
+  const refreshData = async () => {
+    setIsLoading(true);
+    try {
+      // 获取教师数据
+      const teachersResponse = await fetch('/api/teachers');
+      const teachersData = await teachersResponse.json();
+      setTeachers(teachersData);
+      
+      // 获取学生数据
+      const studentsResponse = await fetch('/api/students');
+      const studentsData = await studentsResponse.json();
+      setStudents(studentsData);
+
+      // 获取年级数据
+      const gradesResponse = await fetch('/api/grades');
+      const gradesData = await gradesResponse.json();
+      setGrades(gradesData);
+
+      // 获取班级数据
+      const classesResponse = await fetch('/api/classes');
+      const classesData = await classesResponse.json();
+      setClasses(classesData);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error('刷新数据失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // 处理导入
   const handleImport = () => {
@@ -118,11 +213,44 @@ export default function UsersPage() {
   const handleAdd = () => {
     if (activeTab === 'teachers') {
       // 处理添加教师逻辑
-      toast.info('添加教师功能开发中...');
-    } else {
+      setIsAddTeacherDialogOpen(true);
+    } else if (activeTab === 'students') {
       // 处理添加学生逻辑
-      toast.info('添加学生功能开发中...');
+      setIsAddStudentDialogOpen(true);
     }
+  };
+  
+  // 处理添加年级
+  const handleAddGrade = () => {
+    setIsAddGradeDialogOpen(true);
+  };
+  
+  // 处理添加班级
+  const handleAddClasses = () => {
+    setIsAddClassesDialogOpen(true);
+  };
+  
+  // 处理分配教师到班级
+  const handleAssignTeachers = (classData: Class) => {
+    setSelectedClass(classData);
+    setIsAssignTeachersDialogOpen(true);
+  };
+  
+  // 处理分配学生到班级
+  const handleAssignStudents = (classData: Class) => {
+    setSelectedClass(classData);
+    setIsAssignStudentsDialogOpen(true);
+  };
+  
+  // 获取班级对应的年级名称
+  const getGradeName = (gradeId: string) => {
+    const grade = grades.find(g => g.id === gradeId);
+    return grade ? grade.name : '';
+  };
+  
+  // 获取班级的学生人数
+  const getClassStudentCount = (classId: string) => {
+    return students.filter(s => s.class === classId).length;
   };
   
   // 处理编辑教师
@@ -148,6 +276,79 @@ export default function UsersPage() {
     setSelectedStudent(student);
     setIsDeleteDialogOpen(true);
   };
+  
+  // 确认删除教师
+  const confirmDeleteTeacher = async () => {
+    if (!selectedTeacher) return;
+    
+    try {
+      const response = await fetch(`/api/teachers/${selectedTeacher.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('删除教师失败');
+      }
+      
+      toast.success('教师删除成功');
+      setIsDeleteDialogOpen(false);
+      refreshData();
+    } catch (error) {
+      console.error('Error deleting teacher:', error);
+      toast.error('删除教师失败');
+    }
+  };
+  
+  // 确认删除学生
+  const confirmDeleteStudent = async () => {
+    if (!selectedStudent) return;
+    
+    try {
+      const response = await fetch(`/api/students/${selectedStudent.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('删除学生失败');
+      }
+      
+      toast.success('学生删除成功');
+      setIsDeleteDialogOpen(false);
+      refreshData();
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast.error('删除学生失败');
+    }
+  };
+  
+  // 过滤教师
+  const filteredTeachers = searchQuery
+    ? teachers.filter(
+        teacher =>
+          teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          teacher.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          teacher.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : teachers;
+
+  // 过滤学生
+  const filteredStudents = searchQuery
+    ? students.filter(
+        student =>
+          student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          student.guardian.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : students;
+
+  // 过滤班级
+  const filteredClasses = searchQuery
+    ? classes.filter(
+        cls =>
+          cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getGradeName(cls.gradeId).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : classes;
   
   return (
     <div className="h-full flex flex-col">
@@ -196,6 +397,10 @@ export default function UsersPage() {
                 <Users className="h-4 w-4" />
                 学生管理
               </TabsTrigger>
+              <TabsTrigger value="classes" className="flex items-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
+                <School className="h-4 w-4" />
+                班级管理
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="teachers" className="space-y-4 mt-4">
@@ -242,7 +447,7 @@ export default function UsersPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {teachers.map((teacher) => (
+                        {filteredTeachers.map((teacher) => (
                           <TableRow key={teacher.id}>
                             <TableCell className="font-medium">{teacher.name}</TableCell>
                             <TableCell>{teacher.gender}</TableCell>
@@ -331,7 +536,7 @@ export default function UsersPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {students.map((student) => (
+                        {filteredStudents.map((student) => (
                           <TableRow key={student.id}>
                             <TableCell className="font-medium">{student.name}</TableCell>
                             <TableCell>{student.gender}</TableCell>
@@ -375,11 +580,179 @@ export default function UsersPage() {
                 </CardContent>
               </CardContainer>
             </TabsContent>
+
+            {/* 班级管理 */}
+            <TabsContent value="classes" className="space-y-4 mt-4">
+              <div className="flex justify-between">
+                <div className="relative w-full max-w-sm">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="search"
+                    placeholder="搜索班级或年级..."
+                    className="pl-10 rounded-xl border-gray-200"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    className="h-10 px-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                    onClick={handleAddGrade}
+                  >
+                    <FolderPlus className="h-4 w-4 mr-2" />
+                    添加年级
+                  </Button>
+                  <Button 
+                    className="h-10 px-4 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+                    onClick={handleAddClasses}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    添加班级
+                  </Button>
+                </div>
+              </div>
+              
+              <CardContainer elevated className="border-gray-100/80 overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-5">
+                  <CardTitle className="text-base font-medium text-gray-900">班级列表</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 overflow-x-auto">
+                  {isLoading ? (
+                    <TableSkeleton rowCount={5} columnCount={6} />
+                  ) : (
+                    <Table>
+                      <TableHeader className="bg-gray-50/30">
+                        <TableRow>
+                          <TableHead className="w-[150px]">班级名称</TableHead>
+                          <TableHead className="w-[120px]">所属年级</TableHead>
+                          <TableHead className="w-[120px]">学年</TableHead>
+                          <TableHead className="w-[100px]">学生人数</TableHead>
+                          <TableHead className="w-[100px]">教室</TableHead>
+                          <TableHead className="w-[150px] text-right">操作</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredClasses.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                              {searchQuery ? '未找到匹配的班级' : '暂无班级数据'}
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredClasses.map((classData) => {
+                            const grade = grades.find(g => g.id === classData.gradeId);
+                            const studentCount = getClassStudentCount(classData.id);
+                            
+                            return (
+                              <TableRow key={classData.id}>
+                                <TableCell className="font-medium">{classData.name}</TableCell>
+                                <TableCell>{grade?.name || '-'}</TableCell>
+                                <TableCell>{grade?.year || '-'}</TableCell>
+                                <TableCell>{studentCount}</TableCell>
+                                <TableCell>{classData.roomNumber || '-'}</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="h-8 px-2"
+                                      onClick={() => handleAssignTeachers(classData)}
+                                    >
+                                      <UserCog className="h-3.5 w-3.5 mr-1" />
+                                      教师
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="h-8 px-2"
+                                      onClick={() => handleAssignStudents(classData)}
+                                    >
+                                      <BookOpen className="h-3.5 w-3.5 mr-1" />
+                                      学生
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </CardContainer>
+            </TabsContent>
           </Tabs>
         </SectionContainer>
       </div>
       
       {/* 对话框组件 - 编辑与删除的实际实现 */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {activeTab === 'teachers' && selectedTeacher && (
+              <p>确定要删除教师 <span className="font-medium">{selectedTeacher.name}</span> 吗？此操作不可撤销。</p>
+            )}
+            {activeTab === 'students' && selectedStudent && (
+              <p>确定要删除学生 <span className="font-medium">{selectedStudent.name}</span> 吗？此操作不可撤销。</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              取消
+            </Button>
+            <Button type="button" variant="destructive" onClick={activeTab === 'teachers' ? confirmDeleteTeacher : confirmDeleteStudent}>
+              确认删除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 年级、班级、教师、学生管理对话框 */}
+      <AddGradeDialog 
+        open={isAddGradeDialogOpen} 
+        onOpenChange={setIsAddGradeDialogOpen} 
+        onAddSuccess={refreshData}
+      />
+
+      <AddClassesDialog 
+        open={isAddClassesDialogOpen} 
+        onOpenChange={setIsAddClassesDialogOpen} 
+        onAddSuccess={refreshData}
+      />
+
+      <AddTeacherDialog 
+        open={isAddTeacherDialogOpen} 
+        onOpenChange={setIsAddTeacherDialogOpen} 
+        onAddSuccess={refreshData}
+      />
+
+      <AddStudentDialog 
+        open={isAddStudentDialogOpen} 
+        onOpenChange={setIsAddStudentDialogOpen} 
+        onAddSuccess={refreshData}
+      />
+
+      <AssignTeachersDialog 
+        open={isAssignTeachersDialogOpen} 
+        onOpenChange={setIsAssignTeachersDialogOpen} 
+        classId={selectedClass?.id || ''}
+        className={selectedClass?.name}
+        onAssignSuccess={refreshData}
+      />
+
+      <AssignStudentsDialog 
+        open={isAssignStudentsDialogOpen} 
+        onOpenChange={setIsAssignStudentsDialogOpen} 
+        classId={selectedClass?.id || ''}
+        className={selectedClass?.name}
+        gradeId={selectedClass?.gradeId}
+        onAssignSuccess={refreshData}
+      />
     </div>
   );
 } 

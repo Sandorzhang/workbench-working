@@ -11,6 +11,7 @@ import { teachingPlanHandlers } from './teaching-plans';
 import { agentHandlers } from './agents';
 import { workbenchHandlers } from './workbench';
 import { classroomTimemachineHandlers } from './classroom-timemachine';
+import { educationHandlers } from './education';
 // 导入其他处理器...
 
 export const handlers = [
@@ -25,6 +26,7 @@ export const handlers = [
   ...agentHandlers,
   ...workbenchHandlers,
   ...classroomTimemachineHandlers,
+  ...educationHandlers,
   // 其他处理器...
   
   // 处理教学设计API
