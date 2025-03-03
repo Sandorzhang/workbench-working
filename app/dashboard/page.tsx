@@ -165,6 +165,14 @@ export default function DashboardPage() {
             icon: 'fileText',
             url: '/exam-management',
             roles: ['教师', '管理员']
+          },
+          {
+            id: '7',
+            name: '学业标准',
+            description: '浏览和查询各学科学业标准',
+            icon: 'book',
+            url: '/academic-standards',
+            roles: ['教师', '管理员']
           }
         ];
         
