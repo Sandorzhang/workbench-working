@@ -127,7 +127,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={projects} isLoading={loading} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUserAuth />
+        <NavUserAuth 
+          user={user || undefined} 
+          onLogout={handleLogout} 
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

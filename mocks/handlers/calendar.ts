@@ -426,4 +426,62 @@ export const calendarHandlers = [
     
     return new HttpResponse(null, { status: 204 });
   }),
+  
+  // 获取特定年月的日历事件
+  http.get('*/api/calendar-events', async ({ request }) => {
+    await delay(300);
+    
+    // 解析查询参数
+    const url = new URL(request.url);
+    const year = url.searchParams.get('year');
+    const month = url.searchParams.get('month');
+    
+    console.log(`获取日历事件: 年=${year}, 月=${month}`);
+    
+    if (!year || !month) {
+      return new HttpResponse(null, { status: 400, statusText: '缺少必要的查询参数' });
+    }
+    
+    // 获取当前月份的第一天和最后一天
+    const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const endDate = new Date(parseInt(year), parseInt(month), 0);
+    
+    // 将日期转换为字符串格式，便于比较
+    const startDateStr = formatDate(startDate);
+    const endDateStr = formatDate(endDate);
+    
+    // 筛选当前月份的事件
+    const events = mockEvents.filter(event => {
+      return event.date >= startDateStr && event.date <= endDateStr;
+    });
+    
+    // 如果没有事件，生成一些示例事件
+    if (events.length === 0) {
+      // 为当前月份生成一些随机事件
+      const generatedEvents = [];
+      
+      // 生成3个随机事件
+      for (let i = 1; i <= 3; i++) {
+        // 随机一个当月的日期
+        const day = Math.floor(Math.random() * endDate.getDate()) + 1;
+        const eventDate = new Date(parseInt(year), parseInt(month) - 1, day);
+        
+        generatedEvents.push({
+          id: `generated-${i}`,
+          title: ['教师会议', '班级活动', '教研讨论', '教师培训'][Math.floor(Math.random() * 4)],
+          date: formatDate(eventDate),
+          startTime: '09:00',
+          endTime: '11:00',
+          location: ['会议室A', '教室201', '多功能厅', '在线会议'][Math.floor(Math.random() * 4)],
+          type: ['meeting', 'class', 'training', 'other'][Math.floor(Math.random() * 4)],
+          description: '自动生成的日历事件',
+          participants: ['张老师', '李老师', '王老师']
+        });
+      }
+      
+      return HttpResponse.json(generatedEvents);
+    }
+    
+    return HttpResponse.json(events);
+  }),
 ]; 

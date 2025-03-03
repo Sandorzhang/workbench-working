@@ -5,6 +5,7 @@ import {
   ChevronsUpDown,
   LogOut,
   Settings,
+  User,
 } from "lucide-react"
 
 import {
@@ -27,6 +28,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 export function NavUserAuth({
   user,
@@ -41,17 +44,7 @@ export function NavUserAuth({
   onLogout?: () => Promise<void>
 }) {
   const { isMobile } = useSidebar()
-  
-  // 默认用户信息（当未提供用户时使用）
-  const defaultUser = {
-    name: '张老师',
-    email: 'teacher@school.edu',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-    role: 'teacher'
-  };
-  
-  // 使用提供的用户或默认用户
-  const currentUser = user || defaultUser;
+  const router = useRouter()
   
   // 用户角色显示文本
   const getRoleDisplay = (role: string) => {
@@ -74,6 +67,24 @@ export function NavUserAuth({
     }
   };
 
+  // 如果没有用户，显示登录按钮
+  if (!user) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start" 
+            onClick={() => router.push('/login')}
+          >
+            <User className="mr-2 h-4 w-4" />
+            登录
+          </Button>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -84,12 +95,12 @@ export function NavUserAuth({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                <AvatarFallback className="rounded-lg">{currentUser.name.slice(0, 2)}</AvatarFallback>
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{currentUser.name}</span>
-                <span className="truncate text-xs">{currentUser.email}</span>
+                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -103,14 +114,14 @@ export function NavUserAuth({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                  <AvatarFallback className="rounded-lg">{currentUser.name.slice(0, 2)}</AvatarFallback>
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{currentUser.name}</span>
-                  <span className="truncate text-xs">{currentUser.email}</span>
+                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate text-xs">{user.email}</span>
                   <Badge variant="outline" className="mt-1 text-[10px] py-0 w-fit">
-                    {getRoleDisplay(currentUser.role)}
+                    {getRoleDisplay(user.role)}
                   </Badge>
                 </div>
               </div>

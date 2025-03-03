@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
@@ -16,6 +16,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<string>('password');
@@ -29,15 +30,27 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading, error } = useAuth();
 
-  React.useEffect(() => {
-    // 如果已认证，重定向到工作台
+  // 处理认证后的重定向
+  useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      toast.success('登录成功，即将跳转到工作台...');
+      // 短暂延迟以显示成功消息
+      const timer = setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, router]);
 
+  // 显示错误提示
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
   // 倒计时逻辑
-  React.useEffect(() => {
+  useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => {
         setCountdown(countdown - 1);
@@ -50,16 +63,43 @@ export default function LoginPage() {
 
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!username || !password) return;
+    
+    // 表单验证
+    if (!username) {
+      toast.error('请输入用户名');
+      return;
+    }
+    
+    if (!password) {
+      toast.error('请输入密码');
+      return;
+    }
+    
+    // 调用登录
     await login(username, password);
   };
 
   const handleSendCode = async () => {
-    if (!phone || phone.length !== 11 || isLoading || countdown > 0) return;
+    if (!phone) {
+      toast.error('请输入手机号码');
+      return;
+    }
     
-    await sendVerificationCode(phone);
-    setCodeSent(true);
-    setCountdown(60); // 60秒倒计时
+    if (phone.length !== 11) {
+      toast.error('请输入正确的手机号码格式');
+      return;
+    }
+    
+    if (isLoading || countdown > 0) return;
+    
+    try {
+      await sendVerificationCode(phone);
+      setCodeSent(true);
+      setCountdown(60); // 60秒倒计时
+      toast.success('验证码已发送，请注意查收');
+    } catch (error) {
+      // 错误已在 auth context 中处理
+    }
   };
 
   const handleCodeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -69,12 +109,19 @@ export default function LoginPage() {
     if (!codeSent) {
       if (phone.length === 11) {
         await handleSendCode();
+      } else {
+        toast.error('请输入正确的手机号码');
       }
       return;
     }
     
-    // 验证码已发送，执行登录
-    if (!phone || !verificationCode || verificationCode.length < 6) return;
+    // 验证码格式检查
+    if (verificationCode.length !== 6) {
+      toast.error('请输入6位验证码');
+      return;
+    }
+    
+    // 调用验证码登录
     await loginWithCode(phone, verificationCode);
   };
 
