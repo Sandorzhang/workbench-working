@@ -78,10 +78,12 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   
   // 获取当前年月
   const currentYear = currentDate.getFullYear();
@@ -118,6 +120,16 @@ export default function CalendarPage() {
     }
   }, [authChecked, isAuthenticated, user, currentYear, currentMonth]);
   
+  // 手动刷新函数
+  const refreshEvents = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    await fetchEvents();
+    setIsRefreshing(false);
+    setLastRefreshTime(new Date());
+  };
+  
   // 数据获取逻辑
   const fetchEvents = async (retryCount = 0) => {
     try {
@@ -129,7 +141,9 @@ export default function CalendarPage() {
       }
       
       setError(null);
-      setIsLoading(true);
+      if (!initialLoadDone) {
+        setIsLoading(true);
+      }
       
       // 准备请求头和查询参数
       const headers: HeadersInit = {
@@ -184,9 +198,8 @@ export default function CalendarPage() {
         // 其他错误重试
         if (retryCount < 2) { // 最多重试2次
           console.log(`获取日历事件失败，正在重试(${retryCount + 1}/2)...`);
-          // 短暂延迟后重试
-          setTimeout(() => fetchEvents(retryCount + 1), 1000);
-          return;
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return fetchEvents(retryCount + 1);
         }
         
         throw new Error(`获取日历事件失败: ${response.status}`);
@@ -210,6 +223,10 @@ export default function CalendarPage() {
           }
         }
         
+        if (!initialLoadDone) {
+          setInitialLoadDone(true);
+        }
+        
       } else {
         console.warn('API返回的数据不是数组:', data);
         setEvents([]);
@@ -219,25 +236,29 @@ export default function CalendarPage() {
       console.error('获取日历事件失败:', err);
       setError('获取日历事件失败，请稍后重试');
       toast.error('获取日历事件失败，请稍后重试');
-      setEvents([]); // 确保在错误时清空事件
+      setEvents([]);
     } finally {
-      // 延迟设置加载完成，展示骨架屏效果
+      const delay = initialLoadDone ? 300 : 500;
       setTimeout(() => {
         setIsLoading(false);
-      }, 500); // 缩短加载时间，提升用户体验
+        setInitialLoadDone(true);
+      }, delay);
     }
   };
   
   // 日历导航
   const goToPreviousMonth = () => {
+    setIsRefreshing(true);
     setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
   };
   
   const goToNextMonth = () => {
+    setIsRefreshing(true);
     setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
   };
   
   const goToToday = () => {
+    setIsRefreshing(true);
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today);
@@ -337,24 +358,24 @@ export default function CalendarPage() {
     }
   };
   
-  // 如果认证状态仍在加载，显示加载状态
-  if (authLoading) {
+  // 渲染加载状态
+  if (isLoading && !initialLoadDone) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-gray-500">加载中...</p>
-        </div>
+      <div className="space-y-4 p-4">
+        <TitleSkeleton />
+        <CardSkeleton />
+        <ContentSkeleton />
+        <ListSkeleton />
       </div>
     );
   }
   
-  // 如果用户未登录，显示错误提示
-  if (!isAuthenticated && authChecked) {
+  // 渲染错误状态
+  if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="bg-red-50 text-red-500 p-6 rounded-lg shadow-md animate-fadeIn text-center">
-          <p className="mb-4">请登录后查看您的日历</p>
+          <p className="mb-4">{error}</p>
           <Button
             variant="default"
             onClick={() => router.push('/login')}
@@ -368,233 +389,217 @@ export default function CalendarPage() {
   }
   
   return (
-    <div className="pb-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">我的日历</h1>
-        <Button variant="outline" onClick={() => toast.info('功能开发中')}>
-          <Plus className="h-4 w-4 mr-2" />
-          添加事件
-        </Button>
-      </div>
-      
-      {isLoading ? (
-        <div className="h-full w-full flex items-center justify-center">
-          <div className="space-y-4 w-full max-w-3xl">
-            <CardSkeleton className="h-96" />
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
-                  <div className="space-y-2 flex-1">
-                    <div className="h-4 rounded-md bg-muted animate-pulse w-[60%]" />
-                    <div className="h-3 rounded-md bg-muted animate-pulse w-[80%]" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+    <div className="space-y-4 p-4">
+      {/* 日历头部 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h2 className="text-2xl font-bold">
+            {getMonthName(currentMonth)} {currentYear}
+          </h2>
+          {isRefreshing && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+          {lastRefreshTime && (
+            <span className="text-xs text-muted-foreground">
+              上次更新: {format(lastRefreshTime, 'HH:mm:ss')}
+            </span>
+          )}
         </div>
-      ) : error ? (
-        <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6 animate-fadeIn">
-          {error}
+        <div className="flex items-center space-x-2">
           <Button
-            variant="link"
-            className="ml-2 text-red-600"
-            onClick={() => fetchEvents()}
+            variant="outline"
+            size="icon"
+            onClick={goToPreviousMonth}
+            disabled={isRefreshing}
           >
-            重试
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={goToToday}
+            disabled={isRefreshing}
+          >
+            今天
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToNextMonth}
+            disabled={isRefreshing}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={refreshEvents}
+            disabled={isRefreshing}
+          >
+            <Loader2 className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
           </Button>
         </div>
-      ) : (
-        <div className="w-full overflow-x-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-xl font-semibold transition-all duration-300">
-                {getMonthName(currentMonth)} {currentYear}
-              </h2>
-              <Badge variant="outline" className="text-sm font-normal animate-fadeIn">
-                {events.length} 个事件
-              </Badge>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={goToPreviousMonth}
-                aria-label="上个月"
-                className="transition-transform duration-200 hover:-translate-x-0.5"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={goToNextMonth}
-                aria-label="下个月"
-                className="transition-transform duration-200 hover:translate-x-0.5"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={goToToday}
-                size="sm"
-                className="transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
-              >
-                今天
-              </Button>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 min-w-0">
-              <CardContent className="p-0 overflow-x-auto">
-                <div className="grid grid-cols-7 text-center py-3 bg-muted/10 border-b">
-                  {['日', '一', '二', '三', '四', '五', '六'].map((day, index) => (
-                    <div key={index} className="py-1.5 text-sm font-medium text-muted-foreground">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 auto-rows-fr min-h-[520px]">
-                  {calendarDays.map((day, index) => (
-                    <div 
-                      key={index}
-                      onClick={() => handleDateClick(day.date)}
-                      className={cn(
-                        "min-h-[90px] md:min-h-[100px] lg:min-h-[110px] p-2 border relative cursor-pointer transition-all duration-200",
-                        day.isCurrentMonth 
-                          ? "bg-white hover:bg-gray-50/80" 
-                          : "bg-gray-50/30 text-gray-400 hover:bg-gray-100/50",
-                        isToday(day.date) && "bg-primary/5",
-                        isSelected(day.date) && isToday(day.date) && "ring-1 ring-primary/30 ring-inset",
-                        isSelected(day.date) && !isToday(day.date) && "ring-1 ring-primary/40 ring-inset bg-primary/5"
-                      )}
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <div className={cn(
-                          "flex items-center justify-center w-7 h-7 transition-all",
-                          isToday(day.date) && "bg-primary text-primary-foreground rounded-full",
-                          isSelected(day.date) && !isToday(day.date) && "font-medium text-primary"
-                        )}>
-                          <span className="text-sm">{day.day}</span>
-                        </div>
-                        {hasEvents(day.date) && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 font-medium bg-background/80">
-                            {getEventsForDate(day.date).length}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {/* 事件指示器 */}
-                      <div className="space-y-1.5 overflow-hidden max-h-[70px]">
-                        {getEventsForDate(day.date).slice(0, 2).map((event, eventIndex) => (
-                          <div 
-                            key={eventIndex}
-                            className={cn(
-                              "text-[10px] px-1.5 py-0.5 rounded-sm truncate shadow-[0_1px_2px_rgba(0,0,0,0.05)]",
-                              eventTypeConfig[event.type]?.bgColor || "bg-gray-100/80",
-                              eventTypeConfig[event.type]?.color || "text-gray-600",
-                              "transition-all duration-150 hover:translate-x-0.5"
-                            )}
-                            title={event.title}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
-                        {getEventsForDate(day.date).length > 2 && (
-                          <div className="text-[10px] text-muted-foreground pl-1 font-medium">
-                            +{getEventsForDate(day.date).length - 2} 更多
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <div className="space-y-6">
-              {selectedDate ? (
-                <>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg font-semibold">
-                        {formatDate(selectedDate)}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {getEventsForDate(selectedDate).length > 0 ? (
-                        <p className="text-muted-foreground">
-                          {getEventsForDate(selectedDate).length} 个活动安排
-                        </p>
-                      ) : (
-                        <p className="text-muted-foreground">今日无活动安排</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                  
-                  {getEventsForDate(selectedDate).length > 0 ? (
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-semibold">活动详情</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {getEventsForDate(selectedDate).map((event) => (
-                            <div
-                              key={event.id}
-                              className={cn(
-                                "p-4 rounded-lg cursor-pointer transition-all duration-200",
-                                eventTypeConfig[event.type]?.bgColor || "bg-gray-100/80",
-                                "hover:translate-y-[-1px] hover:shadow-md"
-                              )}
-                              onClick={() => handleEventClick(event)}
-                            >
-                              <h3 className="font-medium mb-3 flex justify-between items-center">
-                                <span>{event.title}</span>
-                                <Badge variant="outline" className="text-xs font-normal">
-                                  {event.type === 'meeting' && '会议'}
-                                  {event.type === 'class' && '课程'}
-                                  {event.type === 'exam' && '考试'}
-                                  {event.type === 'activity' && '活动'}
-                                  {event.type === 'holiday' && '假期'}
-                                  {event.type === 'classroom-impression' && '课堂印象'}
-                                </Badge>
-                              </h3>
-                              <div className="space-y-2 text-sm">
-                                <div className="flex items-center text-muted-foreground">
-                                  <Clock className="h-3.5 w-3.5 mr-1.5" />
-                                  {event.startTime} - {event.endTime}
-                                </div>
-                                <div className="flex items-center text-muted-foreground">
-                                  <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                                  {event.location || "未指定地点"}
-                                </div>
-                                <div className="flex items-center text-muted-foreground">
-                                  <Users className="h-3.5 w-3.5 mr-1.5" />
-                                  {event.participants.length > 0 ? `${event.participants.length} 人参与` : "无参与者"}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : null}
-                </>
-              ) : (
-                <Card>
-                  <CardContent className="py-6 text-center text-muted-foreground">
-                    <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>选择一个日期查看活动安排</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+      </div>
+      
+      <div className="w-full overflow-x-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-xl font-semibold transition-all duration-300">
+              {getMonthName(currentMonth)} {currentYear}
+            </h2>
+            <Badge variant="outline" className="text-sm font-normal animate-fadeIn">
+              {events.length} 个事件
+            </Badge>
           </div>
         </div>
-      )}
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 min-w-0">
+            <CardContent className="p-0 overflow-x-auto">
+              <div className="grid grid-cols-7 text-center py-3 bg-muted/10 border-b">
+                {['日', '一', '二', '三', '四', '五', '六'].map((day, index) => (
+                  <div key={index} className="py-1.5 text-sm font-medium text-muted-foreground">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 auto-rows-fr min-h-[520px]">
+                {calendarDays.map((day, index) => (
+                  <div 
+                    key={index}
+                    onClick={() => handleDateClick(day.date)}
+                    className={cn(
+                      "min-h-[90px] md:min-h-[100px] lg:min-h-[110px] p-2 border relative cursor-pointer transition-all duration-200",
+                      day.isCurrentMonth 
+                        ? "bg-white hover:bg-gray-50/80" 
+                        : "bg-gray-50/30 text-gray-400 hover:bg-gray-100/50",
+                      isToday(day.date) && "bg-primary/5",
+                      isSelected(day.date) && isToday(day.date) && "ring-1 ring-primary/30 ring-inset",
+                      isSelected(day.date) && !isToday(day.date) && "ring-1 ring-primary/40 ring-inset bg-primary/5"
+                    )}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <div className={cn(
+                        "flex items-center justify-center w-7 h-7 transition-all",
+                        isToday(day.date) && "bg-primary text-primary-foreground rounded-full",
+                        isSelected(day.date) && !isToday(day.date) && "font-medium text-primary"
+                      )}>
+                        <span className="text-sm">{day.day}</span>
+                      </div>
+                      {hasEvents(day.date) && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 font-medium bg-background/80">
+                          {getEventsForDate(day.date).length}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {/* 事件指示器 */}
+                    <div className="space-y-1.5 overflow-hidden max-h-[70px]">
+                      {getEventsForDate(day.date).slice(0, 2).map((event, eventIndex) => (
+                        <div 
+                          key={eventIndex}
+                          className={cn(
+                            "text-[10px] px-1.5 py-0.5 rounded-sm truncate shadow-[0_1px_2px_rgba(0,0,0,0.05)]",
+                            eventTypeConfig[event.type]?.bgColor || "bg-gray-100/80",
+                            eventTypeConfig[event.type]?.color || "text-gray-600",
+                            "transition-all duration-150 hover:translate-x-0.5"
+                          )}
+                          title={event.title}
+                        >
+                          {event.title}
+                        </div>
+                      ))}
+                      {getEventsForDate(day.date).length > 2 && (
+                        <div className="text-[10px] text-muted-foreground pl-1 font-medium">
+                          +{getEventsForDate(day.date).length - 2} 更多
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="space-y-6">
+            {selectedDate ? (
+              <>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-semibold">
+                      {formatDate(selectedDate)}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {getEventsForDate(selectedDate).length > 0 ? (
+                      <p className="text-muted-foreground">
+                        {getEventsForDate(selectedDate).length} 个活动安排
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">今日无活动安排</p>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                {getEventsForDate(selectedDate).length > 0 ? (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg font-semibold">活动详情</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {getEventsForDate(selectedDate).map((event) => (
+                          <div
+                            key={event.id}
+                            className={cn(
+                              "p-4 rounded-lg cursor-pointer transition-all duration-200",
+                              eventTypeConfig[event.type]?.bgColor || "bg-gray-100/80",
+                              "hover:translate-y-[-1px] hover:shadow-md"
+                            )}
+                            onClick={() => handleEventClick(event)}
+                          >
+                            <h3 className="font-medium mb-3 flex justify-between items-center">
+                              <span>{event.title}</span>
+                              <Badge variant="outline" className="text-xs font-normal">
+                                {event.type === 'meeting' && '会议'}
+                                {event.type === 'class' && '课程'}
+                                {event.type === 'exam' && '考试'}
+                                {event.type === 'activity' && '活动'}
+                                {event.type === 'holiday' && '假期'}
+                                {event.type === 'classroom-impression' && '课堂印象'}
+                              </Badge>
+                            </h3>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center text-muted-foreground">
+                                <Clock className="h-3.5 w-3.5 mr-1.5" />
+                                {event.startTime} - {event.endTime}
+                              </div>
+                              <div className="flex items-center text-muted-foreground">
+                                <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                                {event.location || "未指定地点"}
+                              </div>
+                              <div className="flex items-center text-muted-foreground">
+                                <Users className="h-3.5 w-3.5 mr-1.5" />
+                                {event.participants.length > 0 ? `${event.participants.length} 人参与` : "无参与者"}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </>
+            ) : (
+              <Card>
+                <CardContent className="py-6 text-center text-muted-foreground">
+                  <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>选择一个日期查看活动安排</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
