@@ -1,89 +1,127 @@
 "use client";
 
-import React from "react";
-import { Mentor, Student } from "@lib/types";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Separator } from "../ui/separator";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Button } from "../ui/button";
+import { Mentor, MentorStudent } from "@/lib/types";
+import { StudentDetail } from "./student-detail";
 
 interface MentorDetailProps {
   mentor: Mentor;
+  onBack: () => void;
 }
 
-export function MentorDetail({ mentor }: MentorDetailProps) {
+export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
+  const [students, setStudents] = useState<MentorStudent[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<MentorStudent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/mentors/${mentor.id}/students`);
+        if (!response.ok) throw new Error('Failed to fetch students');
+        
+        const data = await response.json();
+        setStudents(data);
+      } catch (err) {
+        setError('Failed to load students');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, [mentor.id]);
+
+  if (selectedStudent) {
+    return (
+      <StudentDetail
+        student={selectedStudent}
+        onBack={() => setSelectedStudent(null)}
+      />
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={mentor.avatar} alt={mentor.name} />
-            <AvatarFallback>{mentor.name.slice(0, 2)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <CardTitle className="text-xl">{mentor.name}</CardTitle>
-            <CardDescription>{mentor.title}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold mb-2">个人简介</h3>
-          <p className="text-sm text-muted-foreground">{mentor.bio}</p>
-        </div>
+    <div className="space-y-6">
+      <Button variant="outline" onClick={onBack} className="mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        返回
+      </Button>
 
-        <Separator />
-
-        <div>
-          <h3 className="text-lg font-semibold mb-2">联系方式</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>导师信息</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium">电子邮件</p>
-              <p className="text-sm text-muted-foreground">{mentor.email}</p>
+              <label className="text-sm font-medium">姓名</label>
+              <p className="mt-1">{mentor.name}</p>
             </div>
             <div>
-              <p className="text-sm font-medium">电话</p>
-              <p className="text-sm text-muted-foreground">{mentor.phone}</p>
+              <label className="text-sm font-medium">职称</label>
+              <p className="mt-1">{mentor.title}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">部门</label>
+              <p className="mt-1">{mentor.department}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">联系电话</label>
+              <p className="mt-1">{mentor.phone}</p>
             </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <Separator />
-
-        <div>
-          <h3 className="text-lg font-semibold mb-2">指导学生</h3>
-          {mentor.students && mentor.students.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {mentor.students.map((student: Student, index: number) => (
-                <Card key={student.id || index} className="overflow-hidden">
-                  <div className="relative h-32 bg-muted">
-                    {student.avatar ? (
-                      <div className="absolute inset-0">
-                        <img 
-                          src={student.avatar} 
-                          alt={student.name} 
-                          className="h-full w-full object-cover"
-                        />
+      <Card>
+        <CardHeader>
+          <CardTitle>指导学生</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-4">
+              <svg className="animate-spin h-5 w-5 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 text-center py-4">{error}</div>
+          ) : students.length === 0 ? (
+            <div className="text-gray-500 text-center py-4">暂无指导学生</div>
+          ) : (
+            <div className="grid gap-4">
+              {students.map((student) => (
+                <Card key={student.id} className="cursor-pointer hover:bg-gray-50 transition-colors">
+                  <CardContent className="p-4" onClick={() => setSelectedStudent(student)}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium">{student.name}</h4>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {student.studentId} | {student.major} {student.grade}级 {student.class}班
+                        </p>
                       </div>
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted-foreground">
-                        {student.name.slice(0, 2)}
-                      </div>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <p className="font-medium">{student.name}</p>
-                    <p className="text-sm text-muted-foreground">{student.grade}</p>
+                      <Button variant="ghost" size="sm">
+                        查看详情
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-8 bg-muted/20 rounded-lg">
-              <p className="text-muted-foreground">该导师暂未管理任何学生</p>
-            </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 } 
