@@ -248,17 +248,17 @@ export default function CalendarPage() {
   
   // 日历导航
   const goToPreviousMonth = () => {
-    setIsRefreshing(true);
+    setIsLoading(true);
     setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
   };
   
   const goToNextMonth = () => {
-    setIsRefreshing(true);
+    setIsLoading(true);
     setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
   };
   
   const goToToday = () => {
-    setIsRefreshing(true);
+    setIsLoading(true);
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today);
