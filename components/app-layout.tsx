@@ -47,6 +47,10 @@ const pageTitleMap: Record<string, PageInfo> = {
     title: '全员导师制',
     parent: { title: '工作台', path: '/dashboard' }
   },
+  '/concept-map': {
+    title: '大概念地图',
+    parent: { title: '工作台', path: '/dashboard' }
+  },
   '/calendar': {
     title: '我的日历'
   },
