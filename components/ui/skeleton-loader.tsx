@@ -52,24 +52,30 @@ export function CardGridSkeleton({ className, count = 6 }: SkeletonProps & { cou
 }
 
 // 表格骨架
-export function TableSkeleton({ className, ...props }: SkeletonProps) {
+export function TableSkeleton({ 
+  className, 
+  rowCount = 5, 
+  columnCount = 4,
+  ...props 
+}: SkeletonProps & { 
+  rowCount?: number;
+  columnCount?: number;
+}) {
   return (
     <div
       className={cn("space-y-3", className)}
       {...props}
     >
       <div className="flex space-x-4 overflow-hidden">
-        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
-        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
-        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
-        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
+        {Array.from({ length: columnCount }).map((_, index) => (
+          <div key={index} className="h-8 w-full rounded-md bg-muted animate-pulse" />
+        ))}
       </div>
-      {Array.from({ length: 5 }).map((_, index) => (
+      {Array.from({ length: rowCount }).map((_, index) => (
         <div key={index} className="flex space-x-4 overflow-hidden">
-          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
-          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
-          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
-          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
+          {Array.from({ length: columnCount }).map((_, colIndex) => (
+            <div key={colIndex} className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
+          ))}
         </div>
       ))}
     </div>
