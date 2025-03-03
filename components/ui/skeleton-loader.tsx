@@ -1,33 +1,40 @@
 import React from "react";
-import { Skeleton } from "./skeleton";
 import { cn } from "@/lib/utils";
 
-interface SkeletonProps {
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-// 通用标题和内容骨架
-export function TitleSkeleton({ className }: SkeletonProps) {
+// 通用加载样式
+export function Skeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("space-y-2", className)}>
-      <Skeleton className="h-8 w-[250px]" />
-      <Skeleton className="h-4 w-[350px]" />
-    </div>
+    <div
+      className={cn("animate-pulse rounded-md bg-muted", className)}
+      {...props}
+    />
+  );
+}
+
+// 标题骨架
+export function TitleSkeleton({ className, ...props }: SkeletonProps) {
+  return (
+    <div
+      className={cn("h-8 w-[250px] rounded-md bg-muted animate-pulse", className)}
+      {...props}
+    />
   );
 }
 
 // 卡片骨架
-export function CardSkeleton({ className }: SkeletonProps) {
+export function CardSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn("rounded-xl border bg-white shadow-sm p-6", className)}>
-      <div className="space-y-4">
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-4 w-3/4" />
-        <div className="pt-2 space-y-2">
-          <Skeleton className="h-20 w-full" />
-        </div>
-      </div>
-    </div>
+    <div
+      className={cn("rounded-lg border bg-card shadow-sm animate-pulse", className)}
+      {...props}
+    />
   );
 }
 
@@ -45,54 +52,26 @@ export function CardGridSkeleton({ className, count = 6 }: SkeletonProps & { cou
 }
 
 // 表格骨架
-export function TableSkeleton({ className, rowCount = 5, columnCount = 4 }: SkeletonProps & { rowCount?: number; columnCount?: number }) {
+export function TableSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn("w-full overflow-hidden border rounded-md", className)}>
-      <div className="bg-gray-50 p-4">
-        <Skeleton className="h-6 w-1/4" />
+    <div
+      className={cn("space-y-3", className)}
+      {...props}
+    >
+      <div className="flex space-x-4 overflow-hidden">
+        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
+        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
+        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
+        <div className="h-8 w-full rounded-md bg-muted animate-pulse" />
       </div>
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-8 w-32" />
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex space-x-4 overflow-hidden">
+          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
+          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
+          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
+          <div className="h-6 w-full rounded-sm bg-muted/70 animate-pulse" />
         </div>
-        <div className="border rounded-md overflow-hidden">
-          <div className="grid grid-cols-[repeat(var(--column-count),1fr)] border-b bg-gray-50">
-            {Array(columnCount)
-              .fill(null)
-              .map((_, i) => (
-                <div key={i} className="p-3">
-                  <Skeleton className="h-5 w-full" />
-                </div>
-              ))}
-          </div>
-          {Array(rowCount)
-            .fill(null)
-            .map((_, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="grid grid-cols-[repeat(var(--column-count),1fr)] border-b last:border-0"
-                style={{ "--column-count": columnCount } as React.CSSProperties}
-              >
-                {Array(columnCount)
-                  .fill(null)
-                  .map((_, colIndex) => (
-                    <div key={colIndex} className="p-3">
-                      <Skeleton className="h-5 w-full" />
-                    </div>
-                  ))}
-              </div>
-            ))}
-        </div>
-        <div className="mt-4 flex items-center justify-between">
-          <Skeleton className="h-8 w-24" />
-          <div className="flex space-x-2">
-            <Skeleton className="h-8 w-8" />
-            <Skeleton className="h-8 w-8" />
-            <Skeleton className="h-8 w-8" />
-          </div>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
@@ -171,14 +150,21 @@ export function ListItemSkeleton({ className }: SkeletonProps) {
 }
 
 // 列表骨架
-export function ListSkeleton({ className, count = 5 }: SkeletonProps & { count?: number }) {
+export function ListSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn("space-y-3", className)}>
-      {Array(count)
-        .fill(null)
-        .map((_, i) => (
-          <ListItemSkeleton key={i} />
-        ))}
+    <div
+      className={cn("space-y-3", className)}
+      {...props}
+    >
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex items-center space-x-4">
+          <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+          <div className="space-y-2 flex-1">
+            <div className="h-4 rounded-md bg-muted animate-pulse w-[60%]" />
+            <div className="h-3 rounded-md bg-muted animate-pulse w-[80%]" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -199,17 +185,17 @@ export function TabsSkeleton({ className, tabCount = 3 }: SkeletonProps & { tabC
   );
 }
 
-// 帖子/文章骨架
-export function ContentSkeleton({ className }: SkeletonProps) {
+// 内容区骨架
+export function ContentSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn("space-y-4", className)}>
-      <TitleSkeleton />
-      <Skeleton className="h-[200px] w-full rounded-xl" />
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
+    <div
+      className={cn("space-y-2", className)}
+      {...props}
+    >
+      <div className="h-4 rounded-md bg-muted animate-pulse" />
+      <div className="h-4 rounded-md bg-muted animate-pulse w-[90%]" />
+      <div className="h-4 rounded-md bg-muted animate-pulse w-[85%]" />
+      <div className="h-4 rounded-md bg-muted animate-pulse w-[80%]" />
     </div>
   );
 }

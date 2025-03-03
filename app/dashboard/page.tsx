@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   BookOpen, Users, FileText, Calendar, 
-  Sparkles, TrendingUp, Activity, Clock
+  Sparkles, TrendingUp, Activity, Clock,
+  Database
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
@@ -31,6 +32,7 @@ const iconComponents: Record<string, any> = {
   'users': Users,
   'file': FileText,
   'calendar': Calendar,
+  'database': Database,
 };
 
 // 卡片颜色映射 - 使用更多生动的渐变色
@@ -41,6 +43,7 @@ const colorMap: Record<string, string> = {
   'file': 'from-purple-400 to-violet-600',
   'calendar': 'from-rose-400 to-pink-600',
   'settings': 'from-slate-400 to-slate-600',
+  'database': 'from-cyan-400 to-blue-600',
 };
 
 export default function DashboardPage() {
@@ -93,6 +96,14 @@ export default function DashboardPage() {
         description: '浏览、管理和分配导师资源，促进师生共同成长',
         icon: 'users',
         url: '/mentor-hub',
+        roles: ['教师', '管理员']
+      },
+      {
+        id: '5',
+        name: '数据资产管理',
+        description: '管理和浏览教学相关的各类数据资源',
+        icon: 'database',
+        url: '/data-assets',
         roles: ['教师', '管理员']
       }
     ];
