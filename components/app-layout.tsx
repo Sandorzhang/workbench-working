@@ -23,8 +23,17 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+// 定义页面信息接口
+interface PageInfo {
+  title: string;
+  parent?: {
+    title: string;
+    path: string;
+  };
+}
+
 // 页面标题映射
-const pageTitleMap: Record<string, { title: string, parent?: { title: string, path: string } }> = {
+const pageTitleMap: Record<string, PageInfo> = {
   '/dashboard': { title: '工作台' },
   '/classroom-timemachine': { 
     title: '课堂时光机',
@@ -43,6 +52,22 @@ const pageTitleMap: Record<string, { title: string, parent?: { title: string, pa
   },
   '/admin/users': {
     title: '师生信息管理',
+    parent: { title: '工作台', path: '/dashboard' }
+  },
+  '/academic-standards': {
+    title: '学业标准',
+    parent: { title: '工作台', path: '/dashboard' }
+  },
+  '/exam-management': {
+    title: '考试管理',
+    parent: { title: '工作台', path: '/dashboard' }
+  },
+  '/exam-management/create': {
+    title: '创建考试',
+    parent: { title: '考试管理', path: '/exam-management' }
+  },
+  '/data-assets': {
+    title: '数据资产管理',
     parent: { title: '工作台', path: '/dashboard' }
   }
 };
@@ -66,20 +91,111 @@ export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const [sidebarState, setSidebarState] = useState<boolean | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
+  const [dynamicPageTitle, setDynamicPageTitle] = useState<string | null>(null);
   
   // 在客户端加载时读取cookie
   useEffect(() => {
     setSidebarState(getSidebarStateFromCookie());
     setMounted(true);
   }, []);
+
+  // 处理动态路由的页面标题
+  useEffect(() => {
+    // 检查是否是学业标准详情页
+    if (pathname.startsWith('/academic-standards/') && pathname !== '/academic-standards') {
+      // 获取标准详情以获取标题
+      const fetchStandardDetail = async () => {
+        try {
+          const standardId = pathname.split('/').pop();
+          const response = await fetch(`/api/academic-standards/${standardId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setDynamicPageTitle(data.title);
+          }
+        } catch (error) {
+          console.error('获取标准详情失败:', error);
+        }
+      };
+      
+      fetchStandardDetail();
+    } 
+    // 检查是否是考试编辑页
+    else if (pathname.startsWith('/exam-management/edit/')) {
+      const fetchExamDetail = async () => {
+        try {
+          const examId = pathname.split('/').pop();
+          const response = await fetch(`/api/exams/${examId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setDynamicPageTitle(`编辑: ${data.title || '考试'}`);
+          }
+        } catch (error) {
+          console.error('获取考试详情失败:', error);
+        }
+      };
+      
+      fetchExamDetail();
+    }
+    // 检查是否是数据资产详情页
+    else if (pathname.startsWith('/data-assets/') && pathname !== '/data-assets') {
+      const fetchDataAssetDetail = async () => {
+        try {
+          const assetId = pathname.split('/').pop();
+          const response = await fetch(`/api/data-assets/${assetId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setDynamicPageTitle(data.name || '资产详情');
+          }
+        } catch (error) {
+          console.error('获取数据资产详情失败:', error);
+        }
+      };
+      
+      fetchDataAssetDetail();
+    }
+    else {
+      setDynamicPageTitle(null);
+    }
+  }, [pathname]);
   
   // 登录页不使用此布局
   if (pathname === '/login') {
     return <>{children}</>;
   }
+
+  // 处理动态路由的面包屑
+  let pageInfo: PageInfo = { title: '页面' };
+  let dynamicParent: { title: string; path: string } | null = null;
   
-  const pageInfo = pageTitleMap[pathname] || { title: '页面' };
-  
+  // 对于学业标准详情页
+  if (pathname.startsWith('/academic-standards/') && pathname !== '/academic-standards') {
+    pageInfo = { 
+      title: dynamicPageTitle || '标准详情',
+      parent: { title: '学业标准', path: '/academic-standards' }
+    };
+    dynamicParent = { title: '工作台', path: '/dashboard' };
+  } 
+  // 对于考试编辑页
+  else if (pathname.startsWith('/exam-management/edit/')) {
+    pageInfo = { 
+      title: dynamicPageTitle || '编辑考试',
+      parent: { title: '考试管理', path: '/exam-management' }
+    };
+    dynamicParent = { title: '工作台', path: '/dashboard' };
+  }
+  // 对于数据资产详情页
+  else if (pathname.startsWith('/data-assets/') && pathname !== '/data-assets') {
+    pageInfo = { 
+      title: dynamicPageTitle || '资产详情',
+      parent: { title: '数据资产管理', path: '/data-assets' }
+    };
+    dynamicParent = { title: '工作台', path: '/dashboard' };
+  }
+  else {
+    // 普通静态路由
+    pageInfo = pageTitleMap[pathname] || { title: '页面' };
+  }
+
   return (
     <SidebarProvider defaultOpen={sidebarState === undefined ? true : sidebarState}>
       <div className="flex h-screen w-full overflow-hidden">
@@ -92,6 +208,16 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Separator orientation="vertical" className="mx-4 h-5" />
               <Breadcrumb>
                 <BreadcrumbList>
+                  {dynamicParent && (
+                    <>
+                      <BreadcrumbItem className="hidden md:block">
+                        <BreadcrumbLink href={dynamicParent.path} className="text-gray-500 hover:text-gray-900 font-medium">
+                          {dynamicParent.title}
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator className="hidden md:block text-gray-400" />
+                    </>
+                  )}
                   {pageInfo.parent && (
                     <>
                       <BreadcrumbItem className="hidden md:block">

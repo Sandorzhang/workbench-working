@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ExamTable } from '@/components/exam-management/exam-table'
-import { BreadcrumbNav } from '@/components/exam-management/bread-crumb-nav'
 import { PageContainer } from '@/components/ui/page-container'
 import { PlusCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -51,12 +50,6 @@ export default function ExamManagementPage() {
   return (
     <PageContainer>
       <div className="space-y-4">
-        <BreadcrumbNav 
-          items={[
-            { title: '考试管理', href: '/exam-management' },
-            { title: '考试', href: '/exam-management', isCurrentPage: true }
-          ]} 
-        />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">考试</h1>
           <Button onClick={handleAddExam}>
