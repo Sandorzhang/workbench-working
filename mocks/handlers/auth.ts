@@ -97,79 +97,159 @@ export const authHandlers = [
   
   // 获取当前登录用户信息
   http.get('*/api/auth/me', async ({ request }) => {
-    await delay(300);
+    try {
+      await delay(300);
+      
+      console.log('收到 /api/auth/me 请求');
     
-    // 从请求头获取令牌
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return HttpResponse.json(
-        {
-          message: '未授权访问',
-          code: '401',
-          details: { reason: 'missing_token' }
+      // 从请求头获取令牌
+      const authHeader = request.headers.get('Authorization');
+      console.log('Authorization 头:', authHeader ? authHeader.substring(0, 20) + '...' : 'undefined');
+      
+      // 在开发环境，总是返回默认用户
+      const defaultUser = db.user.findFirst({
+        where: {
+          id: {
+            equals: '1', // 默认管理员
+          },
         },
-        { status: 401 }
+      });
+      
+      if (defaultUser) {
+        const { password: _, ...userWithoutPassword } = defaultUser;
+        console.log('返回默认用户信息:', userWithoutPassword.name);
+        return new HttpResponse(
+          JSON.stringify(userWithoutPassword),
+          { 
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      // 如果没有Authorization头或默认用户不存在，则返回401
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('未找到有效的 Authorization 头');
+        return new HttpResponse(
+          JSON.stringify({
+            message: '未授权访问',
+            code: '401',
+            details: { reason: 'missing_token' }
+          }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      const token = authHeader.split('Bearer ')[1];
+      console.log('提取 token:', token.substring(0, 8) + '...');
+      
+      // 查找会话
+      const session = db.session.findFirst({
+        where: {
+          token: {
+            equals: token,
+          },
+        },
+      });
+      
+      if (!session) {
+        console.log(`未找到匹配的会话 for token: ${token.substring(0, 8)}...`);
+        return new HttpResponse(
+          JSON.stringify({
+            message: '无效的访问令牌',
+            code: '401',
+            details: { reason: 'invalid_token' }
+          }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      // 检查会话是否过期
+      if (new Date(session.expiresAt) < new Date()) {
+        console.log('会话已过期');
+        return new HttpResponse(
+          JSON.stringify({
+            message: '会话已过期',
+            code: '401',
+            details: { reason: 'session_expired' }
+          }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      // 获取用户信息
+      const user = db.user.findFirst({
+        where: {
+          id: {
+            equals: session.userId,
+          },
+        },
+      });
+      
+      if (!user) {
+        console.log(`找不到用户ID: ${session.userId}`);
+        return new HttpResponse(
+          JSON.stringify({
+            message: '用户不存在',
+            code: '404',
+            details: { reason: 'user_not_found' }
+          }),
+          { 
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      // 不返回密码字段
+      const { password: _, ...userWithoutPassword } = user;
+      
+      console.log(`成功返回用户信息: ${userWithoutPassword.name}`);
+      
+      return new HttpResponse(
+        JSON.stringify(userWithoutPassword),
+        { 
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (error) {
+      console.error('处理 /api/auth/me 请求时出错:', error);
+      return new HttpResponse(
+        JSON.stringify({
+          message: '服务器内部错误',
+          code: '500',
+          details: { error: String(error) }
+        }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
     }
-    
-    const token = authHeader.split('Bearer ')[1];
-    
-    // 查找会话
-    const session = db.session.findFirst({
-      where: {
-        token: {
-          equals: token,
-        },
-      },
-    });
-    
-    if (!session) {
-      return HttpResponse.json(
-        {
-          message: '无效的访问令牌',
-          code: '401',
-          details: { reason: 'invalid_token' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    // 检查会话是否过期
-    if (new Date(session.expiresAt) < new Date()) {
-      return HttpResponse.json(
-        {
-          message: '会话已过期',
-          code: '401',
-          details: { reason: 'session_expired' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    // 获取用户信息
-    const user = db.user.findFirst({
-      where: {
-        id: {
-          equals: session.userId,
-        },
-      },
-    });
-    
-    if (!user) {
-      return HttpResponse.json(
-        {
-          message: '用户不存在',
-          code: '404',
-          details: { reason: 'user_not_found' }
-        },
-        { status: 404 }
-      );
-    }
-    
-    // 不返回密码字段
-    const { password: _, ...userWithoutPassword } = user;
-    
-    return HttpResponse.json(userWithoutPassword);
   }),
   
   // 发送短信验证码

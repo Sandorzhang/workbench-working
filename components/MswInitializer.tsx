@@ -43,54 +43,57 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
         try {
           console.log(`尝试初始化 MSW (尝试 ${retryCountRef.current + 1}/${MAX_RETRIES})...`);
           
+          // 检查service worker注册
+          if (!navigator.serviceWorker) {
+            console.error('浏览器不支持 Service Worker, MSW 无法初始化');
+            setStatus('error');
+            return;
+          }
+          
           // 导入MSW模块
           const { worker } = await import('@/mocks');
           
-          // 检查service worker注册
-          if ('serviceWorker' in navigator) {
-            console.log('浏览器支持 Service Worker, 开始初始化 MSW...');
-            
-            // 尝试初始化MSW
-            await worker.start({
-              onUnhandledRequest: (request: MswRequest, print: MswPrint) => {
-                // 忽略静态资源请求
-                if (
-                  request.url.includes('/_next/') || 
-                  request.url.includes('.svg') || 
-                  request.url.includes('.png') || 
-                  request.url.includes('.jpg') || 
-                  request.url.includes('.ico') ||
-                  request.url.includes('favicon')
-                ) {
-                  return;
-                }
-                
-                // 记录未处理的请求
-                console.warn(`[MSW] 未处理的请求: ${request.method} ${request.url}`);
-                print.warning();
+          console.log('准备启动MSW worker...');
+          
+          // 尝试初始化MSW
+          await worker.start({
+            onUnhandledRequest: (request: MswRequest, print: MswPrint) => {
+              // 忽略静态资源请求
+              if (
+                request.url.includes('/_next/') || 
+                request.url.includes('.svg') || 
+                request.url.includes('.png') || 
+                request.url.includes('.jpg') || 
+                request.url.includes('.ico') ||
+                request.url.includes('favicon')
+              ) {
+                return;
+              }
+              
+              // 详细记录未处理的请求
+              console.warn(`[MSW] 未处理的请求: ${request.method} ${request.url}`);
+              print.warning();
+            },
+            serviceWorker: {
+              url: '/mockServiceWorker.js',
+              options: {
+                scope: '/',
               },
-              serviceWorker: {
-                url: '/mockServiceWorker.js',
-                options: {
-                  scope: '/',
-                },
-              },
-            });
-            
-            // 确保默认会话可用
-            const token = localStorage.getItem('token');
-            if (!token) {
-              console.log('设置默认测试token');
-              localStorage.setItem('token', 'default-token');
-            }
-            
-            console.log('MSW 初始化成功!');
-            setStatus('success');
-            onInitialized?.();
-          } else {
-            console.error('浏览器不支持 Service Worker, MSW 无法初始化');
-            setStatus('error');
+            },
+          });
+          
+          console.log('MSW worker 启动成功');
+          
+          // 确保默认会话可用
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.log('设置默认测试token');
+            localStorage.setItem('token', 'default-token');
           }
+          
+          console.log('MSW 初始化成功!');
+          setStatus('success');
+          onInitialized?.();
         } catch (error) {
           console.error(`MSW 初始化失败 (尝试 ${retryCountRef.current + 1}/${MAX_RETRIES}):`, error);
           
@@ -103,6 +106,7 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
           
           console.error('MSW 初始化失败，已达到最大重试次数');
           setStatus('error');
+          toast.error('模拟服务初始化失败，请刷新页面重试');
         }
       };
       
@@ -130,8 +134,13 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
         alignItems: 'center',
         gap: '4px'
       }}
+      onClick={() => {
+        if (status === 'error') {
+          window.location.reload();
+        }
+      }}
     >
-      <span>MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启用' : '初始化失败'}</span>
+      <span>MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启用' : '初始化失败 (点击刷新)'}</span>
     </div>
   );
 } 

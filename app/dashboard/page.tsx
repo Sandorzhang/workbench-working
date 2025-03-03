@@ -27,6 +27,19 @@ interface Application {
   roles: string[];
 }
 
+// 角色映射
+const roleMap: Record<string, string> = {
+  'admin': '管理员',
+  'teacher': '教师',
+  'student': '学生'
+};
+
+// 获取角色中文名称
+const getRoleDisplay = (role: string | undefined) => {
+  if (!role) return '用户';
+  return roleMap[role] || role;
+};
+
 // 图标映射 - 使用类型断言避免TypeScript错误
 const iconComponents: Record<string, any> = {
   'book': BookOpen,
@@ -252,7 +265,7 @@ export default function DashboardPage() {
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="px-3 py-1.5 bg-white border-primary/20">
               <Sparkles className="h-3.5 w-3.5 text-primary mr-1" />
-              <span className="text-primary">{user?.role || '用户'}</span>
+              <span className="text-primary">{getRoleDisplay(user?.role)}</span>
             </Badge>
             <Avatar className="h-12 w-12 border-2 border-primary/20">
               <AvatarImage src={user?.avatar || "/avatars/default.png"} alt={user?.name || '用户'} />
@@ -344,7 +357,7 @@ export default function DashboardPage() {
                     <div className="mt-2 flex flex-wrap gap-1">
                       {app.roles.map((role) => (
                         <Badge key={role} variant="secondary" className="text-xs">
-                          {role}
+                          {getRoleDisplay(role)}
                         </Badge>
                       ))}
                     </div>

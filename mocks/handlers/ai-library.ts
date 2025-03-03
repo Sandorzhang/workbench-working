@@ -100,20 +100,32 @@ export const aiLibraryHandlers = [
   }),
   
   // 获取用户添加的智能体
-  http.get('*/api/ai-library/user-agents', async () => {
-    // 在真实环境中，这里会基于授权信息获取用户ID
-    const userId = 'default';
-    
-    // 找出用户添加的所有智能体ID
-    const userAgentIds = userAgentRelations
-      .filter(rel => rel.userId === userId)
-      .map(rel => rel.agentId);
-    
-    // 获取对应的智能体详情
-    const userAgents = agents.filter(agent => userAgentIds.includes(agent.id));
-    
-    await delay(500);
-    return HttpResponse.json(userAgents);
+  http.get('*/api/ai-library/user-agents', async ({ request }) => {
+    try {
+      // 在真实环境中，这里会基于授权信息获取用户ID
+      const userId = 'default';
+      
+      console.log('收到获取用户智能体请求');
+      
+      // 找出用户添加的所有智能体ID
+      const userAgentIds = userAgentRelations
+        .filter(rel => rel.userId === userId)
+        .map(rel => rel.agentId);
+      
+      console.log(`找到 ${userAgentIds.length} 个用户智能体`);
+      
+      // 获取对应的智能体详情
+      const userAgents = agents.filter(agent => userAgentIds.includes(agent.id));
+      
+      await delay(500);
+      return HttpResponse.json(userAgents);
+    } catch (error) {
+      console.error('获取用户智能体失败:', error);
+      return HttpResponse.json(
+        { message: '获取智能体失败', error: String(error) },
+        { status: 500 }
+      );
+    }
   }),
   
   // 添加智能体到用户列表

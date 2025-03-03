@@ -93,7 +93,7 @@ async function handleRequest<T>(
     throw {
       message: error instanceof Error ? error.message : '请求失败',
       code: 'UNKNOWN',
-      details: error
+      details: { originalError: error }
     } as ApiErrorResponse;
   }
 }
