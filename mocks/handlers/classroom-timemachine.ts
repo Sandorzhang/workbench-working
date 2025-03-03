@@ -330,59 +330,227 @@ const filmStrips: FilmStrip[] = [
 // Handlers
 export const classroomTimemachineHandlers = [
   // Get all classroom records
-  http.get('/api/classroom-timemachine/records', async () => {
+  http.get('*/api/classroom-timemachine/records', async ({ request }) => {
     await delay(500);
-    return HttpResponse.json(classroomRecords);
+    
+    try {
+      // 获取授权头
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new HttpResponse(
+          JSON.stringify({ error: '未授权访问' }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      console.log('获取课堂记录列表');
+      return HttpResponse.json(classroomRecords);
+    } catch (error) {
+      console.error('获取课堂记录失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '获取课堂记录失败' }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
   }),
 
   // Get a single classroom record by ID
-  http.get('/api/classroom-timemachine/records/:id', async ({ params }) => {
+  http.get('*/api/classroom-timemachine/records/:id', async ({ params, request }) => {
     const { id } = params;
     await delay(300);
-    const record = classroomRecords.find(r => r.id === id);
     
-    if (!record) {
-      return new HttpResponse(null, { status: 404 });
+    try {
+      // 获取授权头
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new HttpResponse(
+          JSON.stringify({ error: '未授权访问' }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      console.log('获取课堂记录详情:', id);
+      const record = classroomRecords.find(r => r.id === id);
+      
+      if (!record) {
+        return new HttpResponse(
+          JSON.stringify({ error: '课堂记录不存在' }), 
+          { 
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      return HttpResponse.json(record);
+    } catch (error) {
+      console.error('获取课堂记录详情失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '获取课堂记录详情失败' }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
-    
-    return HttpResponse.json(record);
   }),
 
   // Get all film strips
-  http.get('/api/classroom-timemachine/filmstrips', async () => {
+  http.get('*/api/classroom-timemachine/filmstrips', async ({ request }) => {
     await delay(600);
-    return HttpResponse.json(filmStrips);
+    
+    try {
+      // 获取授权头
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new HttpResponse(
+          JSON.stringify({ error: '未授权访问' }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      console.log('获取胶片条列表');
+      return HttpResponse.json(filmStrips);
+    } catch (error) {
+      console.error('获取胶片条列表失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '获取胶片条列表失败' }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
   }),
 
   // Get film strips by semester
-  http.get('/api/classroom-timemachine/filmstrips/:semester', async ({ params }) => {
+  http.get('*/api/classroom-timemachine/filmstrips/:semester', async ({ params, request }) => {
     const { semester } = params;
     await delay(400);
-    const strip = filmStrips.find(s => s.semester === semester);
     
-    if (!strip) {
-      return new HttpResponse(null, { status: 404 });
+    try {
+      // 获取授权头
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new HttpResponse(
+          JSON.stringify({ error: '未授权访问' }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      console.log('获取学期胶片条:', semester);
+      const strip = filmStrips.find(s => s.semester === semester);
+      
+      if (!strip) {
+        return new HttpResponse(
+          JSON.stringify({ error: '未找到该学期的课堂记录' }), 
+          { 
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      return HttpResponse.json(strip);
+    } catch (error) {
+      console.error('获取学期胶片条失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '获取学期胶片条失败' }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
-    
-    return HttpResponse.json(strip);
   }),
 
   // Get teaching moment details by ID
-  http.get('/api/classroom-timemachine/moments/:id', async ({ params }) => {
+  http.get('*/api/classroom-timemachine/moments/:id', async ({ params, request }) => {
     const { id } = params;
     await delay(350);
     
-    let moment: TeachingMoment | undefined;
-    
-    for (const strip of filmStrips) {
-      moment = strip.moments.find(m => m.id === id);
-      if (moment) break;
+    try {
+      // 获取授权头
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new HttpResponse(
+          JSON.stringify({ error: '未授权访问' }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      console.log('获取教学时刻详情:', id);
+      let moment: TeachingMoment | undefined;
+      
+      for (const strip of filmStrips) {
+        moment = strip.moments.find(m => m.id === id);
+        if (moment) break;
+      }
+      
+      if (!moment) {
+        return new HttpResponse(
+          JSON.stringify({ error: '教学时刻不存在' }), 
+          { 
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      return HttpResponse.json(moment);
+    } catch (error) {
+      console.error('获取教学时刻详情失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '获取教学时刻详情失败' }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
-    
-    if (!moment) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    
-    return HttpResponse.json(moment);
   })
 ]; 

@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { type RequestHandler } from 'msw'
+import { examHandlers } from './handlers/exam'
 
 // 导师相关的处理程序
 const mentorHandlers: RequestHandler[] = [
@@ -106,5 +107,6 @@ const mentorHandlers: RequestHandler[] = [
 
 export const handlers = [
   ...mentorHandlers,
+  ...examHandlers,
   // ... existing handlers ...
 ] 

@@ -254,85 +254,127 @@ export const Timeline: React.FC<TimelineProps> = ({
     const subjectGradient = getSubjectGradient(moment.subject);
 
     return (
-      <div 
+      <motion.div 
         key={moment.id} 
         className="relative group"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
         style={{ 
           position: 'absolute',
           left: `${position}%`,
-          width: '200px',
-          marginLeft: '-100px', // 居中
-          zIndex: isSelected ? 30 : 10 // 选中的时刻提高层级，避免被其他元素遮挡
+          width: '180px',
+          marginLeft: '-90px',
+          zIndex: isSelected ? 30 : 10
         }}
         onClick={() => handleMomentClick(moment)}
       >
         {/* 日期标签 - 在时间线上方 */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-30px)] z-20">
+        <motion.div 
+          className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-30px)] z-20"
+          animate={{
+            y: isSelected ? -5 : 0,
+            scale: isSelected ? 1.05 : 1
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <div className={cn(
-            "px-3 py-1 text-sm font-medium rounded-md whitespace-nowrap",
-            isSelected ? "bg-primary text-white" : "bg-background border border-border text-foreground"
+            "px-3 py-1.5 text-sm font-medium rounded-md whitespace-nowrap transition-all duration-200",
+            isSelected 
+              ? "bg-primary text-white shadow-md" 
+              : "bg-background border border-border text-foreground hover:border-primary/50"
           )}>
             <div className="flex items-center">
               <Calendar className="mr-1.5 h-4 w-4" />
               {moment.date}
             </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* 连接线 */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-25px+20px)] h-[75px] w-0.5 z-20">
+        <motion.div 
+          className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-25px+20px)] h-[75px] z-20"
+          animate={{
+            width: isSelected ? '2px' : '1px'
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <div className={cn(
-            "w-full h-full",
+            "w-full h-full transition-all duration-300",
             isSelected 
-              ? "bg-primary" 
-              : `bg-gradient-to-b ${subjectGradient.replace('from-', '').replace('/20', '')}`
+              ? "bg-primary shadow-sm" 
+              : `bg-gradient-to-b ${subjectGradient}`
           )}></div>
-        </div>
+        </motion.div>
         
         {/* 时间线上的锚点 */}
-        <div 
+        <motion.div 
           className="absolute left-1/2 transform -translate-x-1/2 top-[60px] mt-[-4px] z-30"
+          animate={{
+            scale: isSelected ? 1.1 : 1
+          }}
+          transition={{ duration: 0.2 }}
           onClick={(e) => handleNodeClick(moment, e)}
         >
           <div 
             className={cn(
-              "flex items-center justify-center rounded-full cursor-pointer transition-all",
+              "flex items-center justify-center rounded-full cursor-pointer transition-all duration-200",
               isSelected 
-                ? "w-5 h-5 border-2 border-primary bg-white shadow-sm" 
-                : "w-4 h-4 border border-gray-400 bg-white hover:border-primary"
+                ? "w-5 h-5 border-2 border-primary bg-white shadow-md" 
+                : "w-4 h-4 border border-gray-400 bg-white hover:border-primary hover:scale-110"
             )}
           >
             {isSelected && (
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              <motion.div 
+                className="w-2 h-2 rounded-full bg-primary"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.2 }}
+              />
             )}
           </div>
-        </div>
+        </motion.div>
         
         {/* 卡片内容 - 在时间线下方 */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px+38px)] z-20">
-          <motion.div 
+        <motion.div 
+          className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px+38px)] z-20"
+          animate={{
+            y: isSelected ? 5 : 0,
+            scale: isSelected ? 1.02 : 1
+          }}
+          transition={{ duration: 0.2 }}
+        >
+          <div 
             className={cn(
-              "w-56 rounded-lg overflow-hidden border shadow-sm bg-card transition-colors",
-              isSelected ? "border-primary" : "border-border hover:border-primary/50"
+              "w-56 rounded-lg overflow-hidden border shadow-sm bg-card transition-all duration-200",
+              isSelected 
+                ? "border-primary shadow-md" 
+                : "border-border hover:border-primary/50 hover:shadow-md"
             )}
-            whileHover={{ y: -2, scale: 1.02, transition: { duration: 0.2 } }}
           >
             <div className="relative h-32 w-full overflow-hidden">
               <img 
                 src={moment.thumbnail || '/placeholder.jpg'} 
                 alt={moment.title} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent">
                 <div className="absolute bottom-3 left-3 right-3 overflow-hidden">
                   <div className="flex items-center gap-2 mb-2 w-full">
-                    <Badge className={cn("py-1 px-2.5 text-xs flex-shrink-0", typeInfo.className)}>
+                    <Badge className={cn(
+                      "py-1 px-2.5 text-xs flex-shrink-0 transition-all duration-200",
+                      typeInfo.className,
+                      isSelected && "shadow-sm scale-105"
+                    )}>
                       <span className="flex items-center w-full overflow-hidden">
                         {typeInfo.icon}
                         <span className="ml-1 truncate">{typeInfo.label}</span>
                       </span>
                     </Badge>
-                    <Badge variant="outline" className="py-1 px-2 text-xs bg-black/30 text-white border-0">
+                    <Badge variant="outline" className={cn(
+                      "py-1 px-2 text-xs bg-black/30 text-white border-0 transition-all duration-200",
+                      isSelected && "bg-black/50"
+                    )}>
                       {moment.subject}
                     </Badge>
                   </div>
@@ -342,19 +384,23 @@ export const Timeline: React.FC<TimelineProps> = ({
               
               {/* 播放按钮 */}
               {(moment.type === 'video' || moment.type === 'audio') && (
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button size="icon" variant="secondary" className="w-9 h-9 rounded-full bg-black/50 hover:bg-primary border-none">
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Button 
+                    size="icon" 
+                    variant="secondary" 
+                    className="w-9 h-9 rounded-full bg-black/50 hover:bg-primary border-none shadow-lg"
+                  >
                     <Play className="h-4 w-4 text-white" />
                   </Button>
                 </div>
               )}
               
               {/* 放大按钮 */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <Button 
                   size="icon" 
                   variant="secondary" 
-                  className="w-7 h-7 rounded-full bg-black/50 hover:bg-primary border-none"
+                  className="w-7 h-7 rounded-full bg-black/50 hover:bg-primary border-none shadow-lg"
                   onClick={(e) => {
                     e.stopPropagation();
                     openDetailDialog(moment);
@@ -364,9 +410,9 @@ export const Timeline: React.FC<TimelineProps> = ({
                 </Button>
               </div>
             </div>
-          </motion.div>
-        </div>
-      </div>
+          </div>
+        </motion.div>
+      </motion.div>
     );
   };
 
@@ -378,80 +424,115 @@ export const Timeline: React.FC<TimelineProps> = ({
     const subjectGradient = getSubjectGradient(moment.subject);
 
     return (
-      <div 
+      <motion.div 
         key={moment.id} 
         className="relative group"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
         style={{ 
           position: 'absolute',
           left: `${position}%`,
           width: '250px',
-          marginLeft: '-125px', // 居中
+          marginLeft: '-125px',
           zIndex: isSelected ? 30 : 10
         }}
         onClick={() => handleMomentClick(moment)}
       >
         {/* 日期标签 - 在时间线上方 */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-35px)] z-20">
+        <motion.div 
+          className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-35px)] z-20"
+          animate={{
+            y: isSelected ? -5 : 0,
+            scale: isSelected ? 1.05 : 1
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <div className={cn(
-            "px-3 py-1.5 text-sm font-medium rounded-md whitespace-nowrap shadow-sm",
-            isSelected ? "bg-primary text-white" : "bg-background border border-border text-foreground"
+            "px-3 py-1.5 text-sm font-medium rounded-md whitespace-nowrap shadow-sm transition-all duration-200",
+            isSelected 
+              ? "bg-primary text-white shadow-md" 
+              : "bg-background border border-border text-foreground hover:border-primary/50"
           )}>
             <div className="flex items-center">
               <Calendar className="mr-1.5 h-4 w-4" />
               {moment.date}
             </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* 连接线 */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-25px+20px)] h-[85px] w-1 z-20">
+        <motion.div 
+          className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px-25px+20px)] h-[85px] z-20"
+          animate={{
+            width: isSelected ? '3px' : '2px'
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <div className={cn(
-            "w-full h-full",
+            "w-full h-full transition-all duration-300",
             isSelected 
-              ? "bg-primary" 
-              : `bg-gradient-to-b ${subjectGradient.replace('from-', '').replace('/20', '')}`
+              ? "bg-primary shadow-md" 
+              : `bg-gradient-to-b ${subjectGradient}`
           )}></div>
-        </div>
+        </motion.div>
         
         {/* 时间线上的锚点 */}
-        <div 
+        <motion.div 
           className="absolute left-1/2 transform -translate-x-1/2 top-[60px] mt-[-5px] z-30"
+          animate={{
+            scale: isSelected ? 1.1 : 1
+          }}
+          transition={{ duration: 0.2 }}
           onClick={(e) => handleNodeClick(moment, e)}
         >
           <div 
             className={cn(
-              "flex items-center justify-center rounded-full cursor-pointer transition-all",
+              "flex items-center justify-center rounded-full cursor-pointer transition-all duration-200",
               isSelected 
-                ? "w-6 h-6 border-3 border-primary bg-white shadow-md" 
-                : "w-5 h-5 border-2 border-gray-400 bg-white hover:border-primary"
+                ? "w-6 h-6 border-3 border-primary bg-white shadow-lg" 
+                : "w-5 h-5 border-2 border-gray-400 bg-white hover:border-primary hover:scale-110"
             )}
           >
             {isSelected && (
-              <div className="w-2.5 h-2.5 rounded-full bg-primary"></div>
+              <motion.div 
+                className="w-2.5 h-2.5 rounded-full bg-primary"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.2 }}
+              />
             )}
           </div>
-        </div>
+        </motion.div>
         
         {/* 卡片内容 - 在时间线下方 */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px+45px)] z-20">
-          <motion.div 
+        <motion.div 
+          className="absolute left-1/2 transform -translate-x-1/2 top-[calc(60px+45px)] z-20"
+          animate={{
+            y: isSelected ? 5 : 0,
+            scale: isSelected ? 1.02 : 1
+          }}
+          transition={{ duration: 0.2 }}
+        >
+          <div 
             className={cn(
-              "w-64 rounded-xl overflow-hidden border shadow-md bg-card transition-colors",
-              isSelected ? "border-primary" : "border-border hover:border-primary/50"
+              "w-64 rounded-xl overflow-hidden border shadow-md bg-card transition-all duration-200",
+              isSelected 
+                ? "border-primary shadow-lg" 
+                : "border-border hover:border-primary/50 hover:shadow-lg"
             )}
-            whileHover={{ y: -3, scale: 1.03, transition: { duration: 0.2 } }}
           >
             <div className="relative h-40 w-full overflow-hidden">
               <img 
                 src={moment.thumbnail || '/placeholder.jpg'} 
                 alt={moment.title} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
               />
               {/* 视频播放容器 */}
               {moment.type === 'video' && (
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                   <Button 
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-full py-2 px-4 shadow-md"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-full py-2 px-4 shadow-md transition-all duration-200 hover:scale-105"
                     onClick={(e) => {
                       e.stopPropagation();
                       openDetailDialog(moment);
@@ -466,13 +547,20 @@ export const Timeline: React.FC<TimelineProps> = ({
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent">
                 <div className="absolute bottom-3 left-3 right-3 overflow-hidden">
                   <div className="flex items-center gap-2 mb-2 w-full">
-                    <Badge className={cn("py-1.5 px-3 text-sm flex-shrink-0", typeInfo.className)}>
+                    <Badge className={cn(
+                      "py-1.5 px-3 text-sm flex-shrink-0 transition-all duration-200",
+                      typeInfo.className,
+                      isSelected && "shadow-sm scale-105"
+                    )}>
                       <span className="flex items-center w-full overflow-hidden">
                         {typeInfo.icon}
                         <span className="ml-1.5 truncate">{typeInfo.label}</span>
                       </span>
                     </Badge>
-                    <Badge variant="outline" className="py-1.5 px-2.5 text-xs bg-black/30 text-white border-0">
+                    <Badge variant="outline" className={cn(
+                      "py-1.5 px-2.5 text-xs bg-black/30 text-white border-0 transition-all duration-200",
+                      isSelected && "bg-black/50"
+                    )}>
                       {moment.subject}
                     </Badge>
                   </div>
@@ -482,8 +570,8 @@ export const Timeline: React.FC<TimelineProps> = ({
             </div>
             
             <div className="p-3">
-              <p className="text-xs text-gray-600 line-clamp-2">{moment.description}</p>
-              <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-gray-600 line-clamp-2 mb-2">{moment.description}</p>
+              <div className="flex items-center justify-between">
                 <div className="flex items-center text-xs text-gray-500">
                   <Clock className="h-3 w-3 mr-1" />
                   {moment.duration}
@@ -491,7 +579,10 @@ export const Timeline: React.FC<TimelineProps> = ({
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-7 px-2 text-xs"
+                  className={cn(
+                    "h-7 px-2 text-xs transition-colors duration-200",
+                    isSelected && "text-primary hover:text-primary/90"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation();
                     openDetailDialog(moment);
@@ -501,9 +592,9 @@ export const Timeline: React.FC<TimelineProps> = ({
                 </Button>
               </div>
             </div>
-          </motion.div>
-        </div>
-      </div>
+          </div>
+        </motion.div>
+      </motion.div>
     );
   };
 
@@ -563,10 +654,23 @@ export const Timeline: React.FC<TimelineProps> = ({
                   variant={selectedSemester === strip.semester ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleSelectSemester(strip.semester)}
-                  className="min-w-max"
+                  className={cn(
+                    "min-w-max transition-all duration-200",
+                    selectedSemester === strip.semester 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "hover:bg-muted"
+                  )}
                 >
                   {strip.semester}
-                  <Badge variant="secondary" className="ml-2 bg-background text-foreground">
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "ml-2",
+                      selectedSemester === strip.semester 
+                        ? "bg-primary-foreground/10 text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
                     {strip.moments.length}
                   </Badge>
                 </Button>
@@ -579,58 +683,31 @@ export const Timeline: React.FC<TimelineProps> = ({
         {/* 主时间线区域 */}
         <div className="relative p-4 pt-2 pb-6">
           {/* 时间进度指示器 */}
-          <div className="mb-3 relative h-2 bg-muted rounded-full overflow-hidden">
+          <div className="mb-3 relative h-2.5 bg-muted rounded-full overflow-hidden">
             <div 
-              className="absolute top-0 left-0 h-full bg-primary rounded-full"
+              className="absolute top-0 left-0 h-full bg-primary/70 rounded-full transition-all duration-300"
               style={{ width: `${viewportPosition}%` }}
             ></div>
             <div 
-              className="absolute top-0 h-full w-8 bg-gradient-to-r from-transparent to-primary/50 rounded-full"
-              style={{ left: `calc(${viewportPosition}% - 32px)` }}
+              className="absolute top-0 h-full w-12 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full transition-all duration-300"
+              style={{ left: `calc(${viewportPosition}% - 24px)` }}
             ></div>
             
             {/* 月份标记 */}
             {timeMarkers.map((marker, index) => (
               <div
                 key={marker}
-                className="absolute -top-6 transform -translate-x-1/2"
+                className="absolute -top-7 transform -translate-x-1/2"
                 style={{ 
                   left: `${(index / (timeMarkers.length - 1)) * 100}%`,
                 }}
               >
-                <div className="text-xs font-medium text-muted-foreground">{marker}</div>
-                <div className="absolute top-6 left-1/2 transform -translate-x-1/2 h-3 w-px bg-muted-foreground"></div>
+                <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">{marker}</div>
+                <div className="absolute top-8 left-1/2 transform -translate-x-1/2 h-4 w-px bg-muted-foreground/50"></div>
               </div>
             ))}
           </div>
           
-          {/* 时间线操作区 */}
-          <div className="flex justify-between items-center mb-1">
-            <Badge variant="outline" className="bg-muted/50 text-sm font-normal">
-              {selectedSemester ? `当前: ${selectedSemester}` : '滑动或点击学期按钮导航'}
-            </Badge>
-            
-            <div className="flex items-center space-x-1">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={scrollLeft}
-                className="h-7 w-7 p-0 rounded-full"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={scrollRight}
-                className="h-7 w-7 p-0 rounded-full"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {/* 滚动区域 */}
           <div className="relative overflow-hidden border border-muted rounded-md">
             <ScrollArea 
               ref={timelineRef} 
@@ -643,7 +720,8 @@ export const Timeline: React.FC<TimelineProps> = ({
                 className="relative" 
                 style={{ 
                   width: `${timelineWidth}px`, 
-                  height: viewMode === 'compact' ? '350px' : '480px' 
+                  height: viewMode === 'compact' ? '350px' : '480px',
+                  transition: 'height 0.3s ease'
                 }}
               >
                 {/* 时间线背景 */}
@@ -653,10 +731,16 @@ export const Timeline: React.FC<TimelineProps> = ({
                     <div 
                       key={i} 
                       className={cn(
-                        "absolute h-2.5 w-px", 
-                        i % 5 === 0 ? "bg-muted-foreground" : "bg-border"
+                        "absolute h-3 w-px transition-all duration-200", 
+                        i % 5 === 0 
+                          ? "bg-muted-foreground/70 h-4" 
+                          : "bg-muted-foreground/30"
                       )} 
-                      style={{ left: `${i}%`, top: '-0.5px' }}
+                      style={{ 
+                        left: `${i}%`, 
+                        top: '-50%',
+                        transform: 'translateY(-50%)'
+                      }}
                     />
                   ))}
                 </div>
@@ -671,10 +755,10 @@ export const Timeline: React.FC<TimelineProps> = ({
                     <div 
                       key={strip.semester}
                       className={cn(
-                        "absolute h-12 z-5 border-l border-r border-border",
+                        "absolute h-12 z-5 border-l border-r border-border transition-all duration-200",
                         selectedSemester === strip.semester 
                           ? "bg-primary/5" 
-                          : index % 2 === 0 ? "bg-muted/40" : "bg-muted/20"
+                          : index % 2 === 0 ? "bg-muted/30" : "bg-muted/20"
                       )}
                       style={{ 
                         left: `${startPos}%`, 
@@ -698,7 +782,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                     }}
                   >
                     <div className={cn(
-                      "text-xs font-semibold",
+                      "text-xs font-semibold transition-colors duration-200",
                       selectedSemester === strip.semester 
                         ? "text-primary" 
                         : "text-muted-foreground"

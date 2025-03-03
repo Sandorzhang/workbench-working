@@ -78,6 +78,39 @@ const mockEvents = [
     type: 'holiday',
     description: '清明节假期',
     participants: []
+  },
+  {
+    id: '6',
+    title: '数学课堂印象',
+    date: '2024-03-22',
+    startTime: '10:00',
+    endTime: '11:30',
+    location: '教室301',
+    type: 'classroom-impression',
+    description: 'recordId:cr-001',
+    participants: ['张老师', '初三(2)班']
+  },
+  {
+    id: '7',
+    title: '物理实验课记录',
+    date: '2024-03-23',
+    startTime: '14:00',
+    endTime: '15:30',
+    location: '物理实验室',
+    type: 'classroom-impression',
+    description: 'recordId:cr-002',
+    participants: ['李老师', '高一(3)班']
+  },
+  {
+    id: '8',
+    title: '语文课堂印象',
+    date: '2024-03-25',
+    startTime: '08:00',
+    endTime: '09:30',
+    location: '教室102',
+    type: 'classroom-impression',
+    description: 'recordId:cr-003',
+    participants: ['王老师', '六年级(1)班']
   }
 ];
 

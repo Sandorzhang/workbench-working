@@ -10,6 +10,7 @@ import { imageHandlers } from './image';
 import { teachingPlanHandlers } from './teaching-plans';
 import { agentHandlers } from './agents';
 import { workbenchHandlers } from './workbench';
+import { classroomTimemachineHandlers } from './classroom-timemachine';
 // 导入其他处理器...
 
 export const handlers = [
@@ -23,6 +24,7 @@ export const handlers = [
   ...teachingPlanHandlers,
   ...agentHandlers,
   ...workbenchHandlers,
+  ...classroomTimemachineHandlers,
   // 其他处理器...
   
   // 处理教学设计API

@@ -68,7 +68,11 @@ const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] =>
   const fetchClassroomRecords = async () => {
     setLoadingRecords(true);
     try {
-      const response = await fetch('/api/classroom-timemachine/records');
+      const response = await fetch('/api/classroom-timemachine/records', {
+        headers: {
+          'Authorization': 'Bearer mock-token'
+        }
+      });
       if (!response.ok) throw new Error('获取课堂记录失败');
       const data = await response.json();
       setRecords(data);
@@ -87,7 +91,11 @@ const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] =>
   const fetchFilmStrips = async () => {
     setLoadingFilmStrips(true);
     try {
-      const response = await fetch('/api/classroom-timemachine/filmstrips');
+      const response = await fetch('/api/classroom-timemachine/filmstrips', {
+        headers: {
+          'Authorization': 'Bearer mock-token'
+        }
+      });
       if (!response.ok) throw new Error('获取胶片条失败');
       const data = await response.json();
       setFilmStrips(data);
@@ -103,7 +111,11 @@ const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] =>
   const fetchMomentDetail = async (momentId: string) => {
     setLoadingMoment(true);
     try {
-      const response = await fetch(`/api/classroom-timemachine/moments/${momentId}`);
+      const response = await fetch(`/api/classroom-timemachine/moments/${momentId}`, {
+        headers: {
+          'Authorization': 'Bearer mock-token'
+        }
+      });
       if (!response.ok) throw new Error('获取教学时刻失败');
       const data = await response.json();
       setSelectedMoment(data);

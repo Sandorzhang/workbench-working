@@ -63,6 +63,17 @@ export const db = factory({
     grade: String,
     major: String,
   },
+  // 考试类型
+  exam: {
+    id: primaryKey(String),
+    name: String,
+    subject: String,
+    grade: String,
+    semester: String,
+    startTime: String,
+    endTime: String,
+    status: String, // 'published' or 'draft'
+  },
   // 可以添加更多模型
 });
 
@@ -261,6 +272,18 @@ export function seedDb() {
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fang',
     grade: '大四',
     major: '物理学',
+  });
+  
+  // 添加考试示例数据
+  db.exam.create({
+    id: '1',
+    name: '期中考试',
+    subject: '高等数学',
+    grade: '一年级',
+    semester: '2024-1',
+    startTime: '2024-03-25T09:00:00',
+    endTime: '2024-03-25T11:00:00',
+    status: 'published',
   });
   
   // 添加更多初始数据...

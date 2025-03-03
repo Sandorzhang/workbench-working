@@ -348,12 +348,14 @@ export default function CalendarPage() {
   // 处理事件点击
   const handleEventClick = (event: CalendarEvent) => {
     if (event.type === 'classroom-impression') {
-      // 提取课堂记录ID（假设存储在description字段中）
+      // 提取课堂记录ID
       const recordId = event.description.split('recordId:')[1]?.trim();
       if (recordId) {
-        router.push(`/classroom-timemachine?recordId=${recordId}`);
+        console.log('跳转到课堂时光机，记录ID:', recordId);
+        router.push(`/classroom-timemachine/${recordId}`);
       } else {
-        router.push('/classroom-timemachine');
+        console.warn('课堂记录ID未找到:', event);
+        toast.error('无法访问课堂记录');
       }
     }
   };

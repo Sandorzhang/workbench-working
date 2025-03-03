@@ -34,6 +34,7 @@ const iconComponents: Record<string, any> = {
   'file': FileText,
   'calendar': Calendar,
   'database': Database,
+  'fileText': FileText, // 考试管理使用文档图标
 };
 
 // 卡片颜色映射 - 使用更多生动的渐变色
@@ -45,6 +46,7 @@ const colorMap: Record<string, string> = {
   'calendar': 'from-rose-400 to-pink-600',
   'settings': 'from-slate-400 to-slate-600',
   'database': 'from-cyan-400 to-blue-600',
+  'fileText': 'from-amber-400 to-red-600', // 考试管理使用橙红色渐变
 };
 
 export default function DashboardPage() {
@@ -141,6 +143,14 @@ export default function DashboardPage() {
             description: '管理和浏览教学相关的各类数据资源',
             icon: 'database',
             url: '/data-assets',
+            roles: ['教师', '管理员']
+          },
+          {
+            id: '6',
+            name: '考试管理',
+            description: '创建、编辑和管理各类考试及试卷',
+            icon: 'fileText',
+            url: '/exam-management',
             roles: ['教师', '管理员']
           }
         ];
