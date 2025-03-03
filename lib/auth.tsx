@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           error: null,
         });
         
-        console.log('用户会话验证成功');
+        console.log('用户会话验证成功:', userData.name);
       } catch (error: any) {
         console.error('会话验证失败:', error);
         
@@ -105,21 +105,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       console.log('登录成功，获取到token和用户数据');
       
-      // 先保存token，再更新状态
+      // 先保存token
       localStorage.setItem('token', data.token);
       
-      // 使用setTimeout确保状态更新和导航不会冲突
-      setTimeout(() => {
-        setState({
-          isAuthenticated: true,
-          user: data.user,
-          token: data.token,
-          isLoading: false,
-          error: null,
-        });
-        
-        toast.success('登录成功');
-      }, 0);
+      // 立即更新状态，不使用setTimeout
+      setState({
+        isAuthenticated: true,
+        user: data.user,
+        token: data.token,
+        isLoading: false,
+        error: null,
+      });
+      
+      toast.success('登录成功');
     } catch (error: any) {
       console.error('登录失败:', error);
       const errorMessage = error.message || '登录时发生错误';
@@ -144,20 +142,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       console.log('验证码登录成功，获取到token和用户数据');
       
-      // 先保存token，再更新状态
+      // 先保存token
       localStorage.setItem('token', data.token);
       
-      setTimeout(() => {
-        setState({
-          isAuthenticated: true,
-          user: data.user,
-          token: data.token,
-          isLoading: false,
-          error: null,
-        });
-        
-        toast.success('登录成功');
-      }, 0);
+      // 立即更新状态，不使用setTimeout
+      setState({
+        isAuthenticated: true,
+        user: data.user,
+        token: data.token,
+        isLoading: false,
+        error: null,
+      });
+      
+      toast.success('登录成功');
     } catch (error: any) {
       console.error('验证码登录失败:', error);
       const errorMessage = error.message || '验证码登录失败';
@@ -201,8 +198,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('开始注销操作...');
       
-      // 使用API工具执行登出
-      await api.auth.logout();
+      // 先记录当前token用于API调用
+      const currentToken = localStorage.getItem('token');
+      
+      // 清除本地token
+      localStorage.removeItem('token');
+      console.log('已清除本地token');
+      
+      try {
+        // 尝试调用API，但不等待结果
+        if (currentToken) {
+          console.log('调用API进行服务器端登出');
+          await api.auth.logout();
+          console.log('API登出调用成功');
+        } else {
+          console.log('没有token，跳过API登出调用');
+        }
+      } catch (logoutError) {
+        // 如果API调用失败，记录错误但继续删除本地状态
+        console.error('注销API调用失败，但会继续清除本地状态:', logoutError);
+      }
       
       // 清除本地状态
       setState({
@@ -213,11 +228,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
       
-      console.log('注销成功');
+      // 添加成功提示
       toast.success('已成功退出登录');
-    } catch (error: any) {
-      console.error('注销操作失败:', error);
-      setState(prev => ({ ...prev, isLoading: false }));
+      console.log('登出流程完成，状态已重置');
+    } catch (error) {
+      console.error('注销过程中发生错误:', error);
+      
+      // 即使出错也清除本地token和状态
+      localStorage.removeItem('token');
+      setState({
+        isAuthenticated: false,
+        user: null,
+        token: null,
+        isLoading: false,
+        error: '注销过程中发生错误',
+      });
+      
+      toast.error('退出登录时发生错误');
     }
   };
 

@@ -6,10 +6,11 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from "sonner";
 import { 
   BookOpen, Users, FileText, Calendar, 
   Sparkles, TrendingUp, Activity, Clock,
-  Database
+  Database, Loader2
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
@@ -48,11 +49,12 @@ const colorMap: Record<string, string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true); 
   const [currentDate] = useState(new Date());
+  const [authChecked, setAuthChecked] = useState(false);
   
   // 统计数据 - 模拟数据
   const [stats] = useState({
@@ -62,61 +64,117 @@ export default function DashboardPage() {
     activeStudents: 87
   });
   
-  // 简化的应用获取逻辑
+  // 检查认证状态
   useEffect(() => {
-    // 使用模拟数据，简化身份验证逻辑
-    const mockApplications = [
-      {
-        id: '1',
-        name: '师生信息管理',
-        description: '管理教师和学生的基本信息',
-        icon: 'users',
-        url: '/admin/users',
-        roles: ['管理员']
-      },
-      {
-        id: '2',
-        name: '课堂时光机',
-        description: '记录和回放课堂教学过程，辅助教学分析',
-        icon: 'book',
-        url: '/classroom-timemachine',
-        roles: ['教师']
-      },
-      {
-        id: '3',
-        name: '单元教学设计',
-        description: '创建和管理单元教学设计方案',
-        icon: 'file',
-        url: '/unit-teaching-design',
-        roles: ['教师']
-      },
-      {
-        id: '4',
-        name: '全员导师制',
-        description: '浏览、管理和分配导师资源，促进师生共同成长',
-        icon: 'users',
-        url: '/mentor-hub',
-        roles: ['教师', '管理员']
-      },
-      {
-        id: '5',
-        name: '数据资产管理',
-        description: '管理和浏览教学相关的各类数据资源',
-        icon: 'database',
-        url: '/data-assets',
-        roles: ['教师', '管理员']
+    if (!authLoading) {
+      // 认证检查完成
+      setAuthChecked(true);
+      
+      if (!isAuthenticated) {
+        console.log('未登录状态，重定向到登录页');
+        toast.error('请先登录');
+        router.push('/login');
+      } else {
+        console.log('用户已登录:', user?.name, user?.id);
+        
+        // 验证token是否存在，确保用户真的登录了
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.warn('登录状态异常：用户已认证但没有token');
+          toast.error('登录状态异常，请重新登录');
+          router.push('/login');
+        }
       }
-    ];
-    
-    // 模拟加载时间为了展示动画效果
-    setTimeout(() => {
-      setApplications(mockApplications);
-      setIsLoading(false);
-    }, 500);
-    
-  }, []);
+    }
+  }, [authLoading, isAuthenticated, user, router]);
   
+  // 应用获取逻辑
+  useEffect(() => {
+    // 只有在用户认证后才加载应用
+    if (!authChecked || !isAuthenticated) return;
+    
+    console.log('开始获取应用数据');
+    
+    const fetchApplications = async () => {
+      try {
+        // 这里可以添加真实的API调用
+        // const response = await fetch('/api/applications');
+        // const data = await response.json();
+        
+        // 当前使用模拟数据
+        const mockApplications = [
+          {
+            id: '1',
+            name: '师生信息管理',
+            description: '管理教师和学生的基本信息',
+            icon: 'users',
+            url: '/admin/users',
+            roles: ['管理员']
+          },
+          {
+            id: '2',
+            name: '课堂时光机',
+            description: '记录和回放课堂教学过程，辅助教学分析',
+            icon: 'book',
+            url: '/classroom-timemachine',
+            roles: ['教师']
+          },
+          {
+            id: '3',
+            name: '单元教学设计',
+            description: '创建和管理单元教学设计方案',
+            icon: 'file',
+            url: '/unit-teaching-design',
+            roles: ['教师']
+          },
+          {
+            id: '4',
+            name: '全员导师制',
+            description: '浏览、管理和分配导师资源，促进师生共同成长',
+            icon: 'users',
+            url: '/mentor-hub',
+            roles: ['教师', '管理员']
+          },
+          {
+            id: '5',
+            name: '数据资产管理',
+            description: '管理和浏览教学相关的各类数据资源',
+            icon: 'database',
+            url: '/data-assets',
+            roles: ['教师', '管理员']
+          }
+        ];
+        
+        // 模拟加载时间为了展示动画效果
+        setTimeout(() => {
+          console.log('应用数据加载完成');
+          setApplications(mockApplications);
+          setIsLoading(false);
+        }, 500);
+      } catch (error) {
+        console.error('获取应用列表失败:', error);
+        toast.error('获取应用列表失败');
+        setIsLoading(false);
+      }
+    };
+    
+    fetchApplications();
+  }, [authChecked, isAuthenticated]);
+  
+  // 应用点击处理函数
   const handleAppClick = (url: string) => {
+    // 记录跳转日志
+    console.log('应用点击，准备导航到:', url);
+    
+    // 确保在客户端路由导航前验证用户状态
+    if (!isAuthenticated || !user) {
+      console.warn('用户未登录，取消导航并重定向到登录页');
+      toast.error('请先登录');
+      router.push('/login');
+      return;
+    }
+    
+    // 执行导航
     router.push(url);
   };
   
@@ -140,6 +198,23 @@ export default function DashboardPage() {
     if (hour < 18) return '下午好';
     return '晚上好';
   };
+  
+  // 如果认证状态仍在加载，显示加载状态
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-gray-500">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // 如果用户未登录，页面将被重定向，显示空内容
+  if (!isAuthenticated) {
+    return null;
+  }
   
   return (
     <PageContainer
@@ -167,7 +242,7 @@ export default function DashboardPage() {
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="px-3 py-1.5 bg-white border-primary/20">
               <Sparkles className="h-3.5 w-3.5 text-primary mr-1" />
-              <span className="text-primary">教师</span>
+              <span className="text-primary">{user?.role || '用户'}</span>
             </Badge>
             <Avatar className="h-12 w-12 border-2 border-primary/20">
               <AvatarImage src={user?.avatar || "/avatars/default.png"} alt={user?.name || '用户'} />
@@ -249,28 +324,20 @@ export default function DashboardPage() {
                 onClick={() => handleAppClick(app.url)}
                 className="h-full transform transition-all duration-200 hover:scale-[1.02]"
               >
-                <div className="flex flex-col h-full">
-                  <div className="flex items-start mb-4">
-                    <div className={`flex-shrink-0 p-3 rounded-xl bg-gradient-to-br ${gradientColor} text-white`}>
-                      {IconComponent && <IconComponent className="h-6 w-6" />}
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="font-medium text-lg text-gray-900">{app.name}</h3>
-                      <p className="text-gray-500 text-sm mt-1">{app.description}</p>
-                    </div>
+                <div className="flex items-start p-1">
+                  <div className={`p-3 rounded-lg bg-gradient-to-br ${gradientColor} mr-4 shadow-md`}>
+                    {IconComponent && <IconComponent className="h-6 w-6 text-white" />}
                   </div>
-                  
-                  <div className="mt-auto flex justify-end">
-                    <Button 
-                      variant="ghost" 
-                      className="text-primary hover:text-primary/80 hover:bg-primary/5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAppClick(app.url);
-                      }}
-                    >
-                      进入应用
-                    </Button>
+                  <div>
+                    <h3 className="font-medium text-gray-900">{app.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{app.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {app.roles.map((role) => (
+                        <Badge key={role} variant="secondary" className="text-xs">
+                          {role}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </CardContainer>

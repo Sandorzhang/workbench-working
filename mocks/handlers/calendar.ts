@@ -147,8 +147,9 @@ export const calendarHandlers = [
     const url = new URL(request.url);
     const yearParam = url.searchParams.get('year');
     const monthParam = url.searchParams.get('month');
+    const userIdParam = url.searchParams.get('userId');
     
-    console.log(`收到获取日历事件请求 - 参数: 年=${yearParam}, 月=${monthParam}`);
+    console.log(`收到获取日历事件请求 - 参数: 年=${yearParam}, 月=${monthParam}, 用户ID=${userIdParam}`);
     
     // 从请求头中获取令牌
     const authHeader = request.headers.get('Authorization');
@@ -226,8 +227,55 @@ export const calendarHandlers = [
       );
     }
     
+    console.log(`日历API: 找到用户 ${user.name}, ID: ${user.id}`);
+    
     // 获取所有日历事件 - 使用原始数组而不是db对象以避免类型错误
     let events = [...mockEvents];
+    
+    // 根据用户生成特定的事件
+    if (user.id === '2') { // 李四（教师）
+      console.log('为李四教师生成特定的日历事件');
+      
+      // 添加李四特有的事件
+      const teacherEvents = [
+        {
+          id: 'teacher-1',
+          title: '数学教研组会议',
+          date: '2024-03-15',
+          startTime: '14:00',
+          endTime: '16:00',
+          location: '教研室',
+          type: 'meeting',
+          description: '讨论本学期教学重点',
+          participants: ['李四', '教研组成员']
+        },
+        {
+          id: 'teacher-2',
+          title: '李四的教学观摩课',
+          date: '2024-03-18',
+          startTime: '09:00',
+          endTime: '10:30',
+          location: '201教室',
+          type: 'class',
+          description: '优秀教师示范课',
+          participants: ['李四', '其他教师']
+        },
+        {
+          id: 'teacher-3',
+          title: '家长会',
+          date: '2024-03-20',
+          startTime: '19:00',
+          endTime: '21:00',
+          location: '会议厅',
+          type: 'meeting',
+          description: '与学生家长沟通本学期学习情况',
+          participants: ['李四', '学生家长']
+        }
+      ];
+      
+      // 合并事件列表
+      events = [...events, ...teacherEvents];
+    }
     
     // 如果有年月参数，进行过滤
     if (yearParam && monthParam) {

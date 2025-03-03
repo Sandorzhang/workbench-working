@@ -6,6 +6,12 @@ const API_BASE_URL = '/api';
 const getAuthHeaders = (): HeadersInit => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   
+  if (token) {
+    console.log(`添加认证头，token: ${token.substring(0, 5)}...`);
+  } else {
+    console.log('没有token，使用无认证头');
+  }
+  
   return {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -18,13 +24,48 @@ async function handleRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   try {
+    // 每次请求时重新获取认证头，确保使用最新的token
+    const headers = {
+      ...getAuthHeaders(),
+      ...options.headers
+    };
+
+    // 检查是否有认证头并记录日志
+    const hasAuthHeader = 'Authorization' in headers;
+    console.log(`API请求: ${url} - Authorization头: ${hasAuthHeader ? '已设置' : '未设置'}`);
+    
+    // 执行请求
     const response = await fetch(url, {
       ...options,
-      headers: {
-        ...getAuthHeaders(),
-        ...options.headers
-      }
+      headers
     });
+    
+    // 处理401认证错误
+    if (response.status === 401) {
+      console.error('认证失败 (401)，清除token并提示用户重新登录');
+      // 清除无效token
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        // 添加导航到登录页的逻辑，如果在客户端
+        console.log('尝试重定向到登录页');
+      }
+      throw {
+        message: '登录已过期，请重新登录',
+        code: '401',
+        details: {}
+      } as ApiErrorResponse;
+    }
+    
+    // 处理其他HTTP错误
+    if (!response.ok) {
+      console.error(`API请求失败: ${url} - 状态码: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw {
+        message: errorData.message || '请求失败',
+        code: response.status.toString(),
+        details: errorData.details || {}
+      } as ApiErrorResponse;
+    }
     
     const data = await response.json();
     
@@ -69,26 +110,33 @@ export const api = {
       handleRequest(`${API_BASE_URL}/auth/me`),
       
     logout: () => {
-      // 首先尝试调用退出登录API
-      try {
-        // 不等待API响应，因为即使API调用失败我们也要清除本地token
-        if (typeof window !== 'undefined') {
-          fetch(`${API_BASE_URL}/auth/logout`, {
-            method: 'POST',
-            headers: getAuthHeaders()
-          }).catch(error => {
-            console.error('登出API调用失败:', error);
-          });
-        }
-      } catch (error) {
-        console.error('处理登出过程中出错:', error);
-      }
-      
-      // 无论API调用成功与否，都清除本地token
+      // 首先清除本地token
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
       }
       
+      // 然后调用退出登录API (如果在浏览器环境)
+      if (typeof window !== 'undefined') {
+        return fetch(`${API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: getAuthHeaders()
+        })
+        .then(response => {
+          if (!response.ok && response.status !== 401) {
+            // 如果不是401错误（表示已经没有有效会话），则记录错误
+            console.warn('登出API调用返回非200状态码:', response.status);
+          }
+          // 即使API调用失败，也返回成功，因为我们已经清除了本地存储
+          return Promise.resolve();
+        })
+        .catch(error => {
+          console.error('登出API调用失败:', error);
+          // 因为我们已经清除了本地存储，即使API调用失败，也视为登出成功
+          return Promise.resolve();
+        });
+      }
+      
+      // 如果不在浏览器环境，直接返回成功
       return Promise.resolve();
     }
   },

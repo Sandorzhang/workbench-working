@@ -13,7 +13,8 @@ import {
   Clock, 
   MapPin, 
   Plus, 
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ import {
   ContentSkeleton, 
   ListSkeleton 
 } from "@/components/ui/skeleton-loader";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // 日历事件类型
 interface CalendarEvent {
@@ -78,14 +80,54 @@ export default function CalendarPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   
   // 获取当前年月
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
   
+  // 检查认证状态，如果未登录则显示提示
+  useEffect(() => {
+    if (!authLoading) {
+      // 认证检查完成
+      setAuthChecked(true);
+      
+      if (!isAuthenticated) {
+        console.log('未登录状态，显示提示信息');
+        setError('请登录后查看您的日历');
+        setIsLoading(false);
+        // 导航到登录页面
+        toast.error('请先登录');
+        setTimeout(() => {
+          router.push('/login');
+        }, 1000);
+      } else {
+        console.log('用户已登录:', user?.name);
+        setError(null);
+      }
+    }
+  }, [authLoading, isAuthenticated, user, router]);
+  
+  // 当认证状态确认后且用户登录时，获取日历数据
+  useEffect(() => {
+    // 确保认证检查已完成且用户已登录
+    if (authChecked && isAuthenticated && user) {
+      console.log('开始获取日历数据, 用户:', user.name, '(', user.role, ')');
+      fetchEvents();
+    }
+  }, [authChecked, isAuthenticated, user, currentYear, currentMonth]);
+  
   // 数据获取逻辑
   const fetchEvents = async (retryCount = 0) => {
     try {
+      if (!isAuthenticated || !token) {
+        console.log('未认证状态，取消获取日历数据');
+        setError('请登录后查看您的日历');
+        setIsLoading(false);
+        return;
+      }
+      
       setError(null);
       setIsLoading(true);
       
@@ -94,17 +136,22 @@ export default function CalendarPage() {
         'Content-Type': 'application/json'
       };
       
-      // 如果有token，添加授权头
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        console.warn('获取日历事件: 未提供认证token');
-      }
+      // 添加授权头
+      headers['Authorization'] = `Bearer ${token}`;
       
       // 构建查询参数
       const queryParams = new URLSearchParams();
       queryParams.append('year', currentYear.toString());
       queryParams.append('month', (currentMonth + 1).toString());
+      
+      // 如果有用户ID，添加到查询参数
+      if (user?.id) {
+        queryParams.append('userId', user.id);
+      }
+      
+      console.log(`正在获取 ${user?.name || '未知用户'} 的日历事件...`);
+      console.log(`请求URL: /api/calendar-events?${queryParams.toString()}`);
+      console.log(`Authorization头部: ${headers.Authorization ? '已设置' : '未设置'}`);
       
       // 发起请求
       const response = await fetch(`/api/calendar-events?${queryParams.toString()}`, { 
@@ -115,9 +162,19 @@ export default function CalendarPage() {
       if (!response.ok) {
         // 处理401未授权错误
         if (response.status === 401) {
-          console.error('获取日历事件: 认证失败');
+          console.error('获取日历事件: 认证失败，状态码: 401');
           toast.error('登录已过期，请重新登录');
-          // 这里可以添加重定向到登录页面的逻辑
+          
+          // 清除无效的token
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+          }
+          
+          // 重定向到登录页
+          setTimeout(() => {
+            router.push('/login');
+          }, 1000);
+          
           setEvents([]);
           setError('请登录后查看日历');
           setIsLoading(false);
@@ -167,14 +224,9 @@ export default function CalendarPage() {
       // 延迟设置加载完成，展示骨架屏效果
       setTimeout(() => {
         setIsLoading(false);
-      }, 800); // 缩短加载时间，提升用户体验
+      }, 500); // 缩短加载时间，提升用户体验
     }
   };
-  
-  useEffect(() => {
-    console.log(`获取 ${currentYear}年${currentMonth + 1}月 的日历事件数据...`);
-    fetchEvents();
-  }, [currentYear, currentMonth, token]); // 添加token到依赖数组，确保token变化时重新获取数据
   
   // 日历导航
   const goToPreviousMonth = () => {
@@ -285,6 +337,36 @@ export default function CalendarPage() {
     }
   };
   
+  // 如果认证状态仍在加载，显示加载状态
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-gray-500">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // 如果用户未登录，显示错误提示
+  if (!isAuthenticated && authChecked) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="bg-red-50 text-red-500 p-6 rounded-lg shadow-md animate-fadeIn text-center">
+          <p className="mb-4">请登录后查看您的日历</p>
+          <Button
+            variant="default"
+            onClick={() => router.push('/login')}
+            className="bg-red-500 hover:bg-red-600"
+          >
+            前往登录
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="pb-8">
       <div className="flex justify-between items-center mb-6">
@@ -296,31 +378,32 @@ export default function CalendarPage() {
       </div>
       
       {isLoading ? (
-        <div className="animate-fadeIn">
-          <div className="flex justify-between items-center mb-6">
-            <TitleSkeleton />
-            <div className="w-24 h-10 bg-gray-100 rounded-md animate-pulse"></div>
-          </div>
-          
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-32 h-8 bg-gray-100 rounded-md animate-pulse"></div>
-              <div className="w-20 h-8 bg-gray-100 rounded-md animate-pulse"></div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-100 rounded-md animate-pulse"></div>
-              <div className="w-8 h-8 bg-gray-100 rounded-md animate-pulse"></div>
-              <div className="w-20 h-8 bg-gray-100 rounded-md animate-pulse"></div>
+        <div className="h-full w-full flex items-center justify-center">
+          <div className="space-y-4 w-full max-w-3xl">
+            <CardSkeleton className="h-96" />
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 rounded-md bg-muted animate-pulse w-[60%]" />
+                    <div className="h-3 rounded-md bg-muted animate-pulse w-[80%]" />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <CardSkeleton className="lg:col-span-2 h-[550px]" />
-            <div className="space-y-6">
-              <ContentSkeleton className="h-28" />
-              <ListSkeleton count={3} className="gap-4" />
-            </div>
-          </div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6 animate-fadeIn">
+          {error}
+          <Button
+            variant="link"
+            className="ml-2 text-red-600"
+            onClick={() => fetchEvents()}
+          >
+            重试
+          </Button>
         </div>
       ) : (
         <div className="w-full overflow-x-auto">
@@ -362,19 +445,6 @@ export default function CalendarPage() {
               </Button>
             </div>
           </div>
-          
-          {error && (
-            <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6 animate-fadeIn">
-              {error}
-              <Button
-                variant="link"
-                className="ml-2 text-red-600"
-                onClick={() => fetchEvents()}
-              >
-                重试
-              </Button>
-            </div>
-          )}
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 min-w-0">
