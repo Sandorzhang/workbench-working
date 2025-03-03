@@ -143,7 +143,12 @@ export const calendarHandlers = [
   http.get('*/api/calendar-events', async ({ request }) => {
     await delay(300);
     
-    console.log('收到获取日历事件请求');
+    // 解析URL参数
+    const url = new URL(request.url);
+    const yearParam = url.searchParams.get('year');
+    const monthParam = url.searchParams.get('month');
+    
+    console.log(`收到获取日历事件请求 - 参数: 年=${yearParam}, 月=${monthParam}`);
     
     // 从请求头中获取令牌
     const authHeader = request.headers.get('Authorization');
@@ -221,9 +226,45 @@ export const calendarHandlers = [
       );
     }
     
-    // 获取所有日历事件
-    const events = db.calendar.findMany();
-    console.log(`日历API: 返回 ${events.length} 个事件`);
+    // 获取所有日历事件 - 使用原始数组而不是db对象以避免类型错误
+    let events = [...mockEvents];
+    
+    // 如果有年月参数，进行过滤
+    if (yearParam && monthParam) {
+      const year = parseInt(yearParam);
+      const month = parseInt(monthParam);
+      
+      // 生成过滤用的月份前缀，例如 '2024-03-'
+      const filterPrefix = `${year}-${month.toString().padStart(2, '0')}-`;
+      
+      // 过滤出当月的事件
+      events = events.filter(event => event.date.startsWith(filterPrefix));
+      
+      // 也包含前后一个月的事件，以覆盖日历视图中可能显示的上下月日期
+      const prevMonth = month === 1 ? 12 : month - 1;
+      const prevYear = month === 1 ? year - 1 : year;
+      const prevMonthPrefix = `${prevYear}-${prevMonth.toString().padStart(2, '0')}-`;
+      
+      const nextMonth = month === 12 ? 1 : month + 1;
+      const nextYear = month === 12 ? year + 1 : year;
+      const nextMonthPrefix = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-`;
+      
+      // 也添加前后月的事件
+      const prevMonthEvents = mockEvents.filter(event => 
+        event.date.startsWith(prevMonthPrefix)
+      );
+      
+      const nextMonthEvents = mockEvents.filter(event => 
+        event.date.startsWith(nextMonthPrefix)
+      );
+      
+      // 合并前后月份事件
+      events = [...events, ...prevMonthEvents, ...nextMonthEvents];
+      
+      console.log(`日历API: 过滤后返回 ${events.length} 个事件 (年: ${year}, 月: ${month})`);
+    } else {
+      console.log(`日历API: 返回所有 ${events.length} 个事件`);
+    }
     
     return HttpResponse.json(events);
   }),
