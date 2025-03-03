@@ -45,11 +45,14 @@ export const authHandlers = [
     });
     
     // 检查用户是否存在且密码是否匹配
-    // 注意：提示信息中显示admin/password123，但实际设置的是admin123
     if (!user) {
       console.log(`用户 ${username} 不存在`);
-      return new HttpResponse(
-        JSON.stringify({ error: '用户名或密码错误' }),
+      return HttpResponse.json(
+        {
+          message: '用户名或密码错误',
+          code: '401',
+          details: { reason: 'invalid_credentials' }
+        },
         { status: 401 }
       );
     }
@@ -58,8 +61,12 @@ export const authHandlers = [
     console.log(`检查密码: ${password}, 数据库密码: ${user.password}`);
     if (user.password !== password) {
       console.log(`用户 ${username} 密码不匹配`);
-      return new HttpResponse(
-        JSON.stringify({ error: '用户名或密码错误' }),
+      return HttpResponse.json(
+        {
+          message: '用户名或密码错误',
+          code: '401',
+          details: { reason: 'invalid_credentials' }
+        },
         { status: 401 }
       );
     }
@@ -95,8 +102,12 @@ export const authHandlers = [
     // 从请求头获取令牌
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new HttpResponse(
-        JSON.stringify({ error: 'Unauthorized' }),
+      return HttpResponse.json(
+        {
+          message: '未授权访问',
+          code: '401',
+          details: { reason: 'missing_token' }
+        },
         { status: 401 }
       );
     }
@@ -113,17 +124,24 @@ export const authHandlers = [
     });
     
     if (!session) {
-      return new HttpResponse(
-        JSON.stringify({ error: 'Invalid token' }),
+      return HttpResponse.json(
+        {
+          message: '无效的访问令牌',
+          code: '401',
+          details: { reason: 'invalid_token' }
+        },
         { status: 401 }
       );
     }
     
     // 检查会话是否过期
-    const expiresAt = new Date(session.expiresAt);
-    if (expiresAt < new Date()) {
-      return new HttpResponse(
-        JSON.stringify({ error: 'Session expired' }),
+    if (new Date(session.expiresAt) < new Date()) {
+      return HttpResponse.json(
+        {
+          message: '会话已过期',
+          code: '401',
+          details: { reason: 'session_expired' }
+        },
         { status: 401 }
       );
     }
@@ -138,8 +156,12 @@ export const authHandlers = [
     });
     
     if (!user) {
-      return new HttpResponse(
-        JSON.stringify({ error: 'User not found' }),
+      return HttpResponse.json(
+        {
+          message: '用户不存在',
+          code: '404',
+          details: { reason: 'user_not_found' }
+        },
         { status: 404 }
       );
     }
@@ -165,8 +187,12 @@ export const authHandlers = [
     });
     
     if (!user) {
-      return new HttpResponse(
-        JSON.stringify({ error: '手机号未注册' }),
+      return HttpResponse.json(
+        {
+          message: '手机号未注册',
+          code: '404',
+          details: { reason: 'phone_not_registered' }
+        },
         { status: 404 }
       );
     }
@@ -194,8 +220,12 @@ export const authHandlers = [
     
     // 检查验证码是否存在
     if (!storedCode) {
-      return new HttpResponse(
-        JSON.stringify({ error: '验证码不存在或已过期' }),
+      return HttpResponse.json(
+        {
+          message: '验证码不存在或已过期',
+          code: '401',
+          details: { reason: 'code_not_found' }
+        },
         { status: 401 }
       );
     }
@@ -208,16 +238,24 @@ export const authHandlers = [
     if (now.getTime() - createdAt.getTime() > expirationTime) {
       // 验证码过期，删除并返回错误
       verificationCodes.delete(phone);
-      return new HttpResponse(
-        JSON.stringify({ error: '验证码已过期，请重新获取' }),
+      return HttpResponse.json(
+        {
+          message: '验证码已过期，请重新获取',
+          code: '401',
+          details: { reason: 'code_expired' }
+        },
         { status: 401 }
       );
     }
     
     // 检查验证码是否匹配
     if (storedCode.code !== code && !(TEST_MODE && code === TEST_VERIFICATION_CODE)) {
-      return new HttpResponse(
-        JSON.stringify({ error: '验证码错误' }),
+      return HttpResponse.json(
+        {
+          message: '验证码错误',
+          code: '401',
+          details: { reason: 'invalid_code' }
+        },
         { status: 401 }
       );
     }
@@ -232,8 +270,12 @@ export const authHandlers = [
     });
     
     if (!user) {
-      return new HttpResponse(
-        JSON.stringify({ error: '用户不存在' }),
+      return HttpResponse.json(
+        {
+          message: '用户不存在',
+          code: '404',
+          details: { reason: 'user_not_found' }
+        },
         { status: 404 }
       );
     }
@@ -268,7 +310,14 @@ export const authHandlers = [
     // 从请求头中获取令牌
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new HttpResponse(null, { status: 401 });
+      return HttpResponse.json(
+        {
+          message: '未授权访问',
+          code: '401',
+          details: { reason: 'missing_token' }
+        },
+        { status: 401 }
+      );
     }
     
     const token = authHeader.split('Bearer ')[1];
@@ -299,7 +348,14 @@ export const authHandlers = [
     // 从请求头中获取令牌
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new HttpResponse(null, { status: 401 });
+      return HttpResponse.json(
+        {
+          message: '未授权访问',
+          code: '401',
+          details: { reason: 'missing_token' }
+        },
+        { status: 401 }
+      );
     }
     
     const token = authHeader.split(' ')[1];
@@ -314,13 +370,24 @@ export const authHandlers = [
     });
     
     if (!session) {
-      return new HttpResponse(null, { status: 401 });
+      return HttpResponse.json(
+        {
+          message: '无效的访问令牌',
+          code: '401',
+          details: { reason: 'invalid_token' }
+        },
+        { status: 401 }
+      );
     }
     
     // 验证会话是否过期
     if (new Date(session.expiresAt) < new Date()) {
-      return new HttpResponse(
-        JSON.stringify({ error: '会话已过期' }),
+      return HttpResponse.json(
+        {
+          message: '会话已过期',
+          code: '401',
+          details: { reason: 'session_expired' }
+        },
         { status: 401 }
       );
     }
@@ -335,7 +402,14 @@ export const authHandlers = [
     });
     
     if (!user) {
-      return new HttpResponse(null, { status: 404 });
+      return HttpResponse.json(
+        {
+          message: '用户不存在',
+          code: '404',
+          details: { reason: 'user_not_found' }
+        },
+        { status: 404 }
+      );
     }
     
     // 获取所有应用

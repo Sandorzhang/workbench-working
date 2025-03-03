@@ -49,38 +49,52 @@ async function handleRequest<T>(
         // 添加导航到登录页的逻辑，如果在客户端
         console.log('尝试重定向到登录页');
       }
-      throw {
-        message: '登录已过期，请重新登录',
-        code: '401',
-        details: {}
-      } as ApiErrorResponse;
-    }
-    
-    // 处理其他HTTP错误
-    if (!response.ok) {
-      console.error(`API请求失败: ${url} - 状态码: ${response.status}`);
+      
       const errorData = await response.json().catch(() => ({}));
       throw {
-        message: errorData.message || '请求失败',
-        code: response.status.toString(),
+        message: errorData.message || '登录已过期，请重新登录',
+        code: '401',
         details: errorData.details || {}
       } as ApiErrorResponse;
     }
     
-    const data = await response.json();
+    // 尝试解析响应
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('响应解析失败:', parseError);
+      throw {
+        message: '服务器响应格式错误',
+        code: response.status.toString(),
+        details: { parseError }
+      } as ApiErrorResponse;
+    }
     
+    // 处理非成功状态码
     if (!response.ok) {
+      console.error(`API请求失败: ${url} - 状态码: ${response.status}`, data);
       throw {
         message: data.message || '请求失败',
-        code: data.code || response.status.toString(),
-        details: data
+        code: response.status.toString(),
+        details: data.details || data
       } as ApiErrorResponse;
     }
     
     return data as T;
   } catch (error) {
     console.error('API请求错误:', error);
-    throw error;
+    
+    // 确保返回标准化的错误格式
+    if ((error as ApiErrorResponse).code) {
+      throw error;
+    }
+    
+    throw {
+      message: error instanceof Error ? error.message : '请求失败',
+      code: 'UNKNOWN',
+      details: error
+    } as ApiErrorResponse;
   }
 }
 

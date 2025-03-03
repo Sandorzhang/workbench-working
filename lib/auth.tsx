@@ -80,13 +80,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 清除无效token
         localStorage.removeItem('token');
         
+        // 设置错误信息
+        const errorMessage = error.message || '会话验证失败';
+        
         setState({
           isAuthenticated: false,
           user: null,
           token: null,
           isLoading: false,
-          error: null,
+          error: errorMessage,
         });
+        
+        // 显示错误提示
+        toast.error(errorMessage);
       }
     };
     
@@ -179,6 +185,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setState(prev => ({ ...prev, isLoading: false }));
       console.log('验证码发送成功');
+      toast.success('验证码已发送');
     } catch (error: any) {
       console.error('验证码发送失败:', error);
       const errorMessage = error.message || '验证码发送失败';
@@ -214,7 +221,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           console.log('没有token，跳过API登出调用');
         }
-      } catch (logoutError) {
+      } catch (logoutError: any) {
         // 如果API调用失败，记录错误但继续删除本地状态
         console.error('注销API调用失败，但会继续清除本地状态:', logoutError);
       }
@@ -231,7 +238,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // 添加成功提示
       toast.success('已成功退出登录');
       console.log('登出流程完成，状态已重置');
-    } catch (error) {
+    } catch (error: any) {
       console.error('注销过程中发生错误:', error);
       
       // 即使出错也清除本地token和状态
@@ -241,10 +248,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user: null,
         token: null,
         isLoading: false,
-        error: '注销过程中发生错误',
+        error: error.message || '注销过程中发生错误',
       });
       
-      toast.error('退出登录时发生错误');
+      toast.error(error.message || '退出登录时发生错误');
     }
   };
 
