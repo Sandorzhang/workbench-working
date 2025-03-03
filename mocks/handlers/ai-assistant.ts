@@ -69,6 +69,24 @@ const conversations: Conversation[] = [
         content: "小组合作学习是一种非常有效的教学方法，特别适合初中生。以下是如何组织有效的小组合作学习：\n\n**1. 小组组建策略：**\n- 异质分组：将不同能力、学习风格和性格的学生混合，每组4-5人为宜\n- 考虑学生的社交关系，避免小团体或边缘化情况\n- 定期重组小组，让学生有机会与更多同学合作\n\n**2. 明确的角色分配：**\n- 组长：协调组内工作，确保任务进度\n- 记录员：记录讨论内容和决策\n- 材料管理员：负责管理学习资料\n- 报告员：向全班汇报小组成果\n- 鼓励官：给予组员积极反馈，保持团队士气\n\n**3. 项目设计要点：**\n- 设置明确的学习目标和成果要求\n- 任务应具有适当难度，需要团队合作才能完成\n- 提供清晰的评分标准\n- 设计需要不同技能的子任务，使每位学生都能贡献所长\n\n**4. 合作监督与指导：**\n- 巡视各小组，提供必要指导但不过度干预\n- 观察小组互动模式，及时调整不平衡情况\n- 引导学生学会如何有效沟通和解决冲突\n\n**5. 评估方式：**\n- 结合小组整体表现和个人贡献进行评分\n- 使用同伴评价作为参考\n- 让学生进行自我反思\n\n**6. 具体活动示例：**\n- 历史课：小组编写和表演历史事件微剧本\n- 科学课：设计和执行实验，分析结果并展示\n- 语文课：合作创作故事或编辑班级杂志\n- 数学课：解决现实生活中的数学问题并制作展示板\n\n您想要针对哪个具体学科设计一个小组合作学习活动？",
         role: "assistant",
         timestamp: new Date(2023, 2, 15, 10, 38).toISOString()
+      },
+      {
+        id: "m5",
+        content: "我是数学老师，请帮我设计一个数学课的小组合作活动。",
+        role: "user",
+        timestamp: new Date(2023, 2, 15, 10, 40).toISOString()
+      },
+      {
+        id: "m6",
+        content: "非常好！以下是一个为初中数学课设计的小组合作学习活动方案：\n\n# 初中数学小组合作学习活动：「现实世界中的几何学」\n\n## 活动目标\n- 理解并应用几何概念解决实际问题\n- 培养数据收集、分析和表示能力\n- 锻炼团队协作与沟通技巧\n- 提高数学建模能力\n\n## 活动设计（45-90分钟课堂 + 课外时间）\n\n### 第一阶段：问题提出与小组分工（15分钟）\n\n1. **情景导入**：展示学校或社区中的一个需要改进的空间设计问题，例如：\n   - 学校操场上最佳休息区的位置和大小\n   - 教室内如何重新安排座位以优化学习效果\n   - 校园内新建一个花园，如何设计路径使得总长度最短\n\n2. **分组**：将学生分为4-5人一组，确保每组技能互补\n\n3. **角色分配**：\n   - 项目经理：协调组内工作，确保进度\n   - 测量专家：负责实地测量和数据收集\n   - 计算专员：执行数学计算\n   - 设计师：进行图形设计和视觉表达\n   - 报告员：准备和展示最终方案\n\n### 第二阶段：数据收集与分析（课外20分钟 + 课堂20分钟）\n\n1. **实地测量**：使用卷尺、角度测量器等工具收集必要的数据\n   - 测量相关区域的尺寸\n   - 记录关键位置的坐标或距离\n\n2. **数据处理**：\n   - 整理收集的数据\n   - 应用适当的几何公式计算面积、体积、距离等\n   - 使用比例尺绘制草图\n\n### 第三阶段：解决方案设计（25分钟）\n\n1. **方案构思**：\n   - 应用几何原理（如三角形特性、勾股定理、圆的性质等）\n   - 考虑多种可能的解决方案\n   - 使用数学模型进行优化\n\n2. **方案展示准备**：\n   - 制作包含图表、计算和结论的展示板\n   - 准备3-5分钟的口头报告\n   - 说明应用的数学原理和解决方案的优势\n\n### 第四阶段：方案展示与评价（20分钟）\n\n1. **小组展示**：各小组向全班介绍其解决方案\n\n2. **同伴评价**：\n   - 其他小组根据评分标准给予反馈\n   - 评价标准：数学原理应用的正确性、解决方案的创新性、展示的清晰度\n\n3. **教师总结**：\n   - 强调各组方案的优点\n   - 指出数学概念在实际应用中的重要性\n\n## 评估方式\n\n1. **小组成果评估（60%）**：\n   - 数学概念应用正确性（20%）\n   - 解决方案的可行性和创新性（20%）\n   - 材料质量和展示效果（20%）\n\n2. **个人贡献评估（40%）**：\n   - 同伴评价（15%）\n   - 自我反思报告（15%）\n   - 教师观察（10%）\n\n## 扩展活动\n\n- 将最佳方案实际应用于学校环境\n- 使用3D建模软件将设计可视化\n- 计算实施方案的成本并做预算规划\n\n这个活动将几何学习与现实问题结合，使学生能够将抽象概念应用到实际环境中，同时培养团队合作能力。您可以根据具体的年级和已学内容调整难度和复杂度。\n\n您认为这个活动设计怎么样？需要我针对某个具体数学主题做更详细的调整吗？",
+        role: "assistant",
+        timestamp: new Date(2023, 2, 15, 10, 45).toISOString()
+      },
+      {
+        id: "m7",
+        content: "这个方案非常全面，我很喜欢！你可以尝试小组合作学习方式，这对培养学生的团队协作能力很有帮助。",
+        role: "user",
+        timestamp: new Date(2023, 2, 15, 10, 50).toISOString()
       }
     ]
   },
@@ -124,79 +142,50 @@ const conversations: Conversation[] = [
   }
 ];
 
-// AI助手的预设回复
-const presetResponses: Record<string, Record<string, string>> = {
-  // 默认助手（通用）
-  "default": {
-    "greeting": "您好！我是您的智能教学助手，可以帮助您解决教学设计、课堂管理、学生评价等方面的问题。请问有什么我可以帮助您的？",
-    "class_activity": "设计课堂活动时，应考虑以下几个方面：\n\n1. 明确教学目标\n2. 了解学生特点和兴趣\n3. 设计多样化的互动环节\n4. 准备适当的教学资源\n5. 预留时间进行总结和反思\n\n不同学科可以采用不同的活动形式，如角色扮演、小组讨论、实践操作等。",
-    "student_evaluation": "现代学生评价应该是多元化的，建议从以下几个维度进行：\n\n1. 学业表现评价\n2. 课堂参与度评价\n3. 合作能力评价\n4. 创新思维评价\n5. 自我管理评价\n\n重要的是既关注结果也关注过程，既看到学生的优点也帮助学生改进不足。",
-    "classroom_management": "有效的课堂管理策略包括：\n\n1. 建立明确的课堂规则和流程\n2. 培养积极的师生关系\n3. 使用分层教学策略\n4. 设计吸引人的教学内容\n5. 及时处理问题行为\n6. 表扬和鼓励积极行为\n\n重要的是保持一致性并理解学生行为背后的原因。",
-    "teaching_resources": "优质教学资源的特点是：\n\n1. 与教学目标紧密相关\n2. 适合学生的认知水平\n3. 具有互动性和吸引力\n4. 可以根据需要灵活调整\n5. 促进深度思考和理解\n\n现代教学可以利用多媒体资源、在线平台、实物教具等多种资源类型。",
-    "fallback": "作为教育工作者，我建议综合考虑学生特点、教学目标和教学资源，采用多样化的教学方法，并根据实际教学效果进行调整和优化。您对这个方向有什么具体问题吗？"
-  },
-  // 智能教学助手 (ID: 1)
-  "1": {
-    "greeting": "您好！我是智能教学助手，专注于帮助教师设计课堂活动、解决教学难题，提供学生评价建议。请问今天有什么教学问题需要我协助解决？",
-    "class_activity": "针对课堂活动设计，我推荐：\n\n1. 目标导向：明确每个活动的教学目标\n2. 多样互动：设计师生、生生互动环节\n3. 节奏变化：交替使用不同类型的活动\n4. 差异化设计：照顾不同学习风格和能力的学生\n5. 结果导向：确保活动能产生可评估的学习成果\n\n我可以针对您的具体学科提供更详细的活动设计。",
-    "fallback": "作为智能教学助手，我建议您可以从教学设计、课堂管理和学生评价三个维度思考这个问题。每个班级和学生的情况不同，教学策略需要因地制宜。您需要我在哪个方面提供更具体的建议吗？"
-  },
-  // 学科备课专家 (ID: 2)
-  "2": {
-    "greeting": "您好！我是学科备课专家，专注于提供教案设计和知识点讲解。请问您需要哪个学科的备课支持？",
-    "teaching_plan": "一份优质的教案应包含以下要素：\n\n1. 明确的教学目标\n2. 教学重点与难点\n3. 详细的教学过程\n4. 教学资源清单\n5. 课堂练习和作业设计\n6. 教学反思部分\n\n我可以帮您设计特定学科和年级的教案，请告诉我您的具体需求。",
-    "fallback": "作为学科备课专家，我建议从教学目标、重点难点、教学策略和评价方式几个方面系统思考。不同的教学内容需要采用不同的教学方法。您希望我针对哪个具体知识点或教学单元提供备课建议？"
-  },
-  // 创意教学设计师 (ID: 3)
-  "3": {
-    "greeting": "您好！我是创意教学设计师，专注于提供创新教学方法和活动设计，激发学生学习兴趣。请问您想了解哪方面的创新教学？",
-    "creative_teaching": "创新教学的核心是突破传统教学模式的局限，以下是一些创意教学方法：\n\n1. 故事化教学：将知识点融入引人入胜的故事中\n2. 游戏化学习：设计教育游戏，增强学习体验\n3. 角色扮演：让学生通过扮演角色深入理解知识\n4. 创客教育：通过动手制作培养创新思维\n5. 跨学科整合：打破学科界限，促进知识迁移\n\n我可以为您的具体教学内容提供创意设计方案。",
-    "fallback": "作为创意教学设计师，我建议尝试突破常规思维，将艺术、游戏、技术等元素融入教学中。创新不一定是全新的方法，而是对现有方法的创造性改进。您希望我针对哪个具体场景设计创新教学活动？"
-  }
-};
-
-// 根据智能体ID和关键词生成AI回复
+// 智能体回复生成逻辑
 const generateResponse = (message: string, agentId?: string): string => {
-  // 确定使用哪个智能体的回复模板
-  const responseSet = agentId && presetResponses[agentId] 
-    ? presetResponses[agentId] 
-    : presetResponses.default;
-
-  // 根据消息内容匹配回复
-  if (message.toLowerCase().includes("hello") || message.includes("你好")) {
-    return responseSet.greeting || presetResponses.default.greeting;
-  } else if (message.includes("课堂活动") || message.includes("教学活动")) {
-    return responseSet.class_activity || presetResponses.default.class_activity;
-  } else if (message.includes("评价") || message.includes("考核")) {
-    return responseSet.student_evaluation || presetResponses.default.student_evaluation;
-  } else if (message.includes("课堂管理") || message.includes("学生行为")) {
-    return responseSet.classroom_management || presetResponses.default.classroom_management;
-  } else if (message.includes("资源") || message.includes("教材")) {
-    return responseSet.teaching_resources || presetResponses.default.teaching_resources;
-  } else if (message.includes("教案") || message.includes("备课")) {
-    return responseSet.teaching_plan || presetResponses.default.teaching_resources;
-  } else if (message.includes("创新") || message.includes("创意")) {
-    return responseSet.creative_teaching || (responseSet.fallback || presetResponses.default.fallback);
-  } else {
-    return responseSet.fallback || presetResponses.default.fallback;
+  // 根据智能体ID和用户消息生成不同的回复
+  if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi') || message.toLowerCase().includes('hey') || message.toLowerCase().includes('你好')) {
+    return "您好！很高兴为您服务。请问有什么我可以帮助您的吗？";
   }
+  
+  if (message.toLowerCase().includes('thank') || message.toLowerCase().includes('谢谢')) {
+    return "不客气！如果您还有其他问题，随时可以问我。";
+  }
+  
+  // 教育相关问题
+  if (message.includes('教学') || message.includes('课程') || message.includes('学生')) {
+    return "作为一名教育助手，我可以帮助您解决教学过程中遇到的各种挑战。您可以向我咨询课程设计、教学方法、学生管理等方面的问题。我会根据最新的教育理念和实践经验为您提供建议。您想了解哪方面的具体内容呢？";
+  }
+  
+  // AI和技术相关问题
+  if (message.includes('AI') || message.includes('人工智能') || message.includes('技术')) {
+    return "人工智能正在逐渐改变教育领域。它可以通过个性化学习、智能评估、自动化管理等方式，提高教学效率和学习效果。您对教育中的AI应用有什么具体的问题吗？";
+  }
+  
+  // 根据智能体ID生成不同的专业回复
+  if (agentId === "1") { // 教学助手
+    return "作为教学助手，我认为这个问题涉及到教学设计的核心原则。有效的教学需要明确的学习目标、合适的教学策略、及时的反馈和评估。您的问题很有价值，我建议从学生的认知发展水平和已有知识基础出发，设计符合其学习需求的教学活动。您希望我从哪个方面进一步展开分析呢？";
+  } else if (agentId === "2") { // 学生助手
+    return "我理解你作为学生可能面临的挑战。学习是一个需要策略和方法的过程，不仅仅是记忆知识点。我建议你尝试主动学习方法，比如间隔复习、知识连接和实践应用。你也可以寻找学习伙伴，互相解释概念可以加深理解。有什么具体的学习困难我可以帮你解决吗？";
+  } else if (agentId === "3") { // 研究助手
+    return "从教育研究的角度看，这个问题涉及到多个理论框架。近期的实证研究表明，混合学习模式结合了传统课堂教学和在线学习的优势，可以显著提高学习成效。Hattie的元分析研究也指出，教师反馈、形成性评估和自我报告成绩是影响学习效果最大的因素。您想了解哪方面的研究证据？";
+  }
+  
+  // 默认回复
+  return "您提出了一个很有思考价值的问题。在教育领域，我们需要综合考虑学习者特点、教学目标和环境条件。基于当前的教育理念，我认为个性化学习和培养批判性思维尤为重要。您有什么具体的场景或者挑战需要探讨吗？";
 };
 
 // 获取智能体名称
 const getAgentName = async (agentId: string): Promise<string> => {
-  try {
-    // 这里可以模拟从API获取智能体信息
-    const agentNames: Record<string, string> = {
-      "1": "智能教学助手",
-      "2": "学科备课专家",
-      "3": "创意教学设计师",
-      "4": "学习分析专家",
-      "5": "教育研究助手",
-      "6": "课程设计专家"
-    };
-    
-    return agentNames[agentId] || "智能助手";
-  } catch {
+  // 模拟API调用获取智能体名称
+  if (agentId === "1") {
+    return "教学助手";
+  } else if (agentId === "2") {
+    return "学生助手";
+  } else if (agentId === "3") {
+    return "研究助手";
+  } else {
     return "智能助手";
   }
 };
@@ -266,34 +255,27 @@ export const aiAssistantHandlers = [
       lastMessage: "",
       lastUpdated: new Date().toISOString(),
       messages: [],
-      agentId
+      agentId // 存储智能体ID
     };
     
-    conversations.push(newConversation);
+    conversations.unshift(newConversation); // 添加到最前面
     
-    await delay(300);
+    await delay(500);
     return HttpResponse.json(newConversation);
   }),
   
-  // 发送聊天消息并获取AI回复
+  // 发送聊天消息
   http.post<any, ChatRequest>('*/api/ai-assistant/chat', async ({ request }) => {
     const req = await request.json() as ChatRequest;
     const { message, conversationId, agentId } = req;
     
     const conversation = conversations.find(conv => conv.id === conversationId);
     if (!conversation) {
-      return new HttpResponse(null, { status: 404 });
+      return new HttpResponse(null, { status: 404, statusText: "Conversation not found" });
     }
     
-    // 记录用户消息
-    const userMessage: Message = {
-      id: generateId(),
-      content: message,
-      role: 'user',
-      timestamp: new Date().toISOString()
-    };
-    
-    conversation.messages.push(userMessage);
+    // 用户消息已经在前端添加，这里不需要再添加
+    // 但在实际生产环境中，应该在后端添加用户消息
     
     // 生成AI回复，优先使用对话绑定的agentId，其次使用请求中的agentId
     await delay(1000); // 模拟AI处理时间

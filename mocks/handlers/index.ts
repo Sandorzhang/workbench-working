@@ -13,6 +13,7 @@ import { workbenchHandlers } from './workbench';
 import { classroomTimemachineHandlers } from './classroom-timemachine';
 import { educationHandlers } from './education';
 import { academicStandardsHandlers } from './academic-standards';
+import { aiAssistantHandlers } from './ai-assistant';
 // 导入其他处理器...
 
 export const handlers = [
@@ -29,6 +30,7 @@ export const handlers = [
   ...classroomTimemachineHandlers,
   ...educationHandlers,
   ...academicStandardsHandlers,
+  ...aiAssistantHandlers,
   // 其他处理器...
   
   // 处理教学设计API

@@ -186,6 +186,17 @@
   animation: fadeIn 0.3s ease-in-out forwards;
 }
 
+/* 移除透视效果，使用更简单的方法来保持圆角 */
+.perspective-1 {
+  /* 不再使用perspective属性，改为使用overflow和transform-style */
+  overflow: hidden;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* 使用现代技术提高渲染质量 */
+  will-change: transform;
+}
+
 /* 动画延迟工具类 */
 .animate-delay-0 {
   animation-delay: 0ms;
@@ -225,6 +236,20 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* 确保textarea滚动条始终可见 */
+.scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 2px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 @layer base {
