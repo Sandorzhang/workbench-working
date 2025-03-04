@@ -89,6 +89,12 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
           if (!token) {
             console.log('设置默认测试token');
             localStorage.setItem('token', 'default-token');
+            
+            // 通知控制台
+            console.info('已设置默认测试token: default-token');
+            console.info('此token将用于开发环境中的自动身份验证');
+          } else {
+            console.log('已存在token:', token.substring(0, 5) + '...');
           }
           
           console.log('MSW 初始化成功!');

@@ -1,5 +1,5 @@
 // import { server } from './node'
-import { seedDb } from './db';
+import { seedDb, db } from './db';
 import { handlers } from './handlers/index';
 
 // 初始化MSW数据库
@@ -33,6 +33,51 @@ export const worker = {
         if (!token) {
           console.log('设置默认测试token');
           localStorage.setItem('token', 'default-token');
+          
+          // 创建一个默认会话，确保default-token有效
+          try {
+            // 检查是否有默认用户
+            const defaultUser = db.user.findFirst({
+              where: {
+                id: {
+                  equals: '1',
+                },
+              },
+            });
+            
+            if (defaultUser) {
+              console.log('为默认用户创建有效会话');
+              const expiresAt = new Date();
+              expiresAt.setDate(expiresAt.getDate() + 7); // 7天有效期
+              
+              // 先删除任何可能存在的default-token会话
+              try {
+                db.session.delete({
+                  where: {
+                    token: {
+                      equals: 'default-token',
+                    },
+                  },
+                });
+              } catch (e) {
+                // 忽略不存在的会话
+              }
+              
+              // 创建新会话
+              db.session.create({
+                id: String(Date.now()),
+                userId: defaultUser.id,
+                token: 'default-token',
+                expiresAt: expiresAt.toISOString(),
+              });
+              
+              console.log('默认会话创建成功');
+            } else {
+              console.warn('找不到默认用户，无法创建默认会话');
+            }
+          } catch (e) {
+            console.error('创建默认会话失败:', e);
+          }
         }
         
         console.log('MSW worker 启动成功，handlers:', handlers.length);

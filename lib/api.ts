@@ -75,7 +75,7 @@ async function handleRequest<T>(
     if (!response.ok) {
       console.error(`API请求失败: ${url} - 状态码: ${response.status}`, data);
       throw {
-        message: data.message || '请求失败',
+        message: data.message || `请求失败 (${response.status})`,
         code: response.status.toString(),
         details: data.details || data
       } as ApiErrorResponse;
@@ -90,11 +90,15 @@ async function handleRequest<T>(
       throw error;
     }
     
-    throw {
+    // 创建更健壮的错误对象
+    const standardError: ApiErrorResponse = {
       message: error instanceof Error ? error.message : '请求失败',
       code: 'UNKNOWN',
       details: { originalError: error }
-    } as ApiErrorResponse;
+    };
+    
+    console.log('标准化API错误:', standardError);
+    throw standardError;
   }
 }
 

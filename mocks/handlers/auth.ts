@@ -106,35 +106,39 @@ export const authHandlers = [
       const authHeader = request.headers.get('Authorization');
       console.log('Authorization 头:', authHeader ? authHeader.substring(0, 20) + '...' : 'undefined');
       
-      // 在开发环境，总是返回默认用户
-      const defaultUser = db.user.findFirst({
-        where: {
-          id: {
-            equals: '1', // 默认管理员
+      // 检查是否为开发环境下的默认token
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
+      if (token === 'default-token') {
+        console.log('检测到默认token，返回默认用户');
+        const defaultUser = db.user.findFirst({
+          where: {
+            id: {
+              equals: '1', // 默认管理员
+            },
           },
-        },
-      });
-      
-      if (defaultUser) {
-        const { password: _, ...userWithoutPassword } = defaultUser;
-        console.log('返回默认用户信息:', userWithoutPassword.name);
-        return new HttpResponse(
-          JSON.stringify(userWithoutPassword),
-          { 
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json'
+        });
+        
+        if (defaultUser) {
+          const { password: _, ...userWithoutPassword } = defaultUser;
+          console.log('返回默认用户信息:', userWithoutPassword.name);
+          return new HttpResponse(
+            JSON.stringify(userWithoutPassword),
+            { 
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json'
+              }
             }
-          }
-        );
+          );
+        }
       }
       
-      // 如果没有Authorization头或默认用户不存在，则返回401
+      // 如果没有Authorization头，则返回401
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         console.log('未找到有效的 Authorization 头');
         return new HttpResponse(
           JSON.stringify({
-            message: '未授权访问',
+            message: '未授权访问: 缺少认证令牌',
             code: '401',
             details: { reason: 'missing_token' }
           }),
@@ -147,23 +151,24 @@ export const authHandlers = [
         );
       }
       
-      const token = authHeader.split('Bearer ')[1];
-      console.log('提取 token:', token.substring(0, 8) + '...');
+      // 提取token并查找会话
+      const validToken = authHeader.split('Bearer ')[1];
+      console.log('提取 token:', validToken.substring(0, 8) + '...');
       
       // 查找会话
       const session = db.session.findFirst({
         where: {
           token: {
-            equals: token,
+            equals: validToken,
           },
         },
       });
       
       if (!session) {
-        console.log(`未找到匹配的会话 for token: ${token.substring(0, 8)}...`);
+        console.log(`未找到匹配的会话 for token: ${validToken.substring(0, 8)}...`);
         return new HttpResponse(
           JSON.stringify({
-            message: '无效的访问令牌',
+            message: '无效的访问令牌: 会话不存在',
             code: '401',
             details: { reason: 'invalid_token' }
           }),
@@ -181,7 +186,7 @@ export const authHandlers = [
         console.log('会话已过期');
         return new HttpResponse(
           JSON.stringify({
-            message: '会话已过期',
+            message: '会话已过期，请重新登录',
             code: '401',
             details: { reason: 'session_expired' }
           }),
@@ -207,7 +212,7 @@ export const authHandlers = [
         console.log(`找不到用户ID: ${session.userId}`);
         return new HttpResponse(
           JSON.stringify({
-            message: '用户不存在',
+            message: '用户账号不存在，请联系管理员',
             code: '404',
             details: { reason: 'user_not_found' }
           }),

@@ -82,8 +82,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 清除无效token
         localStorage.removeItem('token');
         
-        // 设置错误信息
-        const errorMessage = error.message || '会话验证失败';
+        // 更健壮的错误消息提取
+        let errorMessage = '会话验证失败';
+        
+        if (error) {
+          if (typeof error === 'string') {
+            errorMessage = error;
+          } else if (error.message) {
+            errorMessage = error.message;
+          } else if (error.code) {
+            errorMessage = `认证错误 (${error.code})`;
+          } else if (JSON.stringify(error) !== '{}') {
+            // 如果错误对象不为空但没有消息，尝试将整个对象转为字符串
+            errorMessage = `认证错误: ${JSON.stringify(error)}`;
+          }
+        }
+        
+        console.log('设置错误状态，错误消息:', errorMessage);
         
         setState({
           isAuthenticated: false,
