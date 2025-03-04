@@ -10,6 +10,8 @@ import { Progress } from '@/components/ui/progress';
 import { MasteryLegend } from './MasteryLegend';
 import { TimeRangeSelector } from './TimeRangeSelector';
 import { StandardsFilter } from './StandardsFilter';
+import { SectionContainer } from '@/components/ui/section-container';
+import { Users, BookOpen, TrendingUp } from 'lucide-react';
 
 interface ClassOverviewProps {
   classId: string;
@@ -48,7 +50,7 @@ export function ClassOverview({ classId, className }: ClassOverviewProps) {
   }, [classId]);
 
   const handleTimeRangeChange = (startDate: Date, endDate: Date) => {
-    // In a real implementation, we would re-fetch data with the new date range
+    // In a real application, this would fetch data for the selected time range
     console.log('Time range changed:', { startDate, endDate });
   };
 
@@ -56,79 +58,109 @@ export function ClassOverview({ classId, className }: ClassOverviewProps) {
     setFilteredStandardIds(selectedStandards);
   };
 
-  // Get filtered or all standards summary data
   const getFilteredStandardsSummary = () => {
     if (!overviewData) return [];
     
+    const { standardsSummary } = overviewData;
+    
     if (filteredStandardIds.length === 0) {
-      return overviewData.standardsSummary;
+      return standardsSummary;
     }
     
-    return overviewData.standardsSummary.filter(summary => 
+    return standardsSummary.filter(summary => 
       filteredStandardIds.includes(summary.standardId)
     );
   };
 
-  // Find standard details by ID
   const getStandardDetails = (standardId: string) => {
     return standards.find(s => s.id === standardId);
   };
 
-  // Calculate average mastery for filtered standards
   const calculateFilteredProgress = () => {
     if (!overviewData) return null;
     
+    if (filteredStandardIds.length === 0) {
+      return overviewData.overallProgress;
+    }
+    
+    // Calculate progress based on filtered standards
     const filteredSummary = getFilteredStandardsSummary();
-    if (filteredSummary.length === 0) return overviewData.overallProgress;
+    const totalStudents = overviewData.studentCount;
     
-    const studentCount = overviewData.studentCount;
-    const totalAssessments = filteredSummary.length * studentCount;
+    if (filteredSummary.length === 0 || totalStudents === 0) {
+      return {
+        mastered: 0,
+        progressing: 0,
+        needsImprovement: 0,
+        notStarted: 0
+      };
+    }
     
-    const mastered = filteredSummary.reduce((sum, s) => sum + s.masteryDistribution.mastered, 0);
-    const progressing = filteredSummary.reduce((sum, s) => sum + s.masteryDistribution.progressing, 0);
-    const needsImprovement = filteredSummary.reduce((sum, s) => sum + s.masteryDistribution.needsImprovement, 0);
-    const notStarted = filteredSummary.reduce((sum, s) => sum + s.masteryDistribution.notStarted, 0);
+    // Sum up all mastery counts
+    const totals = filteredSummary.reduce(
+      (acc, summary) => {
+        acc.mastered += summary.masteryDistribution.mastered;
+        acc.progressing += summary.masteryDistribution.progressing;
+        acc.needsImprovement += summary.masteryDistribution.needsImprovement;
+        acc.notStarted += summary.masteryDistribution.notStarted;
+        return acc;
+      },
+      { mastered: 0, progressing: 0, needsImprovement: 0, notStarted: 0 }
+    );
     
+    // Convert to percentages
+    const totalStandards = filteredSummary.length * totalStudents;
     return {
-      mastered: (mastered / totalAssessments) * 100,
-      progressing: (progressing / totalAssessments) * 100,
-      needsImprovement: (needsImprovement / totalAssessments) * 100,
-      notStarted: (notStarted / totalAssessments) * 100,
+      mastered: (totals.mastered / totalStandards) * 100,
+      progressing: (totals.progressing / totalStandards) * 100,
+      needsImprovement: (totals.needsImprovement / totalStandards) * 100,
+      notStarted: (totals.notStarted / totalStandards) * 100
     };
   };
 
   if (loading) {
     return (
-      <Card className={cn("w-full h-full min-h-[400px]", className)}>
-        <CardHeader>
-          <CardTitle>班级学业概览</CardTitle>
-          <CardDescription>
-            <Skeleton className="h-4 w-64" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-64 w-full" />
+      <div className={cn("space-y-6", className)}>
+        <SectionContainer>
+          <div className="flex flex-col md:flex-row justify-between gap-4">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-10 w-64" />
           </div>
-        </CardContent>
-      </Card>
+        </SectionContainer>
+        
+        <Card className="w-full h-full min-h-[400px]">
+          <CardHeader>
+            <CardTitle>班级学业概览</CardTitle>
+            <CardDescription>
+              <Skeleton className="h-4 w-64" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   if (error || !overviewData) {
     return (
-      <Card className={cn("w-full h-full min-h-[400px]", className)}>
-        <CardHeader>
-          <CardTitle>班级学业概览</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-[300px]">
-            <p className="text-muted-foreground">{error || '无数据'}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("space-y-6", className)}>
+        <Card className="w-full h-full min-h-[400px]">
+          <CardHeader>
+            <CardTitle>班级学业概览</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-muted-foreground">{error || '无数据'}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -148,140 +180,147 @@ export function ClassOverview({ classId, className }: ClassOverviewProps) {
 
   return (
     <div className={cn("space-y-6", className)}>
-      <div className="flex flex-col md:flex-row justify-between gap-4">
-        <TimeRangeSelector onChange={handleTimeRangeChange} />
-        <StandardsFilter onChange={handleStandardsFilterChange} />
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>班级学业概览</CardTitle>
-          <CardDescription>
-            {classNameData} - 共 {studentCount} 名学生
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-8">
-            {/* Overall Progress */}
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">整体掌握水平</h3>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">掌握进度</span>
-                <MasteryLegend />
-              </div>
-              
-              {filteredProgress && (
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>已掌握</span>
-                      <span>{filteredProgress.mastered.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={filteredProgress.mastered} className="h-2 bg-gray-200" />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>进行中</span>
-                      <span>{filteredProgress.progressing.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={filteredProgress.progressing} className="h-2 bg-gray-200" />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>需提高</span>
-                      <span>{filteredProgress.needsImprovement.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={filteredProgress.needsImprovement} className="h-2 bg-gray-200" />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>未开始</span>
-                      <span>{filteredProgress.notStarted.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={filteredProgress.notStarted} className="h-2 bg-gray-200" />
-                  </div>
-                </div>
-              )}
+      <SectionContainer 
+        title="班级学业概览" 
+        description={`${classNameData} - 共 ${studentCount} 名学生`}
+        className="bg-white rounded-lg shadow-sm border p-6"
+      >
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-50 p-2 rounded-full">
+              <Users className="h-5 w-5 text-blue-500" />
             </div>
-            
-            {/* Challenging Standards */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">需要关注的学习标准</h3>
-              <p className="text-sm text-muted-foreground">以下学习标准的掌握率较低，可能需要额外关注。</p>
-              
-              <div className="space-y-3">
-                {challengingStandards.map(standard => {
-                  const standardDetails = getStandardDetails(standard.standardId);
-                  if (!standardDetails) return null;
-                  
-                  const masteryPercentage = (standard.masteryDistribution.mastered / studentCount) * 100;
-                  
-                  return (
-                    <div key={standard.standardId} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{standardDetails.code}</div>
-                          <div className="text-xs text-muted-foreground truncate">{standardDetails.shortDescription}</div>
-                        </div>
-                        <span className="text-sm font-medium">{masteryPercentage.toFixed(1)}%</span>
-                      </div>
-                      <Progress value={masteryPercentage} className="h-2 bg-gray-200" />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            
-            {/* Additional Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base">总体掌握率</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-3xl font-bold">
-                    {filteredProgress ? filteredProgress.mastered.toFixed(1) : 0}%
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    学生平均掌握学习标准的百分比
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base">标准数量</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-3xl font-bold">
-                    {filteredSummary.length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    当前选择的学习标准数量
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base">已掌握标准数</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-3xl font-bold">
-                    {Math.round((filteredProgress?.mastered || 0) * filteredSummary.length / 100)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    班级平均已完全掌握的标准数量
-                  </p>
-                </CardContent>
-              </Card>
+            <div>
+              <h3 className="font-medium">{classNameData}</h3>
+              <p className="text-sm text-gray-500">{studentCount} 名学生</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="flex flex-wrap gap-4">
+            <TimeRangeSelector onChange={handleTimeRangeChange} />
+            <StandardsFilter onChange={handleStandardsFilterChange} sticky />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-500 p-3 rounded-full">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">整体掌握率</p>
+                  <h4 className="text-2xl font-semibold">{filteredProgress?.mastered.toFixed(1)}%</h4>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-green-500 p-3 rounded-full">
+                  <BookOpen className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">学习标准数</p>
+                  <h4 className="text-2xl font-semibold">{filteredSummary.length}</h4>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-amber-500 p-3 rounded-full">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">进行中标准</p>
+                  <h4 className="text-2xl font-semibold">{filteredProgress?.progressing.toFixed(1)}%</h4>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="space-y-8">
+          {/* Overall Progress */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">整体掌握水平</h3>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">掌握进度</span>
+              <MasteryLegend />
+            </div>
+            
+            {filteredProgress && (
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>已掌握</span>
+                    <span>{filteredProgress.mastered.toFixed(1)}%</span>
+                  </div>
+                  <Progress value={filteredProgress.mastered} className="h-2 bg-gray-200" />
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>进行中</span>
+                    <span>{filteredProgress.progressing.toFixed(1)}%</span>
+                  </div>
+                  <Progress value={filteredProgress.progressing} className="h-2 bg-gray-200" />
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>需提高</span>
+                    <span>{filteredProgress.needsImprovement.toFixed(1)}%</span>
+                  </div>
+                  <Progress value={filteredProgress.needsImprovement} className="h-2 bg-gray-200" />
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>未开始</span>
+                    <span>{filteredProgress.notStarted.toFixed(1)}%</span>
+                  </div>
+                  <Progress value={filteredProgress.notStarted} className="h-2 bg-gray-200" />
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Challenging Standards */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">需要关注的学习标准</h3>
+            <div className="space-y-3">
+              {challengingStandards.length === 0 ? (
+                <p className="text-sm text-muted-foreground">没有需要特别关注的学习标准</p>
+              ) : (
+                challengingStandards.map(standard => {
+                  const standardDetails = getStandardDetails(standard.standardId);
+                  const masteryRate = (standard.masteryDistribution.mastered / studentCount) * 100;
+                  
+                  return (
+                    <div key={standard.standardId} className="p-4 bg-slate-50 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium">{standardDetails?.code || standard.standardId}</h4>
+                          <p className="text-sm text-gray-600">{standardDetails?.shortDescription || '未知标准'}</p>
+                        </div>
+                        <span className="text-sm font-medium text-red-500">{masteryRate.toFixed(1)}% 掌握</span>
+                      </div>
+                      <Progress value={masteryRate} className="h-2 bg-gray-200" />
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </SectionContainer>
     </div>
   );
 } 

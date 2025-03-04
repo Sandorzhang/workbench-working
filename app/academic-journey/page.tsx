@@ -2,15 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { GraduationCap, LineChart, Users } from "lucide-react";
+import { GraduationCap, LineChart, Users, BookOpen } from "lucide-react";
 
 export default function AcademicJourneyPage() {
   return (
     <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center mb-6">
+        <div className="bg-white p-4 shadow-sm rounded-2xl mr-6 border border-gray-100/80">
+          <BookOpen className="h-5 w-5 text-primary" />
+        </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">学业旅程</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">学业旅程</h1>
+          <p className="text-gray-500 mt-1.5 text-sm font-normal">
             跟踪学生的学业标准达成进度，了解班级整体情况。
           </p>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -13,9 +13,10 @@ interface StandardsFilterProps {
   onChange: (selectedStandards: string[]) => void;
   className?: string;
   multiple?: boolean;
+  sticky?: boolean;
 }
 
-export function StandardsFilter({ onChange, className, multiple = true }: StandardsFilterProps) {
+export function StandardsFilter({ onChange, className, multiple = true, sticky = false }: StandardsFilterProps) {
   const [open, setOpen] = useState(false);
   const [standards, setStandards] = useState<LearningStandard[]>([]);
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
@@ -74,7 +75,11 @@ export function StandardsFilter({ onChange, className, multiple = true }: Standa
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn(
+      "space-y-4", 
+      sticky && "sticky top-4 z-10 bg-white p-4 rounded-lg shadow-sm border", 
+      className
+    )}>
       <div className="flex flex-wrap gap-2">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -82,22 +87,25 @@ export function StandardsFilter({ onChange, className, multiple = true }: Standa
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between md:w-[300px]"
+              className="w-full justify-between md:w-[350px]"
             >
-              {multiple
-                ? selectedValues.length === 0
-                  ? "选择学习标准"
-                  : `已选择 ${selectedValues.length} 项标准`
-                : selectedValues.length > 0
-                ? standards.find(standard => standard.id === selectedValues[0])?.shortDescription || "选择学习标准"
-                : "选择学习标准"}
+              <div className="flex items-center">
+                <Filter className="mr-2 h-4 w-4" />
+                {multiple
+                  ? selectedValues.length === 0
+                    ? "选择学习标准"
+                    : `已选择 ${selectedValues.length} 项标准`
+                  : selectedValues.length > 0
+                  ? standards.find(standard => standard.id === selectedValues[0])?.shortDescription || "选择学习标准"
+                  : "选择学习标准"}
+              </div>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0 md:w-[500px]">
-            <Command>
-              <CommandInput placeholder="搜索学习标准..." />
-              <div className="flex p-2 gap-2">
+          <PopoverContent className="w-full p-0 md:w-[650px] max-h-[80vh] overflow-hidden">
+            <Command className="max-h-full">
+              <CommandInput placeholder="搜索学习标准..." className="h-12" />
+              <div className="flex p-3 gap-2 bg-slate-50 border-b">
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={selectedSubject || ''}
@@ -120,7 +128,7 @@ export function StandardsFilter({ onChange, className, multiple = true }: Standa
                 </select>
               </div>
               <CommandEmpty>未找到匹配的学习标准</CommandEmpty>
-              <CommandGroup className="max-h-[300px] overflow-y-auto">
+              <CommandGroup className="max-h-[400px] overflow-y-auto">
                 {loading ? (
                   <div className="p-2 text-center text-sm text-muted-foreground">加载中...</div>
                 ) : (
@@ -129,6 +137,7 @@ export function StandardsFilter({ onChange, className, multiple = true }: Standa
                       key={standard.id}
                       value={standard.id}
                       onSelect={() => handleSelect(standard.id)}
+                      className="p-3 border-b last:border-0"
                     >
                       <Check
                         className={cn(
@@ -136,9 +145,9 @@ export function StandardsFilter({ onChange, className, multiple = true }: Standa
                           selectedValues.includes(standard.id) ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <div>
+                      <div className="flex flex-col">
                         <div className="font-medium">{standard.code}</div>
-                        <div className="text-sm text-muted-foreground truncate">{standard.shortDescription}</div>
+                        <div className="text-sm text-muted-foreground">{standard.shortDescription}</div>
                       </div>
                     </CommandItem>
                   ))
@@ -150,7 +159,7 @@ export function StandardsFilter({ onChange, className, multiple = true }: Standa
       </div>
       
       {multiple && selectedValues.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg">
           {selectedValues.map(value => {
             const standard = standards.find(s => s.id === value);
             if (!standard) return null;
