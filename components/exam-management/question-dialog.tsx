@@ -261,12 +261,17 @@ export function QuestionDialog({
                       min={0.5}
                       max={100}
                       step={0.5}
-                      placeholder="输入分值"
                       {...field}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value)
+                        if (value < 0.5) e.target.value = '0.5'
+                        if (value > 100) e.target.value = '100'
+                        field.onChange(e)
+                      }}
                     />
                   </FormControl>
                   <FormDescription>
-                    设置题目的分值，最小0.5分，最大100分
+                    设置题目的分值（0.5-100分之间）
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -278,12 +283,12 @@ export function QuestionDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>题目描述（可选）</FormLabel>
+                  <FormLabel>题目描述</FormLabel>
                   <FormControl>
-                    <Input placeholder="简要描述题目内容" {...field} />
+                    <Input placeholder="简要描述题目内容（选填）" {...field} />
                   </FormControl>
                   <FormDescription>
-                    可选填写题目的简要描述，便于识别
+                    输入题目的简要描述，帮助识别题目内容
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -295,89 +300,81 @@ export function QuestionDialog({
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>题目图片（可选）</FormLabel>
+                  <FormLabel>题目图片</FormLabel>
                   <div className="space-y-2">
-                    {!imagePreview ? (
-                      <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-6 bg-gray-50">
-                        <Label
-                          htmlFor="image-upload"
-                          className="flex flex-col items-center justify-center cursor-pointer"
-                        >
-                          <Image className="h-8 w-8 text-gray-400 mb-2" />
-                          <span className="text-sm font-medium text-gray-600">点击上传图片</span>
-                          <span className="text-xs text-gray-400 mt-1">支持 JPG, PNG, GIF 格式</span>
-                          <Input
-                            id="image-upload"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                            disabled={isUploading}
+                    {imagePreview ? (
+                      <div className="relative rounded-md border overflow-hidden">
+                        <div className="relative aspect-video w-full bg-muted/30">
+                          <img
+                            src={imagePreview}
+                            alt="题目图片预览"
+                            className="object-contain h-full w-full"
                           />
-                        </Label>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <img
-                          src={imagePreview}
-                          alt="题目图片"
-                          className="max-h-[200px] rounded-md mx-auto object-contain"
-                        />
+                        </div>
                         <Button
                           type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
                           onClick={handleRemoveImage}
-                          disabled={isUploading}
                         >
                           <X className="h-4 w-4" />
+                          <span className="sr-only">删除图片</span>
                         </Button>
                       </div>
-                    )}
-                    {isUploading && (
-                      <div className="flex items-center justify-center py-2">
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        <span className="text-sm text-muted-foreground">上传中...</span>
+                    ) : (
+                      <div
+                        className={cn(
+                          "border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors",
+                          isUploading && "pointer-events-none opacity-60"
+                        )}
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                      >
+                        {isUploading ? (
+                          <div className="flex flex-col items-center justify-center">
+                            <Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-2" />
+                            <p className="text-sm text-muted-foreground">上传中...</p>
+                          </div>
+                        ) : (
+                          <>
+                            <Image className="h-10 w-10 text-muted-foreground mb-2" />
+                            <p className="font-medium">点击上传题目图片</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              支持JPG、PNG格式，最大2MB
+                            </p>
+                          </>
+                        )}
+                        <input
+                          id="image-upload"
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={isUploading}
+                        />
                       </div>
                     )}
-                    <input type="hidden" {...field} />
+                    <FormDescription>
+                      上传题目图片，方便查看题目原始内容（选填）
+                    </FormDescription>
+                    <FormMessage />
                   </div>
-                  <FormDescription>
-                    可选上传题目相关的图片，如题目图表、公式等
-                  </FormDescription>
-                  <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={isLoading || isUploading}
+                disabled={isLoading}
               >
                 取消
               </Button>
-              <Button 
-                type="submit" 
-                disabled={isLoading || isUploading}
-                className={cn(
-                  isLoading ? "opacity-80" : ""
-                )}
-              >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {isEditing ? '保存中...' : '添加中...'}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    {isEditing ? '保存题目' : '添加题目'}
-                  </span>
-                )}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEditing ? '保存修改' : '添加题目'}
               </Button>
             </DialogFooter>
           </form>

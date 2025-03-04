@@ -17,15 +17,14 @@ import { conceptMapHandlers } from './concept-map';
 import { academicJourneyHandlers } from './academic-journey';
 import { teachingDesignsHandlers } from './teaching-designs-alt';
 import { examHandlers } from './exam';
-import { questionHandlers } from './question';
-import { notificationHandlers } from './notification';
+import { questionsHandlers } from './question';
 // 导入其他处理器...
 
 export const handlers = [
   ...authHandlers,
   ...userHandlers,
   ...examHandlers,
-  ...questionHandlers,
+  ...questionsHandlers,
   ...calendarHandlers,
   ...dataAssetsHandlers,
   ...aiLibraryHandlers,

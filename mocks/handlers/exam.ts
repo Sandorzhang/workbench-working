@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { db } from '../db'
+import { questions } from './question'
 
 // 定义考试数据类型
 interface ExamData {
@@ -275,8 +276,9 @@ function genRandomId(): string {
 // 确保在导出处理程序前初始化数据
 initExams();
 
+// 添加一个获取考试详情及相关题目的API处理器
 export const examHandlers = [
-  // 获取所有考试
+  // 获取考试列表
   http.get('/api/exams', async () => {
     await delay(500)
     console.log('[MSW] 处理请求: GET /api/exams')
@@ -314,6 +316,44 @@ export const examHandlers = [
     
     console.log(`[MSW] 返回考试详情: ${exam.name}`)
     return HttpResponse.json(exam)
+  }),
+
+  // 获取考试详情与题目 (新增)
+  http.get('/api/exams/:id/details', async ({ params }) => {
+    await delay(500)
+    
+    const id = typeof params.id === 'string' ? params.id : String(params.id)
+    console.log(`[MSW] 处理请求: GET /api/exams/${id}/details`)
+    
+    const exam = db.exam.findFirst({
+      where: { id: { equals: id } }
+    })
+    
+    if (!exam) {
+      console.log(`[MSW] 考试不存在: ${id}`)
+      return new HttpResponse(
+        JSON.stringify({ error: 'Exam not found' }), 
+        {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+    }
+    
+    // 获取该考试的所有题目
+    const examQuestions = questions.filter(q => q.examId === id)
+    
+    // 计算总分
+    const totalScore = examQuestions.reduce((sum, question) => sum + question.score, 0)
+    
+    console.log(`[MSW] 返回考试详情及题目: ${exam.name}, 题目数量: ${examQuestions.length}`)
+    return HttpResponse.json({
+      ...exam,
+      questions: examQuestions,
+      totalScore
+    })
   }),
 
   // 创建新考试

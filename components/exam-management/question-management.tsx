@@ -12,11 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { AlertCircle, Edit, Image as ImageIcon, Plus, Trash2 } from 'lucide-react'
+import { AlertCircle, Edit, FileUp, Image as ImageIcon, Plus, Trash2, Calculator } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Question, LearningObjective } from '@/types/question'
 import { QuestionDialog } from './question-dialog'
 import { Exam } from '@/types/exam'
+import { PdfImportDialog } from './pdf-import-dialog'
+import { BulkScoreDialog } from './bulk-score-dialog'
 
 interface QuestionManagementProps {
   examId: string
@@ -33,6 +35,8 @@ export function QuestionManagement({
 }: QuestionManagementProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [pdfImportDialogOpen, setPdfImportDialogOpen] = useState(false)
+  const [bulkScoreDialogOpen, setBulkScoreDialogOpen] = useState(false)
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null)
   const [learningObjectives, setLearningObjectives] = useState<LearningObjective[]>([])
   const [isLoadingObjectives, setIsLoadingObjectives] = useState(false)
@@ -249,17 +253,76 @@ export function QuestionManagement({
     window.open(imageUrl, '_blank')
   }
 
+  // 打开PDF导入对话框
+  const handleOpenPdfImport = () => {
+    // 检查考试是否已有题目
+    if (questions.length > 0) {
+      toast({
+        title: '无法导入',
+        description: '只有空的考试才能使用批量导入功能，请先删除所有题目后再试',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setPdfImportDialogOpen(true)
+  }
+
+  // 处理PDF导入完成
+  const handlePdfImportComplete = (importedQuestions: Question[]) => {
+    onQuestionsUpdate(importedQuestions)
+  }
+
+  // 打开批量赋分对话框
+  const handleOpenBulkScore = () => {
+    // 检查考试是否有题目
+    if (questions.length === 0) {
+      toast({
+        title: '无题目可赋分',
+        description: '请先添加题目后再使用批量赋分功能',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setBulkScoreDialogOpen(true)
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>题目管理</CardTitle>
-        <Button 
-          onClick={() => handleAddEditQuestion()} 
-          disabled={isLoading}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          添加题目
-        </Button>
+        <div className="flex gap-2">
+          {/* 批量导入按钮 */}
+          <Button 
+            variant="outline"
+            onClick={handleOpenPdfImport} 
+            disabled={isLoading || questions.length > 0}
+            title={questions.length > 0 ? "只有空的考试才能使用批量导入" : "导入PDF自动识别题目"}
+          >
+            <FileUp className="mr-2 h-4 w-4" />
+            批量导入
+          </Button>
+          
+          {/* 批量赋分按钮 */}
+          <Button 
+            variant="outline"
+            onClick={handleOpenBulkScore} 
+            disabled={isLoading || questions.length === 0}
+          >
+            <Calculator className="mr-2 h-4 w-4" />
+            批量赋分
+          </Button>
+          
+          {/* 添加题目按钮 */}
+          <Button 
+            onClick={() => handleAddEditQuestion()} 
+            disabled={isLoading}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            添加题目
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {questions.length === 0 ? (
@@ -267,7 +330,7 @@ export function QuestionManagement({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>暂无题目</AlertTitle>
             <AlertDescription>
-              该考试还没有添加任何题目，点击"添加题目"按钮开始创建。
+              该考试还没有添加任何题目，点击"添加题目"按钮开始创建，或使用"批量导入"功能导入PDF试卷。
             </AlertDescription>
           </Alert>
         ) : (
@@ -355,6 +418,7 @@ export function QuestionManagement({
           </div>
         )}
         
+        {/* 题目编辑对话框 */}
         <QuestionDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
@@ -363,6 +427,23 @@ export function QuestionManagement({
           isLoading={isLoading}
           examSubject={examInfo?.subject || examSubject}
           onSubmit={handleQuestionDialogSubmit}
+        />
+        
+        {/* PDF导入对话框 */}
+        <PdfImportDialog
+          examId={examId}
+          open={pdfImportDialogOpen}
+          onOpenChange={setPdfImportDialogOpen}
+          onQuestionsImport={handlePdfImportComplete}
+        />
+        
+        {/* 批量赋分对话框 */}
+        <BulkScoreDialog
+          examId={examId}
+          questions={questions}
+          open={bulkScoreDialogOpen}
+          onOpenChange={setBulkScoreDialogOpen}
+          onQuestionsUpdate={onQuestionsUpdate}
         />
       </CardContent>
     </Card>

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { Question, LearningObjective } from '@/types/question'
 
 // 问题数据存储
-let questions: Question[] = []
+export let questions: Question[] = []
 
 // 学业目标数据
 let learningObjectives: LearningObjective[] = [
@@ -366,12 +366,159 @@ export const getExamDetails = http.get('/api/exams/:id/details', async ({ params
   }, { status: 200 })
 })
 
-export const questionHandlers = [
+// PDF导入题目
+export const importQuestionsFromPdf = http.post('/api/questions/import-pdf', async ({ request }) => {
+  await delay(3000) // 模拟较长的处理时间
+  
+  const formData = await request.formData()
+  const examId = formData.get('examId')
+  const file = formData.get('file')
+  
+  if (!examId) {
+    return new Response(
+      JSON.stringify({ message: '缺少考试ID' }), 
+      { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+  }
+  
+  if (!file || !(file instanceof File) || file.type !== 'application/pdf') {
+    return new Response(
+      JSON.stringify({ message: '请上传有效的PDF文件' }), 
+      { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+  }
+  
+  // 模拟PDF识别结果
+  const mockQuestions: Question[] = [
+    {
+      id: uuidv4(),
+      examId: examId as string,
+      questionNumber: '1',
+      learningObjective: 'LO-MATH-01',
+      score: 5,
+      description: '计算 25 + 18 的结果',
+      imageUrl: 'https://via.placeholder.com/300x200?text=Question+1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: uuidv4(),
+      examId: examId as string,
+      questionNumber: '2',
+      learningObjective: 'LO-MATH-02',
+      score: 10,
+      description: '解方程 3x + 7 = 22',
+      imageUrl: 'https://via.placeholder.com/300x200?text=Question+2',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: uuidv4(),
+      examId: examId as string,
+      questionNumber: '3',
+      learningObjective: 'LO-MATH-03',
+      score: 15,
+      description: '计算三角形的面积，底为6cm，高为8cm',
+      imageUrl: 'https://via.placeholder.com/300x200?text=Question+3',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: uuidv4(),
+      examId: examId as string,
+      questionNumber: '4',
+      learningObjective: 'LO-SCI-01',
+      score: 10,
+      description: '说明光合作用的基本过程',
+      imageUrl: 'https://via.placeholder.com/300x200?text=Question+4',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: uuidv4(),
+      examId: examId as string,
+      questionNumber: '5',
+      learningObjective: 'LO-CHIN-01',
+      score: 20,
+      description: '分析下面这首古诗的主题和写作手法',
+      imageUrl: 'https://via.placeholder.com/300x200?text=Question+5',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  ]
+  
+  // 添加到问题数据库
+  questions.push(...mockQuestions)
+  
+  return HttpResponse.json({
+    success: true,
+    message: '导入成功',
+    questions: mockQuestions,
+    count: mockQuestions.length
+  })
+})
+
+// 批量更新分数
+export const bulkUpdateScores = http.put('/api/questions/bulk-update-scores', async ({ request }) => {
+  await delay(1000)
+  
+  const body = await request.json() as { 
+    examId: string; 
+    questions: Array<{ 
+      id: string; 
+      score: number 
+    }> 
+  }
+  
+  const { examId, questions: updatedQuestions } = body
+  
+  if (!examId || !updatedQuestions || !Array.isArray(updatedQuestions)) {
+    return new Response(
+      JSON.stringify({ message: '缺少必要参数' }), 
+      { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+  }
+  
+  // 更新题目分数
+  for (const updatedQuestion of updatedQuestions) {
+    const questionIndex = questions.findIndex(q => q.id === updatedQuestion.id)
+    
+    if (questionIndex !== -1) {
+      questions[questionIndex] = {
+        ...questions[questionIndex],
+        score: updatedQuestion.score,
+        updatedAt: new Date().toISOString()
+      }
+    }
+  }
+  
+  // 获取更新后的考试题目
+  const examQuestions = questions.filter(q => q.examId === examId)
+  
+  return HttpResponse.json({
+    success: true,
+    message: '批量更新分数成功',
+    questions: examQuestions
+  })
+})
+
+// 更新导出的处理程序
+export const questionsHandlers = [
   getQuestionsByExamId,
   getQuestionById,
   createQuestion,
   updateQuestion,
   deleteQuestion,
   getLearningObjectives,
-  getExamDetails
+  importQuestionsFromPdf,
+  bulkUpdateScores
 ] 
