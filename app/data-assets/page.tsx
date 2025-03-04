@@ -14,7 +14,8 @@ import {
   TagIcon,
   Calendar,
   Users,
-  ArrowRight
+  ArrowRight,
+  Check
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,8 @@ import {
   ContentSkeleton, 
   ListSkeleton 
 } from "@/components/ui/skeleton-loader";
+import { HeroSection } from "@/components/ui/hero-section";
+import { cn } from "@/lib/utils";
 
 // 数据资产类型
 interface DataAsset {
@@ -100,6 +103,7 @@ export default function DataAssetsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeTab, setActiveTab] = useState('overview');
+  const [categories, setCategories] = useState([]);
   
   // 获取所有数据资产
   const fetchDataAssets = async () => {
@@ -237,6 +241,13 @@ export default function DataAssetsPage() {
   
   return (
     <div className="space-y-6">
+      <HeroSection
+        title="数据资产管理"
+        description="管理和浏览教学相关的各类数据资源，支持数据分析和教学决策。"
+        icon={Database}
+        gradient="from-cyan-50 to-blue-50"
+      />
+      
       <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
         <div>
           <h1 className="text-2xl font-bold">校数据资产</h1>
@@ -248,6 +259,43 @@ export default function DataAssetsPage() {
           <Database className="mr-2 h-4 w-4" />
           申请数据访问
         </Button>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="搜索数据资产..."
+            className="pl-8 bg-background"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Filter className="mr-2 h-4 w-4" />
+              {selectedCategory === 'all' ? '所有分类' : selectedCategory}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuLabel>按分类筛选</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setSelectedCategory('all')}>
+              所有分类
+            </DropdownMenuItem>
+            {stats && Object.keys(stats.categoryStats).map((category) => (
+              <DropdownMenuItem 
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       {/* 数据统计卡片 */}
@@ -321,43 +369,6 @@ export default function DataAssetsPage() {
           </Card>
         </div>
       )}
-      
-      {/* 搜索和筛选 */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="搜索数据资产..."
-            className="pl-8 bg-background"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Filter className="mr-2 h-4 w-4" />
-              {selectedCategory === 'all' ? '所有分类' : selectedCategory}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[200px]">
-            <DropdownMenuLabel>按分类筛选</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setSelectedCategory('all')}>
-              所有分类
-            </DropdownMenuItem>
-            {stats && Object.keys(stats.categoryStats).map((category) => (
-              <DropdownMenuItem 
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
       
       {/* 数据资产列表和详情 */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">

@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Clock, Heart, User, Calendar, Plus, Image, 
-  BookOpen, Network, HelpCircle, ListChecks
+  BookOpen, Network, HelpCircle, ListChecks, Clock10
 } from 'lucide-react';
 import { ClassRecord, FilmStrip, TeachingMoment } from '@/mocks/handlers/classroom-timemachine';
 import MomentDetail from '@/components/classroom-timemachine/moment-detail';
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import VerticalTimeline from '@/components/classroom-timemachine/vertical-timeline';
+import { HeroSection } from '@/components/ui/hero-section';
 
 export default function ClassroomTimeMachinePage() {
   // 状态
@@ -172,25 +173,20 @@ const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] =>
   return (
     <div className="h-full flex flex-col">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div className="flex items-center">
-          <div className="bg-white p-4 shadow-sm rounded-2xl mr-6 border border-gray-100/80">
-            <MemoryIcon size="lg" className="text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">课堂时光机</h1>
-            <p className="text-gray-500 mt-1.5 text-sm font-normal">收集、整理和回顾您的教学时刻</p>
-                  </div>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <Button 
-            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            新建记录
-          </Button>
-        </div>
+      <HeroSection
+        title="课堂时光机"
+        description="收集、整理和回顾您的教学时刻"
+        icon={Clock10}
+        gradient="from-purple-50 to-pink-50"
+      />
+      
+      <div className="flex items-center space-x-4 -mt-2 mb-6">
+        <Button 
+          className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          新建记录
+        </Button>
       </div>
 
       {/* 三列布局 */}

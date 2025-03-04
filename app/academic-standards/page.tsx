@@ -14,6 +14,7 @@ import { Search, Calculator, BookOpen, ChevronLeft, ChevronRight } from 'lucide-
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { ResponsiveGrid } from '@/components/ui/responsive-grid';
+import { HeroSection } from '@/components/ui/hero-section';
 
 // 学业标准类型定义
 interface AcademicStandard {
@@ -126,6 +127,8 @@ export default function AcademicStandardsPage() {
   // 获取学科图标组件
   const getSubjectIcon = (iconName: string) => {
     switch (iconName) {
+      case 'book-open':
+        return <BookOpen className="h-5 w-5" />;
       case 'math':
         return <Calculator className="h-5 w-5" />;
       default:
@@ -134,129 +137,134 @@ export default function AcademicStandardsPage() {
   };
   
   return (
-    <PageContainer>
-      <SectionContainer title="学业标准" description="浏览和查询各学科学业标准">
-        {/* 学科选择区域 */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          {subjects.map((subject) => (
+    <div className="h-full flex flex-col">
+      <HeroSection
+        title="学业标准"
+        description="浏览和查询各学科学业标准，了解教学内容和目标要求，支持教学计划制定。"
+        icon={BookOpen}
+        gradient="from-blue-50 to-indigo-50"
+      />
+      
+      {/* 学科选择区域 */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        {subjects.map((subject) => (
+          <Button
+            key={subject.id}
+            variant={selectedSubject === subject.id ? "default" : "outline"}
+            className="flex items-center gap-2"
+            onClick={() => handleSubjectChange(subject.id)}
+          >
+            {getSubjectIcon(subject.icon)}
+            {subject.name}
+          </Button>
+        ))}
+      </div>
+      
+      {/* 年级选择区域 */}
+      {selectedSubject && (
+        <div className="flex flex-wrap gap-2 mb-6 bg-slate-50 p-3 rounded-lg">
+          {['一年级', '二年级', '三年级', '四年级', '五年级'].map((grade) => (
             <Button
-              key={subject.id}
-              variant={selectedSubject === subject.id ? "default" : "outline"}
-              className="flex items-center gap-2"
-              onClick={() => handleSubjectChange(subject.id)}
+              key={grade}
+              variant={selectedGrade === grade ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => handleGradeChange(grade)}
             >
-              {getSubjectIcon(subject.icon)}
-              {subject.name}
+              {grade}
             </Button>
           ))}
         </div>
-        
-        {/* 年级选择区域 */}
-        {selectedSubject && (
-          <div className="flex flex-wrap gap-2 mb-6 bg-slate-50 p-3 rounded-lg">
-            {['一年级', '二年级', '三年级', '四年级', '五年级'].map((grade) => (
-              <Button
-                key={grade}
-                variant={selectedGrade === grade ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => handleGradeChange(grade)}
-              >
-                {grade}
-              </Button>
-            ))}
-          </div>
-        )}
-        
-        {/* 分类标签页 */}
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <div className="flex justify-between items-center mb-4">
-            <TabsList>
-              <TabsTrigger value="competencies">核心素养</TabsTrigger>
-              <TabsTrigger value="domains">领域/主题</TabsTrigger>
-            </TabsList>
-            
-            <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="搜索标准名称"
-                className="pl-10 max-w-xs"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
+      )}
+      
+      {/* 分类标签页 */}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+        <div className="flex justify-between items-center mb-4">
+          <TabsList>
+            <TabsTrigger value="competencies">核心素养</TabsTrigger>
+            <TabsTrigger value="domains">领域/主题</TabsTrigger>
+          </TabsList>
           
-          <TabsContent value="competencies">
-            <ResponsiveGrid xs={1} sm={2} md={3} gap="md">
-              {isLoading ? (
-                // 骨架屏加载状态
-                Array(6).fill(0).map((_, index) => (
-                  <CardContainer key={index} elevated>
-                    <div className="p-4">
-                      <Skeleton className="h-6 w-3/4 mb-4" />
-                      <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-2/3" />
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="搜索标准名称"
+              className="pl-10 max-w-xs"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <TabsContent value="competencies">
+          <ResponsiveGrid xs={1} sm={2} md={3} gap="md">
+            {isLoading ? (
+              // 骨架屏加载状态
+              Array(6).fill(0).map((_, index) => (
+                <CardContainer key={index} elevated>
+                  <div className="p-4">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </CardContainer>
+              ))
+            ) : (
+              standards.map((standard) => (
+                <CardContainer
+                  key={standard.id}
+                  elevated
+                  clickable
+                  onClick={() => handleStandardClick(standard.id)}
+                  className="h-full"
+                >
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900 mb-2">{standard.title}</h3>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline">{standard.grade}</Badge>
+                      <span className="text-sm text-gray-500">{standard.count} 条标准</span>
                     </div>
-                  </CardContainer>
-                ))
-              ) : (
-                standards.map((standard) => (
-                  <CardContainer
-                    key={standard.id}
-                    elevated
-                    clickable
-                    onClick={() => handleStandardClick(standard.id)}
-                    className="h-full"
-                  >
-                    <div className="p-4">
-                      <h3 className="font-medium text-gray-900 mb-2">{standard.title}</h3>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline">{standard.grade}</Badge>
-                        <span className="text-sm text-gray-500">{standard.count} 条标准</span>
-                      </div>
+                  </div>
+                </CardContainer>
+              ))
+            )}
+          </ResponsiveGrid>
+        </TabsContent>
+        
+        <TabsContent value="domains">
+          <ResponsiveGrid xs={1} sm={2} md={3} gap="md">
+            {isLoading ? (
+              // 骨架屏加载状态
+              Array(6).fill(0).map((_, index) => (
+                <CardContainer key={index} elevated>
+                  <div className="p-4">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </CardContainer>
+              ))
+            ) : (
+              standards.map((standard) => (
+                <CardContainer
+                  key={standard.id}
+                  elevated
+                  clickable
+                  onClick={() => handleStandardClick(standard.id)}
+                  className="h-full"
+                >
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900 mb-2">{standard.title}</h3>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline">{standard.grade}</Badge>
+                      <span className="text-sm text-gray-500">{standard.count} 条标准</span>
                     </div>
-                  </CardContainer>
-                ))
-              )}
-            </ResponsiveGrid>
-          </TabsContent>
-          
-          <TabsContent value="domains">
-            <ResponsiveGrid xs={1} sm={2} md={3} gap="md">
-              {isLoading ? (
-                // 骨架屏加载状态
-                Array(6).fill(0).map((_, index) => (
-                  <CardContainer key={index} elevated>
-                    <div className="p-4">
-                      <Skeleton className="h-6 w-3/4 mb-4" />
-                      <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </div>
-                  </CardContainer>
-                ))
-              ) : (
-                standards.map((standard) => (
-                  <CardContainer
-                    key={standard.id}
-                    elevated
-                    clickable
-                    onClick={() => handleStandardClick(standard.id)}
-                    className="h-full"
-                  >
-                    <div className="p-4">
-                      <h3 className="font-medium text-gray-900 mb-2">{standard.title}</h3>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline">{standard.grade}</Badge>
-                        <span className="text-sm text-gray-500">{standard.count} 条标准</span>
-                      </div>
-                    </div>
-                  </CardContainer>
-                ))
-              )}
-            </ResponsiveGrid>
-          </TabsContent>
-        </Tabs>
-      </SectionContainer>
-    </PageContainer>
+                  </div>
+                </CardContainer>
+              ))
+            )}
+          </ResponsiveGrid>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 } 

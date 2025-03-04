@@ -49,6 +49,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { SectionContainer } from "@/components/ui/section-container";
 import { CardContainer } from "@/components/ui/card-container";
 import { ResponsiveGrid } from "@/components/ui/responsive-grid";
+import { HeroSection } from "@/components/ui/hero-section";
 
 // 模拟单元教学设计数据
 const mockUnitDesign = {
@@ -512,33 +513,28 @@ export default function UnitTeachingDesignPage() {
   return (
     <div className="h-full flex flex-col">
       {/* 页面标题区域 */}
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div className="flex items-center">
-          <div className="bg-white p-4 shadow-sm rounded-2xl mr-6 border border-gray-100/80">
-            <BookOpen className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">单元教学设计</h1>
-            <p className="text-gray-500 mt-1.5 text-sm font-normal">管理和创建单元教学设计方案</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <Button 
-            variant="outline" 
-            className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
-            onClick={() => window.location.href = '/dashboard'}
-          >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            返回工作台
-          </Button>
-          <Button 
-            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            新建设计
-          </Button>
-        </div>
+      <HeroSection
+        title="单元教学设计"
+        description="管理和创建单元教学设计方案"
+        icon={BookOpen}
+        gradient="from-cyan-50 to-blue-50"
+      />
+      
+      <div className="flex items-center space-x-3 -mt-2 mb-6">
+        <Button 
+          variant="outline" 
+          className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+          onClick={() => window.location.href = '/dashboard'}
+        >
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          返回工作台
+        </Button>
+        <Button 
+          className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          新建设计
+        </Button>
       </div>
 
       {/* 主内容区 */}

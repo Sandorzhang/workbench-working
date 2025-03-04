@@ -27,6 +27,7 @@ import {
   ListSkeleton 
 } from "@/components/ui/skeleton-loader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HeroSection } from '@/components/ui/hero-section';
 
 // 日历事件类型
 interface CalendarEvent {
@@ -391,13 +392,19 @@ export default function CalendarPage() {
   }
   
   return (
-    <div className="space-y-4 p-4">
-      {/* 日历头部 */}
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      {/* 添加 Hero 部分 */}
+      <HeroSection
+        title={`${getMonthName(currentMonth)} ${currentYear}`}
+        description="安排和管理您的教学课程与重要活动"
+        icon={CalendarIcon}
+        gradient="from-green-50 to-teal-50"
+        className="mb-6"
+      />
+      
+      {/* 日历控制栏 */}
+      <div className="flex items-center justify-between mb-6 px-1">
         <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-bold">
-            {getMonthName(currentMonth)} {currentYear}
-          </h2>
           {isRefreshing && (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           )}

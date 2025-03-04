@@ -1,62 +1,69 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClassOverview } from "@/components/academic-journey/ClassOverview";
+import { GraduationCap, Users, BookOpen, BarChart } from "lucide-react";
 import Link from "next/link";
-import { GraduationCap, LineChart, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { HeroSection } from "@/components/ui/hero-section";
 
 export default function AcademicJourneyPage() {
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center mb-6">
-        <div className="bg-white p-4 shadow-sm rounded-2xl mr-6 border border-gray-100/80">
-          <GraduationCap className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">学业旅程</h1>
-          <p className="text-gray-500 mt-1.5 text-sm font-normal">
-            跟踪学生的学业标准达成进度，了解班级整体情况。
-          </p>
-        </div>
+    <div className="h-full flex flex-col">
+      <HeroSection
+        title="学业旅程"
+        description="跟踪学生的学业标准达成进度，了解班级整体情况，助力教学决策与个性化指导。"
+        icon={GraduationCap}
+        gradient="from-blue-50 to-indigo-50"
+      />
+
+      {/* Navigation buttons with improved styling */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        <Card className="border border-indigo-100 shadow-sm w-full md:w-auto">
+          <CardContent className="p-0">
+            <div className="p-4 flex items-center gap-3">
+              <div className="bg-indigo-50 p-2.5 rounded-md">
+                <BarChart className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">快速导航</h3>
+                <p className="text-sm text-gray-500">访问学业旅程相关功能</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap border-t border-gray-100 divide-x divide-gray-100">
+              <Link href="/academic-journey/students" className="flex-1">
+                <Button variant="ghost" className="w-full rounded-none py-5 flex items-center justify-center gap-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
+                  <Users className="h-4 w-4" />
+                  学生学业进度
+                </Button>
+              </Link>
+              <div className="flex-1">
+                <Button variant="ghost" className="w-full rounded-none py-5 flex items-center justify-center gap-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
+                  <BookOpen className="h-4 w-4" />
+                  学业标准概览
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="space-y-4">
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-          <Link href="/academic-journey/overview">
-            <Card className="hover:bg-accent/50 cursor-pointer transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">班级概览</CardTitle>
-                <LineChart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  查看班级整体学业标准达成情况，了解教学重点和挑战。
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href="/academic-journey/students">
-            <Card className="hover:bg-accent/50 cursor-pointer transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">学生列表</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  查看所有学生的学业标准达成情况，了解个人进度。
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Card className="hover:bg-accent/50 cursor-pointer transition-colors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">学习标准</CardTitle>
-              <GraduationCap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                浏览课程的学习标准，了解教学目标和要求。
-              </p>
-            </CardContent>
-          </Card>
+      {/* Content section with improved header */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <span className="bg-indigo-100 p-1.5 rounded-md">
+              <BarChart className="h-4 w-4 text-indigo-600" />
+            </span>
+            班级学业概览
+          </h2>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span className="bg-green-100 w-3 h-3 rounded-full"></span>高掌握度
+            <span className="bg-yellow-100 w-3 h-3 rounded-full ml-2"></span>中掌握度
+            <span className="bg-red-100 w-3 h-3 rounded-full ml-2"></span>低掌握度
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+          <ClassOverview classId="class-1" />
         </div>
       </div>
     </div>

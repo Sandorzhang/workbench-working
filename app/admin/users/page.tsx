@@ -58,6 +58,7 @@ import {
   AssignStudentsDialog,
   AssignStudentsToGradeDialog
 } from "@/components/education";
+import { HeroSection } from '@/components/ui/hero-section';
 
 // 定义类型
 interface Teacher {
@@ -354,35 +355,30 @@ export default function UsersPage() {
   return (
     <div className="h-full flex flex-col">
       {/* 页面标题区域 */}
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div className="flex items-center">
-          <div className="bg-white p-4 shadow-sm rounded-2xl mr-6 border border-gray-100/80">
-            <Users className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">师生信息管理</h1>
-            <p className="text-gray-500 mt-1.5 text-sm font-normal">管理、查询和维护教师与学生信息</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <Button 
-            variant="outline" 
-            className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
-            onClick={handleExport}
-          >
-            <FileDown className="h-4 w-4 mr-2" />
-            导出数据
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
-            onClick={handleImport}
-          >
-            <FileUp className="h-4 w-4 mr-2" />
-            导入数据
-          </Button>
-        </div>
+      <HeroSection
+        title="师生信息管理"
+        description="管理、查询和维护教师与学生信息"
+        icon={Users}
+        gradient="from-blue-50 to-indigo-50"
+      />
+      
+      <div className="flex items-center space-x-3 -mt-2 mb-6">
+        <Button 
+          variant="outline" 
+          className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+          onClick={handleExport}
+        >
+          <FileDown className="h-4 w-4 mr-2" />
+          导出数据
+        </Button>
+        <Button 
+          variant="outline" 
+          className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+          onClick={handleImport}
+        >
+          <FileUp className="h-4 w-4 mr-2" />
+          导入数据
+        </Button>
       </div>
       
       {/* 主要内容区域 */}

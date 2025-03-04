@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ExamTable } from '@/components/exam-management/exam-table'
-import { PageContainer } from '@/components/ui/page-container'
-import { PlusCircle } from 'lucide-react'
+import { HeroSection } from '@/components/ui/hero-section'
+import { PlusCircle, FileSpreadsheet, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Exam } from '@/types/exam'
 
@@ -48,24 +48,30 @@ export default function ExamManagementPage() {
   }
 
   return (
-    <PageContainer>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">考试</h1>
-          <Button onClick={handleAddExam}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            新增考试
-          </Button>
-        </div>
-        <div className="flex w-full max-w-xs items-center space-x-2">
+    <div className="h-full flex flex-col">
+      <HeroSection
+        title="考试管理"
+        description="创建、编辑和管理各类考试及试卷，支持考试数据分析和成绩管理。"
+        icon={FileSpreadsheet}
+        gradient="from-amber-50 to-orange-50"
+      />
+      
+      <div className="flex items-center justify-between mb-6">
+        <div className="relative w-full max-w-xs">
+          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
-            placeholder="试卷名称"
+            placeholder="搜索考试..."
             value={searchTerm}
             onChange={handleSearch}
+            className="pl-10"
           />
         </div>
-        <ExamTable exams={filteredExams} isLoading={isLoading} onRefresh={fetchExams} />
+        <Button onClick={handleAddExam} className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium">
+          <PlusCircle className="h-4 w-4 mr-2" />
+          新增考试
+        </Button>
       </div>
-    </PageContainer>
+      <ExamTable exams={filteredExams} isLoading={isLoading} onRefresh={fetchExams} />
+    </div>
   )
 } 
