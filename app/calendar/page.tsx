@@ -395,16 +395,31 @@ export default function CalendarPage() {
     <div className="h-full flex flex-col">
       {/* 添加 Hero 部分 */}
       <HeroSection
-        title={`${getMonthName(currentMonth)} ${currentYear}`}
+        title="我的日历"
         description="安排和管理您的教学课程与重要活动"
         icon={CalendarIcon}
         gradient="from-green-50 to-teal-50"
         className="mb-6"
+        actions={
+          <Button 
+            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+            onClick={() => toast.info("创建事件功能正在开发中")}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            创建事件
+          </Button>
+        }
       />
       
       {/* 日历控制栏 */}
       <div className="flex items-center justify-between mb-6 px-1">
         <div className="flex items-center space-x-4">
+          <h2 className="text-xl font-semibold transition-all duration-300">
+            {getMonthName(currentMonth)} {currentYear}
+          </h2>
+          <Badge variant="outline" className="text-sm font-normal animate-fadeIn">
+            {events.length} 个事件
+          </Badge>
           {isRefreshing && (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           )}
@@ -450,17 +465,6 @@ export default function CalendarPage() {
       </div>
       
       <div className="w-full overflow-x-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-xl font-semibold transition-all duration-300">
-              {getMonthName(currentMonth)} {currentYear}
-            </h2>
-            <Badge variant="outline" className="text-sm font-normal animate-fadeIn">
-              {events.length} 个事件
-            </Badge>
-          </div>
-        </div>
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2 min-w-0">
             <CardContent className="p-0 overflow-x-auto">

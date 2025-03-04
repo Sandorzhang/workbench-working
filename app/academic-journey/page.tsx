@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ClassOverview } from "@/components/academic-journey/ClassOverview";
-import { GraduationCap, Users, BookOpen, BarChart } from "lucide-react";
+import { GraduationCap, Users, BookOpen, BarChart, Plus } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { HeroSection } from "@/components/ui/hero-section";
@@ -13,6 +13,22 @@ export default function AcademicJourneyPage() {
         description="跟踪学生的学业标准达成进度，了解班级整体情况，助力教学决策与个性化指导。"
         icon={GraduationCap}
         gradient="from-blue-50 to-indigo-50"
+        actions={
+          <>
+            <Link href="/academic-journey/students">
+              <Button variant="outline" className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                <Users className="h-4 w-4 mr-2" />
+                查看学生进度
+              </Button>
+            </Link>
+            <Link href="/academic-journey/overview">
+              <Button className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium">
+                <Plus className="h-4 w-4 mr-2" />
+                添加新标准
+              </Button>
+            </Link>
+          </>
+        }
       />
 
       {/* Navigation buttons with improved styling */}

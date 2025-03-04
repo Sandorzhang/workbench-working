@@ -178,17 +178,16 @@ const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] =>
         description="收集、整理和回顾您的教学时刻"
         icon={Clock10}
         gradient="from-purple-50 to-pink-50"
+        actions={
+          <Button 
+            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            新建记录
+          </Button>
+        }
       />
       
-      <div className="flex items-center space-x-4 -mt-2 mb-6">
-        <Button 
-          className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          新建记录
-        </Button>
-      </div>
-
       {/* 三列布局 */}
       <div className="grid grid-cols-24 gap-5 flex-1 overflow-hidden" style={{ height: contentHeight }}>
         {/* 左侧: 垂直时间线 */}

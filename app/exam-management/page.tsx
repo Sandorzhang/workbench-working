@@ -54,9 +54,18 @@ export default function ExamManagementPage() {
         description="创建、编辑和管理各类考试及试卷，支持考试数据分析和成绩管理。"
         icon={FileSpreadsheet}
         gradient="from-amber-50 to-orange-50"
+        actions={
+          <Button 
+            onClick={handleAddExam} 
+            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            新增考试
+          </Button>
+        }
       />
       
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center mb-6">
         <div className="relative w-full max-w-xs">
           <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
@@ -66,10 +75,6 @@ export default function ExamManagementPage() {
             className="pl-10"
           />
         </div>
-        <Button onClick={handleAddExam} className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium">
-          <PlusCircle className="h-4 w-4 mr-2" />
-          新增考试
-        </Button>
       </div>
       <ExamTable exams={filteredExams} isLoading={isLoading} onRefresh={fetchExams} />
     </div>

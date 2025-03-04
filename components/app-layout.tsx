@@ -44,7 +44,7 @@ const pageTitleMap: Record<string, PageInfo> = {
     parent: { title: '工作台', path: '/dashboard' }
   },
   '/mentor-hub': {
-    title: '全员导师制',
+    title: '全员导师',
     parent: { title: '工作台', path: '/dashboard' }
   },
   '/ai-library': {

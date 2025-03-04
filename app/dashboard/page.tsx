@@ -155,7 +155,7 @@ export default function DashboardPage() {
           },
           {
             id: '4',
-            name: '全员导师制',
+            name: '全员导师',
             description: '浏览、管理和分配导师资源，促进师生共同成长',
             icon: 'userCheck',
             url: '/mentor-hub',

@@ -27,15 +27,12 @@ export default function ConceptMapClient() {
   return (
     <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'h-full'}`}>
       {!isFullscreen && (
-        <>
-          <HeroSection
-            title="大概念地图"
-            description="探索学科知识结构与概念关系"
-            icon={Network}
-            gradient="from-indigo-50 to-violet-50"
-          />
-          
-          <div className="flex items-center space-x-4 -mt-2 mb-6">
+        <HeroSection
+          title="大概念地图"
+          description="探索学科知识结构与概念关系"
+          icon={Network}
+          gradient="from-indigo-50 to-violet-50"
+          actions={
             <Button 
               className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
               onClick={toggleFullscreen}
@@ -43,8 +40,8 @@ export default function ConceptMapClient() {
               <Plus className="h-4 w-4 mr-2" />
               新建地图
             </Button>
-          </div>
-        </>
+          }
+        />
       )}
 
       {isFullscreen && (

@@ -414,6 +414,7 @@ export default function UnitTeachingDesignPage() {
   const [designs, setDesigns] = useState<typeof mockDesigns>([]);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [currentDesign, setCurrentDesign] = useState<typeof mockDesigns[0] | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   
   useEffect(() => {
     // 模拟API请求
@@ -518,25 +519,27 @@ export default function UnitTeachingDesignPage() {
         description="管理和创建单元教学设计方案"
         icon={BookOpen}
         gradient="from-cyan-50 to-blue-50"
+        actions={
+          <div className="flex items-center space-x-3">
+            <Button 
+              variant="outline" 
+              className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+              onClick={() => window.location.href = '/dashboard'}
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              返回工作台
+            </Button>
+            <Button 
+              className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+              onClick={() => setShowCreateDialog(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              新建设计
+            </Button>
+          </div>
+        }
       />
       
-      <div className="flex items-center space-x-3 -mt-2 mb-6">
-        <Button 
-          variant="outline" 
-          className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
-          onClick={() => window.location.href = '/dashboard'}
-        >
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          返回工作台
-        </Button>
-        <Button 
-          className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          新建设计
-        </Button>
-      </div>
-
       {/* 主内容区 */}
       <div className="flex-1">
         <SectionContainer padding="standard" className="mb-0 h-full">

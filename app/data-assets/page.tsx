@@ -246,20 +246,16 @@ export default function DataAssetsPage() {
         description="管理和浏览教学相关的各类数据资源，支持数据分析和教学决策。"
         icon={Database}
         gradient="from-cyan-50 to-blue-50"
+        actions={
+          <Button 
+            onClick={() => toast.info('功能开发中')}
+            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+          >
+            <Database className="mr-2 h-4 w-4" />
+            申请数据访问
+          </Button>
+        }
       />
-      
-      <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold">校数据资产</h1>
-          <p className="text-muted-foreground mt-1">
-            管理和浏览学校的数据资源
-          </p>
-        </div>
-        <Button onClick={() => toast.info('功能开发中')}>
-          <Database className="mr-2 h-4 w-4" />
-          申请数据访问
-        </Button>
-      </div>
       
       <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
         <div className="relative flex-1">

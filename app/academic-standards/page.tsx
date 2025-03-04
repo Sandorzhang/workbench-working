@@ -143,6 +143,23 @@ export default function AcademicStandardsPage() {
         description="浏览和查询各学科学业标准，了解教学内容和目标要求，支持教学计划制定。"
         icon={BookOpen}
         gradient="from-blue-50 to-indigo-50"
+        actions={
+          <>
+            <Button 
+              variant="outline" 
+              className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              高级筛选
+            </Button>
+            <Button 
+              className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              添加标准
+            </Button>
+          </>
+        }
       />
       
       {/* 学科选择区域 */}
