@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { 
   BookOpen, Users, FileText, Calendar, 
   Sparkles, TrendingUp, Activity, Clock,
-  Database, Loader2, Network
+  Database, Loader2, Network, GraduationCap,
+  School, Pencil, UserCheck, FileSpreadsheet
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
@@ -47,8 +48,12 @@ const iconComponents: Record<string, any> = {
   'file': FileText,
   'calendar': Calendar,
   'database': Database,
-  'fileText': FileText, // 考试管理使用文档图标
+  'fileText': FileSpreadsheet, // 考试管理使用电子表格图标
   'network': Network,    // 概念地图使用网络图标
+  'graduationCap': GraduationCap, // 学业旅程使用毕业帽图标
+  'school': School,      // 课堂时光机使用学校图标
+  'pencil': Pencil,      // 单元教学设计使用铅笔图标
+  'userCheck': UserCheck, // 全员导师制使用用户检查图标
 };
 
 // 卡片颜色映射 - 使用更多生动的渐变色
@@ -61,6 +66,11 @@ const colorMap: Record<string, string> = {
   'settings': 'from-slate-400 to-slate-600',
   'database': 'from-cyan-400 to-blue-600',
   'fileText': 'from-amber-400 to-red-600', // 考试管理使用橙红色渐变
+  'graduationCap': 'from-indigo-400 to-blue-600', // 学业旅程使用蓝紫色渐变
+  'school': 'from-green-400 to-teal-600',  // 课堂时光机使用绿色渐变
+  'pencil': 'from-purple-400 to-pink-600', // 单元教学设计使用紫色渐变
+  'userCheck': 'from-blue-400 to-cyan-600', // 全员导师制使用蓝青色渐变
+  'network': 'from-violet-400 to-indigo-600', // 概念地图使用紫色渐变
 };
 
 export default function DashboardPage() {
@@ -131,7 +141,7 @@ export default function DashboardPage() {
             id: '2',
             name: '课堂时光机',
             description: '记录和回放课堂教学过程，辅助教学分析',
-            icon: 'book',
+            icon: 'school',
             url: '/classroom-timemachine',
             roles: ['教师']
           },
@@ -139,7 +149,7 @@ export default function DashboardPage() {
             id: '3',
             name: '单元教学设计',
             description: '创建和管理单元教学设计方案',
-            icon: 'file',
+            icon: 'pencil',
             url: '/unit-teaching-design',
             roles: ['教师']
           },
@@ -147,7 +157,7 @@ export default function DashboardPage() {
             id: '4',
             name: '全员导师制',
             description: '浏览、管理和分配导师资源，促进师生共同成长',
-            icon: 'users',
+            icon: 'userCheck',
             url: '/mentor-hub',
             roles: ['教师', '管理员']
           },
@@ -185,9 +195,9 @@ export default function DashboardPage() {
           },
           {
             id: '9',
-            name: '学术旅程',
+            name: '学业旅程',
             description: '跟踪学生的学业标准达成进度，了解班级整体情况',
-            icon: 'book',
+            icon: 'graduationCap',
             url: '/academic-journey',
             roles: ['教师', '管理员']
           }

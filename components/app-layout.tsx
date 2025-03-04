@@ -75,16 +75,16 @@ const pageTitleMap: Record<string, PageInfo> = {
     parent: { title: '工作台', path: '/dashboard' }
   },
   '/academic-journey': {
-    title: '学术旅程',
+    title: '学业旅程',
     parent: { title: '工作台', path: '/dashboard' }
   },
   '/academic-journey/overview': {
     title: '班级学业概览',
-    parent: { title: '学术旅程', path: '/academic-journey' }
+    parent: { title: '学业旅程', path: '/academic-journey' }
   },
   '/academic-journey/students': {
     title: '学生学业进度',
-    parent: { title: '学术旅程', path: '/academic-journey' }
+    parent: { title: '学业旅程', path: '/academic-journey' }
   }
 };
 
@@ -224,13 +224,13 @@ export function AppLayout({ children }: AppLayoutProps) {
     };
     dynamicParent = { title: '工作台', path: '/dashboard' };
   }
-  // 对于学术旅程学生详情页
+  // 对于学业旅程学生详情页
   else if (pathname.startsWith('/academic-journey/students/') && pathname !== '/academic-journey/students') {
     pageInfo = { 
       title: dynamicPageTitle || '学生学业热力图',
       parent: { title: '学生学业进度', path: '/academic-journey/students' }
     };
-    dynamicParent = { title: '学术旅程', path: '/academic-journey' };
+    dynamicParent = { title: '学业旅程', path: '/academic-journey' };
   }
   else {
     // 普通静态路由

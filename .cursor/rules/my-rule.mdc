@@ -18,6 +18,7 @@ alwaysApply: false
 - shadcn相关的安装命令为 npm shadcn@latest 而不是npm shadcn-ui@latest
 - 所有的页面添加skeleton加载
 - toast 使用sonner
+- 如果任务完成的话，不需要给我文字总结
 - mocks/index.ts - The main entry point that initializes MSW
 mocks/browser.ts - Browser-specific MSW setup
 mocks/node.ts - Node.js-specific MSW setup
