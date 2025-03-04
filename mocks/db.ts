@@ -64,6 +64,9 @@ export const db = factory({
     avatar: String,
     grade: String,
     major: String,
+    class: String,
+    studentId: String,
+    mentorId: String,
   },
   // 考试类型
   exam: {
@@ -152,6 +155,79 @@ export function seedDb() {
     role: 'teacher',
     tenant: '通用平台',
     tenantType: '完全中学'
+  });
+  
+  // 添加导师和学生示例数据
+  // 添加导师数据
+  const mentor1 = db.mentor.create({
+    id: '2', // 与用户ID匹配，用于教师角色
+    name: '李四',
+    email: 'lisi@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisi',
+    title: '副教授',
+    phone: '13900139000',
+    bio: '计算机科学教授，专注于人工智能和机器学习领域',
+    specialties: ['人工智能', '机器学习', '数据结构'],
+    isAssigned: true,
+    students: [],
+  });
+  
+  db.mentor.create({
+    id: '3',
+    name: '王五',
+    email: 'wangwu@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangwu',
+    title: '讲师',
+    phone: '13700137000',
+    bio: '数学系讲师，主要研究方向为高等代数和数学分析',
+    specialties: ['高等代数', '数学分析', '概率论'],
+    isAssigned: false,
+    students: [],
+  });
+  
+  // 添加学生数据
+  const student1 = db.student.create({
+    id: 's1',
+    name: '张晓明',
+    email: 'xiaoming@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaoming',
+    grade: '初三',
+    major: '', // 移除专业信息
+    class: '1',
+    studentId: '20210101',
+    mentorId: '2',
+  });
+  
+  const student2 = db.student.create({
+    id: 's2',
+    name: '李华',
+    email: 'lihua@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lihua',
+    grade: '初二',
+    major: '', // 移除专业信息
+    class: '2',
+    studentId: '20210202',
+    mentorId: '2',
+  });
+  
+  const student3 = db.student.create({
+    id: 's3',
+    name: '王芳',
+    email: 'wangfang@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangfang',
+    grade: '高一',
+    major: '', // 移除专业信息
+    class: '1',
+    studentId: '20220101',
+    mentorId: '2',
+  });
+  
+  // 更新导师的学生列表
+  db.mentor.update({
+    where: { id: { equals: '2' } },
+    data: {
+      students: [student1, student2, student3],
+    },
   });
   
   // 添加学科数据
@@ -527,86 +603,6 @@ export function seedDb() {
     type: 'holiday',
     description: '清明节假期',
     participants: [],
-  });
-  
-  // 添加导师示例数据
-  db.mentor.create({
-    id: '1',
-    name: '王教授',
-    email: 'wangprof@school.edu',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wang',
-    title: '教授',
-    phone: '13800138000',
-    bio: '在人工智能领域有超过15年的教学和研究经验，曾主持多项国家级科研项目。',
-    specialties: ['人工智能'],
-    isAssigned: false,
-    students: [],
-  });
-  
-  db.mentor.create({
-    id: '2',
-    name: '李教授',
-    email: 'liprof@school.edu',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=li',
-    title: '教授',
-    phone: '13900139000',
-    bio: '数学博士，专注于高等数学的教学研究，教学风格严谨而有趣。',
-    specialties: ['高等数学'],
-    isAssigned: false,
-    students: [],
-  });
-  
-  db.mentor.create({
-    id: '3',
-    name: '赵博士',
-    email: 'zhaophd@school.edu',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhao',
-    title: '博士',
-    phone: '13800138000',
-    bio: '年轻有为的物理学者，研究领域涵盖量子力学和天体物理学。',
-    specialties: ['量子力学'],
-    isAssigned: false,
-    students: [],
-  });
-  
-  // 添加学生示例数据
-  db.student.create({
-    id: '1',
-    name: '小明',
-    email: 'xiaoming@student.edu',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ming',
-    grade: '大三',
-    major: '计算机科学',
-  });
-  
-  db.student.create({
-    id: '2',
-    name: '小华',
-    email: 'xiaohua@student.edu',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=hua',
-    grade: '大二',
-    major: '数学',
-  });
-  
-  db.student.create({
-    id: '3',
-    name: '小芳',
-    email: 'xiaofang@student.edu',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fang',
-    grade: '大四',
-    major: '物理学',
-  });
-  
-  // 添加考试示例数据
-  db.exam.create({
-    id: '1',
-    name: '期中考试',
-    subject: '高等数学',
-    grade: '一年级',
-    semester: '2024-1',
-    startTime: '2024-03-25T09:00:00',
-    endTime: '2024-03-25T11:00:00',
-    status: 'published',
   });
   
   // 添加概念示例数据 - 数学学科

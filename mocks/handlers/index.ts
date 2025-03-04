@@ -18,6 +18,7 @@ import { academicJourneyHandlers } from './academic-journey';
 import { teachingDesignsHandlers } from './teaching-designs-alt';
 import { examHandlers } from './exam';
 import { questionsHandlers } from './question';
+import { teacherHandlers } from './teacher';
 // 导入其他处理器...
 
 export const handlers = [
@@ -29,6 +30,7 @@ export const handlers = [
   ...dataAssetsHandlers,
   ...aiLibraryHandlers,
   ...mentorHandlers,
+  ...teacherHandlers,
   ...imageHandlers,
   ...teachingPlanHandlers,
   ...agentHandlers,
