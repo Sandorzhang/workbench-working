@@ -147,7 +147,24 @@ export function AppLayout({ children }: AppLayoutProps) {
           const response = await fetch(`/api/exams/${examId}`);
           if (response.ok) {
             const data = await response.json();
-            setDynamicPageTitle(`编辑: ${data.title || '考试'}`);
+            setDynamicPageTitle(`编辑: ${data.name || '考试'}`);
+          }
+        } catch (error) {
+          console.error('获取考试详情失败:', error);
+        }
+      };
+      
+      fetchExamDetail();
+    }
+    // 检查是否是考试详情页
+    else if (pathname.startsWith('/exam-management/detail/')) {
+      const fetchExamDetail = async () => {
+        try {
+          const examId = pathname.split('/').pop();
+          const response = await fetch(`/api/exams/${examId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setDynamicPageTitle(`${data.name || '考试'}详情`);
           }
         } catch (error) {
           console.error('获取考试详情失败:', error);
@@ -216,6 +233,14 @@ export function AppLayout({ children }: AppLayoutProps) {
   else if (pathname.startsWith('/exam-management/edit/')) {
     pageInfo = { 
       title: dynamicPageTitle || '编辑考试',
+      parent: { title: '考试管理', path: '/exam-management' }
+    };
+    dynamicParent = { title: '工作台', path: '/dashboard' };
+  }
+  // 对于考试详情页
+  else if (pathname.startsWith('/exam-management/detail/')) {
+    pageInfo = { 
+      title: dynamicPageTitle || '考试详情',
       parent: { title: '考试管理', path: '/exam-management' }
     };
     dynamicParent = { title: '工作台', path: '/dashboard' };

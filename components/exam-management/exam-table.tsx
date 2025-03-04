@@ -9,12 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { MoreHorizontal, Edit, Trash } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash, FileText } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Exam } from '@/types/exam'
@@ -67,6 +68,10 @@ export function ExamTable({ exams, isLoading, onRefresh, onEdit }: ExamTableProp
         setDeletingId(null)
       }
     }
+  }
+
+  const handleViewDetails = (id: string) => {
+    router.push(`/exam-management/detail/${id}`)
   }
 
   const getStatusBadge = (status: string) => {
@@ -124,7 +129,7 @@ export function ExamTable({ exams, isLoading, onRefresh, onEdit }: ExamTableProp
               <TableRow 
                 key={exam.id} 
                 className="group hover:bg-muted/40 cursor-pointer transition-colors"
-                onClick={() => handleEdit(exam.id)}
+                onClick={() => handleViewDetails(exam.id)}
               >
                 <TableCell className="font-medium">{exam.name}</TableCell>
                 <TableCell>{exam.subject}</TableCell>
@@ -146,6 +151,17 @@ export function ExamTable({ exams, isLoading, onRefresh, onEdit }: ExamTableProp
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[160px]">
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleViewDetails(exam.id)
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        详情
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         onClick={(e) => {
                           e.stopPropagation()
