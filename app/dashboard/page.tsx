@@ -182,6 +182,14 @@ export default function DashboardPage() {
             icon: 'network',
             url: '/concept-map',
             roles: ['教师', '管理员', '学生']
+          },
+          {
+            id: '9',
+            name: '学术旅程',
+            description: '跟踪学生的学业标准达成进度，了解班级整体情况',
+            icon: 'book',
+            url: '/academic-journey',
+            roles: ['教师', '管理员']
           }
         ];
         

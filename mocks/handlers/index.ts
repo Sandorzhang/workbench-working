@@ -14,6 +14,7 @@ import { educationHandlers } from './education';
 import { academicStandardsHandlers } from './academic-standards';
 import { aiAssistantHandlers } from './ai-assistant';
 import { conceptMapHandlers } from './concept-map';
+import { academicJourneyHandlers } from './academic-journey';
 // 导入其他处理器...
 
 export const handlers = [
@@ -31,6 +32,7 @@ export const handlers = [
   ...academicStandardsHandlers,
   ...aiAssistantHandlers,
   ...conceptMapHandlers,
+  ...academicJourneyHandlers,
   // 其他处理器...
   
   // 处理教学设计API

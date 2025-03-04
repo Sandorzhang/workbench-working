@@ -73,6 +73,18 @@ const pageTitleMap: Record<string, PageInfo> = {
   '/data-assets': {
     title: '数据资产管理',
     parent: { title: '工作台', path: '/dashboard' }
+  },
+  '/academic-journey': {
+    title: '学术旅程',
+    parent: { title: '工作台', path: '/dashboard' }
+  },
+  '/academic-journey/overview': {
+    title: '班级学业概览',
+    parent: { title: '学术旅程', path: '/academic-journey' }
+  },
+  '/academic-journey/students': {
+    title: '学生学业进度',
+    parent: { title: '学术旅程', path: '/academic-journey' }
   }
 };
 
@@ -157,6 +169,23 @@ export function AppLayout({ children }: AppLayoutProps) {
       
       fetchDataAssetDetail();
     }
+    // 对于学术旅程学生详情页
+    else if (pathname.startsWith('/academic-journey/students/') && pathname !== '/academic-journey/students') {
+      const fetchStudentDetail = async () => {
+        try {
+          const studentId = pathname.split('/').pop();
+          const response = await fetch(`/api/academic-journey/students/${studentId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setDynamicPageTitle(data.title || '学生学业热力图');
+          }
+        } catch (error) {
+          console.error('获取学生详情失败:', error);
+        }
+      };
+      
+      fetchStudentDetail();
+    }
     else {
       setDynamicPageTitle(null);
     }
@@ -194,6 +223,14 @@ export function AppLayout({ children }: AppLayoutProps) {
       parent: { title: '数据资产管理', path: '/data-assets' }
     };
     dynamicParent = { title: '工作台', path: '/dashboard' };
+  }
+  // 对于学术旅程学生详情页
+  else if (pathname.startsWith('/academic-journey/students/') && pathname !== '/academic-journey/students') {
+    pageInfo = { 
+      title: dynamicPageTitle || '学生学业热力图',
+      parent: { title: '学生学业进度', path: '/academic-journey/students' }
+    };
+    dynamicParent = { title: '学术旅程', path: '/academic-journey' };
   }
   else {
     // 普通静态路由
