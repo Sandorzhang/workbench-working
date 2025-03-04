@@ -16,6 +16,7 @@ import { aiAssistantHandlers } from './ai-assistant';
 import { conceptMapHandlers } from './concept-map';
 import { academicJourneyHandlers } from './academic-journey';
 import { teachingDesignsHandlers } from './teaching-designs-alt';
+import { examHandlers } from './exam';
 // 导入其他处理器...
 
 export const handlers = [
@@ -35,6 +36,7 @@ export const handlers = [
   ...conceptMapHandlers,
   ...academicJourneyHandlers,
   ...teachingDesignsHandlers,
+  ...examHandlers,
   // 其他处理器...
   
   // 处理默认头像

@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,19 +21,22 @@ import { Exam } from '@/types/exam'
 import { useRouter } from 'next/navigation'
 import { formatDateTime } from '@/lib/utils'
 import { toast } from '@/components/ui/use-toast'
+import { Badge } from '@/components/ui/badge'
+import { FileSpreadsheet } from 'lucide-react'
 
 interface ExamTableProps {
   exams: Exam[]
   isLoading: boolean
   onRefresh: () => void
+  onEdit: (examId: string) => void
 }
 
-export function ExamTable({ exams, isLoading, onRefresh }: ExamTableProps) {
+export function ExamTable({ exams, isLoading, onRefresh, onEdit }: ExamTableProps) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleEdit = (id: string) => {
-    router.push(`/exam-management/edit/${id}`)
+    onEdit(id)
   }
 
   const handleDelete = async (id: string) => {
@@ -66,70 +69,102 @@ export function ExamTable({ exams, isLoading, onRefresh }: ExamTableProps) {
     }
   }
 
-  const statusMap = {
-    published: '已发布',
-    draft: '草稿',
+  const getStatusBadge = (status: string) => {
+    if (status === 'published') {
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">已发布</Badge>
+    }
+    return <Badge variant="secondary">草稿</Badge>
   }
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-10">
+      <div className="flex justify-center items-center py-16">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <span className="ml-3 text-sm text-muted-foreground">加载中...</span>
       </div>
     )
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>考试ID</TableHead>
-            <TableHead>考试名称</TableHead>
-            <TableHead>学科</TableHead>
-            <TableHead>年级</TableHead>
-            <TableHead>学期</TableHead>
-            <TableHead>考试开始时间</TableHead>
-            <TableHead>考试截止时间</TableHead>
-            <TableHead>发布状态</TableHead>
-            <TableHead className="text-right">操作</TableHead>
+          <TableRow className="bg-muted/30">
+            <TableHead className="font-medium">考试名称</TableHead>
+            <TableHead className="font-medium">学科</TableHead>
+            <TableHead className="font-medium">年级</TableHead>
+            <TableHead className="font-medium">学期</TableHead>
+            <TableHead className="font-medium">考试时间</TableHead>
+            <TableHead className="font-medium">状态</TableHead>
+            <TableHead className="text-right font-medium">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {exams.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-10">
-                暂无考试数据
+              <TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="rounded-full bg-muted p-4">
+                    <FileSpreadsheet className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p>暂无考试数据</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => onEdit('')}
+                    className="mt-2"
+                  >
+                    新增考试
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ) : (
             exams.map((exam) => (
-              <TableRow key={exam.id}>
-                <TableCell>{exam.id}</TableCell>
-                <TableCell>{exam.name}</TableCell>
+              <TableRow 
+                key={exam.id} 
+                className="group hover:bg-muted/40 cursor-pointer transition-colors"
+                onClick={() => handleEdit(exam.id)}
+              >
+                <TableCell className="font-medium">{exam.name}</TableCell>
                 <TableCell>{exam.subject}</TableCell>
                 <TableCell>{exam.grade}</TableCell>
                 <TableCell>{exam.semester}</TableCell>
-                <TableCell>{formatDateTime(exam.startTime)}</TableCell>
-                <TableCell>{formatDateTime(exam.endTime)}</TableCell>
-                <TableCell>{statusMap[exam.status]}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">开始: {formatDateTime(exam.startTime)}</span>
+                    <span className="text-xs text-muted-foreground mt-1">结束: {formatDateTime(exam.endTime)}</span>
+                  </div>
+                </TableCell>
+                <TableCell>{getStatusBadge(exam.status)}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">操作</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(exam.id)}>
+                    <DropdownMenuContent align="end" className="w-[160px]">
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEdit(exam.id)
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
                         编辑
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        className="text-destructive"
-                        onClick={() => handleDelete(exam.id)}
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(exam.id)
+                        }}
                         disabled={deletingId === exam.id}
                       >
+                        <Trash className="mr-2 h-4 w-4" />
                         {deletingId === exam.id ? '删除中...' : '删除'}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
