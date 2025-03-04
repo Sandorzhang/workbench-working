@@ -1,6 +1,47 @@
 import { ApiErrorResponse } from './api-types';
 
 const API_BASE_URL = '/api';
+const MSW_READY_TIMEOUT = 5000; // 5秒超时
+
+// 等待MSW准备就绪
+const waitForMsw = async (): Promise<boolean> => {
+  // 只在浏览器环境中等待MSW
+  if (typeof window === 'undefined') return true;
+  
+  // 如果MSW已经就绪，直接返回
+  if (window.__MSW_READY__ === true) {
+    console.log('MSW已就绪，继续API请求');
+    return true;
+  }
+  
+  console.log('等待MSW初始化...');
+  
+  // 等待MSW就绪，最多等待MSW_READY_TIMEOUT毫秒
+  return new Promise(resolve => {
+    const startTime = Date.now();
+    
+    const checkMswReady = () => {
+      // 如果MSW已就绪或超时，则解析Promise
+      if (window.__MSW_READY__ === true) {
+        console.log('MSW已就绪，继续API请求');
+        resolve(true);
+        return;
+      }
+      
+      // 检查是否超时
+      if (Date.now() - startTime > MSW_READY_TIMEOUT) {
+        console.warn('等待MSW就绪超时，继续API请求（可能会导致错误）');
+        resolve(false);
+        return;
+      }
+      
+      // 继续等待
+      setTimeout(checkMswReady, 100);
+    };
+    
+    checkMswReady();
+  });
+};
 
 // 为请求添加认证头
 const getAuthHeaders = (): HeadersInit => {
@@ -24,6 +65,11 @@ async function handleRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   try {
+    // 在开发环境中等待MSW就绪
+    if (process.env.NODE_ENV === 'development') {
+      await waitForMsw();
+    }
+    
     // 每次请求时重新获取认证头，确保使用最新的token
     const headers = {
       ...getAuthHeaders(),
@@ -58,16 +104,41 @@ async function handleRequest<T>(
       } as ApiErrorResponse;
     }
     
+    // 先检查响应类型
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+      console.error(`API返回了HTML而不是JSON: ${url}`);
+      const htmlText = await response.text();
+      console.error('返回的HTML片段:', htmlText.substring(0, 200) + '...');
+      throw {
+        message: '服务器返回了HTML而不是JSON，请检查API路径或MSW配置',
+        code: 'INVALID_RESPONSE_TYPE',
+        details: { contentType, htmlSnippet: htmlText.substring(0, 200) }
+      } as ApiErrorResponse;
+    }
+    
     // 尝试解析响应
     let data;
     try {
       data = await response.json();
     } catch (parseError) {
       console.error('响应解析失败:', parseError);
+      
+      // 尝试获取文本响应以提供更多诊断信息
+      let responseText = '';
+      try {
+        // 克隆响应，因为原始响应已被消费
+        const clonedResponse = response.clone();
+        responseText = await clonedResponse.text();
+        console.error('响应内容预览:', responseText.substring(0, 200));
+      } catch (textError) {
+        console.error('无法获取响应文本:', textError);
+      }
+      
       throw {
         message: '服务器响应格式错误',
         code: response.status.toString(),
-        details: { parseError }
+        details: { parseError, responsePreview: responseText.substring(0, 200) }
       } as ApiErrorResponse;
     }
     
@@ -99,6 +170,13 @@ async function handleRequest<T>(
     
     console.log('标准化API错误:', standardError);
     throw standardError;
+  }
+}
+
+// 确保声明全局类型
+declare global {
+  interface Window {
+    __MSW_READY__?: boolean;
   }
 }
 

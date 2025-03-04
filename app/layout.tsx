@@ -1,6 +1,8 @@
 import { MswInitializer } from '@/components/MswInitializer';
 import { AuthProvider } from '@/lib/auth';
 import { Toaster } from "@/components/ui/toaster";
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { DebugPanel } from '@/components/DebugPanel';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppLayout } from "@/components/app-layout";
@@ -31,12 +33,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <MswInitializer />
-        <AuthProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
-        </AuthProvider>
+        <MswInitializer>
+          <ErrorBoundary>
+            <AuthProvider>
+              <AppLayout>
+                {children}
+              </AppLayout>
+            </AuthProvider>
+          </ErrorBoundary>
+          {process.env.NODE_ENV === 'development' && <DebugPanel />}
+        </MswInitializer>
         <Toaster />
       </body>
     </html>

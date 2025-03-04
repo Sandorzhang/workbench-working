@@ -38,7 +38,6 @@ import {
   GraduationCap, 
   Users,
   School,
-  FolderPlus,
   BookOpen,
   UserCog 
 } from "lucide-react";
@@ -52,12 +51,12 @@ import { SectionContainer } from "@/components/ui/section-container";
 import { CardContainer } from "@/components/ui/card-container";
 import { toast } from "sonner";
 import {
-  AddGradeDialog,
   AddClassesDialog,
   AddTeacherDialog,
   AddStudentDialog,
   AssignTeachersDialog,
-  AssignStudentsDialog
+  AssignStudentsDialog,
+  AssignStudentsToGradeDialog
 } from "@/components/education";
 
 // 定义类型
@@ -120,14 +119,15 @@ export default function UsersPage() {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isAddGradeDialogOpen, setIsAddGradeDialogOpen] = useState(false);
   const [isAddClassesDialogOpen, setIsAddClassesDialogOpen] = useState(false);
   const [isAddTeacherDialogOpen, setIsAddTeacherDialogOpen] = useState(false);
   const [isAddStudentDialogOpen, setIsAddStudentDialogOpen] = useState(false);
   const [isAssignTeachersDialogOpen, setIsAssignTeachersDialogOpen] = useState(false);
   const [isAssignStudentsDialogOpen, setIsAssignStudentsDialogOpen] = useState(false);
+  const [isAssignStudentsToGradeDialogOpen, setIsAssignStudentsToGradeDialogOpen] = useState(false);
   
   // 初始化数据
   useEffect(() => {
@@ -220,11 +220,6 @@ export default function UsersPage() {
     }
   };
   
-  // 处理添加年级
-  const handleAddGrade = () => {
-    setIsAddGradeDialogOpen(true);
-  };
-  
   // 处理添加班级
   const handleAddClasses = () => {
     setIsAddClassesDialogOpen(true);
@@ -240,6 +235,12 @@ export default function UsersPage() {
   const handleAssignStudents = (classData: Class) => {
     setSelectedClass(classData);
     setIsAssignStudentsDialogOpen(true);
+  };
+  
+  // 处理分配学生到年级
+  const handleAssignStudentsToGrade = (grade: Grade) => {
+    setSelectedGrade(grade);
+    setIsAssignStudentsToGradeDialogOpen(true);
   };
   
   // 获取班级对应的年级名称
@@ -388,16 +389,20 @@ export default function UsersPage() {
       <div className="flex-1">
         <SectionContainer padding="standard" className="mb-0 h-full">
           <Tabs defaultValue="teachers" className="space-y-4 w-full" onValueChange={setActiveTab}>
-            <TabsList className="bg-gray-50/70 p-1 rounded-lg">
-              <TabsTrigger value="teachers" className="flex items-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
-                <GraduationCap className="h-4 w-4" />
+            <TabsList className="w-full flex p-1 mb-4 bg-gray-50/70 rounded-lg">
+              <TabsTrigger value="teachers" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
+                <UserCog className="h-4 w-4" />
                 教师管理
               </TabsTrigger>
-              <TabsTrigger value="students" className="flex items-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
-                <Users className="h-4 w-4" />
+              <TabsTrigger value="students" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
+                <GraduationCap className="h-4 w-4" />
                 学生管理
               </TabsTrigger>
-              <TabsTrigger value="classes" className="flex items-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
+              <TabsTrigger value="grades" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
+                <BookOpen className="h-4 w-4" />
+                年级管理
+              </TabsTrigger>
+              <TabsTrigger value="classes" className="flex-1 flex items-center justify-center gap-2 data-[state=active]:shadow-sm data-[state=active]:font-medium">
                 <School className="h-4 w-4" />
                 班级管理
               </TabsTrigger>
@@ -596,14 +601,6 @@ export default function UsersPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button 
-                    variant="outline"
-                    className="h-10 px-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-                    onClick={handleAddGrade}
-                  >
-                    <FolderPlus className="h-4 w-4 mr-2" />
-                    添加年级
-                  </Button>
-                  <Button 
                     className="h-10 px-4 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
                     onClick={handleAddClasses}
                   >
@@ -683,6 +680,114 @@ export default function UsersPage() {
                 </CardContent>
               </CardContainer>
             </TabsContent>
+            
+            {/* 年级管理 */}
+            <TabsContent value="grades" className="space-y-4 mt-4">
+              <div className="flex justify-between">
+                <div className="relative w-full max-w-sm">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="search"
+                    placeholder="搜索年级..."
+                    className="pl-10 rounded-xl border-gray-200"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex-shrink-0">
+                  <p className="text-sm text-muted-foreground">年级是根据学校学制自动生成，每个年级对应一个学年</p>
+                </div>
+              </div>
+              
+              <CardContainer elevated className="border-gray-100/80 overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-5">
+                  <CardTitle className="text-base font-medium text-gray-900">年级列表</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">年级是根据学校学制自动生成，每个年级对应一个学年</p>
+                </CardHeader>
+                <CardContent className="p-0 overflow-x-auto">
+                  {isLoading ? (
+                    <TableSkeleton rowCount={5} columnCount={5} />
+                  ) : (
+                    <Table>
+                      <TableHeader className="bg-gray-50/30">
+                        <TableRow>
+                          <TableHead className="w-[150px]">年级名称</TableHead>
+                          <TableHead className="w-[120px]">学年</TableHead>
+                          <TableHead className="w-[120px]">班级数量</TableHead>
+                          <TableHead className="w-[120px]">学生人数</TableHead>
+                          <TableHead className="w-[200px] text-right">操作</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {grades.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                              {searchQuery ? '未找到匹配的年级' : '暂无年级数据'}
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          grades.map((grade) => {
+                            // 获取该年级下的班级数量
+                            const classCount = classes.filter(c => c.gradeId === grade.id).length;
+                            // 获取该年级下的学生人数
+                            const studentCount = students.filter(s => s.grade === grade.id).length;
+                            
+                            return (
+                              <TableRow key={grade.id}>
+                                <TableCell className="font-medium">{grade.name}</TableCell>
+                                <TableCell>{grade.year}学年</TableCell>
+                                <TableCell>{classCount}</TableCell>
+                                <TableCell>{studentCount}</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 px-2 text-xs"
+                                      onClick={() => handleAssignStudentsToGrade(grade)}
+                                    >
+                                      <UserPlus className="h-3.5 w-3.5 mr-1" />
+                                      添加学生
+                                    </Button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="rounded-xl">
+                                        <DropdownMenuItem
+                                          className="cursor-pointer"
+                                          onClick={() => {
+                                            // 编辑年级
+                                          }}
+                                        >
+                                          <Edit className="h-4 w-4 mr-2" />
+                                          编辑
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          className="text-red-600 cursor-pointer focus:text-red-600"
+                                          onClick={() => {
+                                            // 删除年级
+                                          }}
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          删除
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </CardContainer>
+            </TabsContent>
           </Tabs>
         </SectionContainer>
       </div>
@@ -713,12 +818,6 @@ export default function UsersPage() {
       </Dialog>
 
       {/* 年级、班级、教师、学生管理对话框 */}
-      <AddGradeDialog 
-        open={isAddGradeDialogOpen} 
-        onOpenChange={setIsAddGradeDialogOpen} 
-        onAddSuccess={refreshData}
-      />
-
       <AddClassesDialog 
         open={isAddClassesDialogOpen} 
         onOpenChange={setIsAddClassesDialogOpen} 
@@ -752,6 +851,13 @@ export default function UsersPage() {
         className={selectedClass?.name}
         gradeId={selectedClass?.gradeId}
         onAssignSuccess={refreshData}
+      />
+
+      <AssignStudentsToGradeDialog 
+        open={isAssignStudentsToGradeDialogOpen} 
+        onOpenChange={setIsAssignStudentsToGradeDialogOpen} 
+        grade={selectedGrade}
+        onSuccess={refreshData}
       />
     </div>
   );

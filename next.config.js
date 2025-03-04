@@ -14,6 +14,14 @@ const nextConfig = {
     };
     return config;
   },
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        '@lib': path.resolve(__dirname, './lib'),
+        '@components': path.resolve(__dirname, './components'),
+      },
+    },
+  },
 };
 
 module.exports = nextConfig; 

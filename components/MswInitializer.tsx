@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { toast } from 'sonner';
-import type { SetupWorkerApi, StartOptions } from 'msw/browser';
+
+// 创建MSW状态上下文
+export const MswContext = createContext<{
+  status: 'pending' | 'success' | 'error';
+  isReady: boolean;
+}>({
+  status: 'pending',
+  isReady: false,
+});
+
+// 导出上下文钩子
+export const useMsw = () => useContext(MswContext);
 
 interface MswInitializerProps {
   onInitialized?: () => void;
+  children?: React.ReactNode;
 }
 
 // MSW request and print types
@@ -19,7 +31,7 @@ interface MswPrint {
   error: () => void;
 }
 
-export function MswInitializer({ onInitialized }: MswInitializerProps) {
+export function MswInitializer({ onInitialized, children }: MswInitializerProps) {
   const [status, setStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const initAttemptedRef = useRef(false);
   const retryCountRef = useRef(0);
@@ -31,14 +43,10 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
     if (initAttemptedRef.current) return;
     initAttemptedRef.current = true;
 
-    const initMsw = async () => {
-      // 始终在开发环境中启用MSW
-      // if (process.env.NODE_ENV !== 'development') {
-      //   setStatus('success');
-      //   onInitialized?.();
-      //   return;
-      // }
+    // 添加全局变量标记MSW状态
+    window.__MSW_READY__ = false;
 
+    const initMsw = async () => {
       const tryInit = async (): Promise<void> => {
         try {
           console.log(`尝试初始化 MSW (尝试 ${retryCountRef.current + 1}/${MAX_RETRIES})...`);
@@ -72,6 +80,13 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
               
               // 详细记录未处理的请求
               console.warn(`[MSW] 未处理的请求: ${request.method} ${request.url}`);
+              
+              // 如果是API请求但没有被处理，增加更明显的警告
+              if (request.url.includes('/api/')) {
+                console.error(`[MSW] ⚠️ API请求未被拦截: ${request.method} ${request.url} - 这可能导致解析错误`);
+                toast.error(`API请求未被拦截: ${request.method} ${new URL(request.url).pathname}`);
+              }
+              
               print.warning();
             },
             serviceWorker: {
@@ -99,6 +114,10 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
           
           console.log('MSW 初始化成功!');
           setStatus('success');
+          
+          // 标记MSW准备就绪
+          window.__MSW_READY__ = true;
+          
           onInitialized?.();
         } catch (error) {
           console.error(`MSW 初始化失败 (尝试 ${retryCountRef.current + 1}/${MAX_RETRIES}):`, error);
@@ -122,31 +141,47 @@ export function MswInitializer({ onInitialized }: MswInitializerProps) {
     initMsw();
   }, [onInitialized]);
   
+  // 提供上下文值
+  const contextValue = {
+    status,
+    isReady: status === 'success'
+  };
+  
   // 显示MSW状态
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        right: 0,
-        padding: '4px 8px',
-        background: status === 'pending' ? '#2196f3' : status === 'success' ? '#4caf50' : '#f44336',
-        color: 'white',
-        fontSize: '12px',
-        zIndex: 9999,
-        borderTopLeftRadius: '4px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px'
-      }}
-      onClick={() => {
-        if (status === 'error') {
-          window.location.reload();
-        }
-      }}
-    >
-      <span>MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启用' : '初始化失败 (点击刷新)'}</span>
-    </div>
+    <MswContext.Provider value={contextValue}>
+      <div 
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          right: 0,
+          padding: '4px 8px',
+          background: status === 'pending' ? '#2196f3' : status === 'success' ? '#4caf50' : '#f44336',
+          color: 'white',
+          fontSize: '12px',
+          zIndex: 9999,
+          borderTopLeftRadius: '4px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}
+        onClick={() => {
+          if (status === 'error') {
+            window.location.reload();
+          }
+        }}
+      >
+        <span>MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启用' : '初始化失败 (点击刷新)'}</span>
+      </div>
+      {children}
+    </MswContext.Provider>
   );
+} 
+
+// 声明全局变量
+declare global {
+  interface Window {
+    __MSW_READY__?: boolean;
+  }
 } 

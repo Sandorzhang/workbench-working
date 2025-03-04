@@ -324,7 +324,7 @@ export const educationHandlers = [
       
       // 添加到新班级
       const newClassIndex = classesData.findIndex(c => c.id === updates.class);
-      if (newClassIndex !== -1) {
+      if (newClassIndex !== -1 && updates.class) {
         classesData[newClassIndex].studentIds.push(id);
       }
     }
@@ -700,6 +700,102 @@ export const educationHandlers = [
       headTeacher,
       students,
       studentCount: students.length
+    });
+  }),
+
+  // 查询年级详情接口
+  http.get('*/api/grades/:id/detail', async ({ params }) => {
+    await delay(500);
+    const { id } = params;
+    
+    const grade = gradesData.find(g => g.id === id);
+    if (!grade) {
+      return HttpResponse.json({ message: '未找到该年级' }, { status: 404 });
+    }
+    
+    // 获取该年级下的班级
+    const gradeClasses = classesData.filter(c => c.gradeId === id);
+    
+    // 获取该年级下的学生
+    const gradeStudents = studentsData.filter(s => s.grade === id);
+    
+    return HttpResponse.json({
+      ...grade,
+      classes: gradeClasses,
+      students: gradeStudents,
+      classCount: gradeClasses.length,
+      studentCount: gradeStudents.length
+    });
+  }),
+  
+  // 查询年级下的学生
+  http.get('*/api/grades/:id/students', async ({ params }) => {
+    await delay(500);
+    const { id } = params;
+    
+    // 获取该年级下的学生
+    const gradeStudents = studentsData.filter(s => s.grade === id);
+    
+    return HttpResponse.json(gradeStudents);
+  }),
+  
+  // 添加学生到年级
+  http.post('*/api/grades/:gradeId/students', async ({ request, params }) => {
+    await delay(500);
+    const { gradeId } = params;
+    const { studentIds } = await request.json() as { studentIds: string[] };
+    
+    // 验证年级存在
+    const gradeIndex = gradesData.findIndex(g => g.id === gradeId);
+    if (gradeIndex === -1) {
+      return HttpResponse.json({ message: '未找到该年级' }, { status: 404 });
+    }
+    
+    // 获取该年级下的班级
+    const gradeClasses = classesData.filter(c => c.gradeId === gradeId);
+    
+    // 如果年级下没有班级，返回错误
+    if (gradeClasses.length === 0) {
+      return HttpResponse.json({ 
+        message: '该年级下没有班级，无法添加学生',
+        hasClasses: false 
+      }, { status: 400 });
+    }
+    
+    // 默认使用该年级下的第一个班级
+    const targetClassId = gradeClasses[0].id;
+    let addedStudentCount = 0;
+    
+    // 添加学生到年级和班级
+    studentIds.forEach(id => {
+      const studentIndex = studentsData.findIndex(s => s.id === id);
+      if (studentIndex !== -1) {
+        // 如果学生已在其他班级，先移除
+        const oldClassId = studentsData[studentIndex].class;
+        if (oldClassId) {
+          const oldClassIndex = classesData.findIndex(c => c.id === oldClassId);
+          if (oldClassIndex !== -1) {
+            classesData[oldClassIndex].studentIds = classesData[oldClassIndex].studentIds.filter(sId => sId !== id);
+          }
+        }
+        
+        // 更新学生信息
+        studentsData[studentIndex].grade = gradeId;
+        studentsData[studentIndex].class = targetClassId;
+        
+        // 添加到班级学生列表
+        const targetClassIndex = classesData.findIndex(c => c.id === targetClassId);
+        if (targetClassIndex !== -1 && !classesData[targetClassIndex].studentIds.includes(id)) {
+          classesData[targetClassIndex].studentIds.push(id);
+          addedStudentCount++;
+        }
+      }
+    });
+    
+    return HttpResponse.json({ 
+      success: true, 
+      addedStudentCount,
+      message: `成功添加 ${addedStudentCount} 名学生到年级`
     });
   })
 ]; 
