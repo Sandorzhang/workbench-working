@@ -90,7 +90,7 @@ export function BulkScoreDialog({
       
       // 调用批量更新API
       const response = await fetch(`/api/questions/bulk-update-scores`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },

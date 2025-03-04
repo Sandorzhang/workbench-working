@@ -375,99 +375,101 @@ export const importQuestionsFromPdf = http.post('/api/questions/import-pdf', asy
   const file = formData.get('file')
   
   if (!examId) {
-    return new Response(
-      JSON.stringify({ message: '缺少考试ID' }), 
-      { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      }
+    return HttpResponse.json(
+      { message: '缺少考试ID' }, 
+      { status: 400 }
     )
   }
   
   if (!file || !(file instanceof File) || file.type !== 'application/pdf') {
-    return new Response(
-      JSON.stringify({ message: '请上传有效的PDF文件' }), 
-      { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      }
+    return HttpResponse.json(
+      { message: '请上传有效的PDF文件' }, 
+      { status: 400 }
     )
   }
   
-  // 模拟PDF识别结果
-  const mockQuestions: Question[] = [
-    {
-      id: uuidv4(),
-      examId: examId as string,
-      questionNumber: '1',
-      learningObjective: 'LO-MATH-01',
-      score: 5,
-      description: '计算 25 + 18 的结果',
-      imageUrl: 'https://via.placeholder.com/300x200?text=Question+1',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: uuidv4(),
-      examId: examId as string,
-      questionNumber: '2',
-      learningObjective: 'LO-MATH-02',
-      score: 10,
-      description: '解方程 3x + 7 = 22',
-      imageUrl: 'https://via.placeholder.com/300x200?text=Question+2',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: uuidv4(),
-      examId: examId as string,
-      questionNumber: '3',
-      learningObjective: 'LO-MATH-03',
-      score: 15,
-      description: '计算三角形的面积，底为6cm，高为8cm',
-      imageUrl: 'https://via.placeholder.com/300x200?text=Question+3',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: uuidv4(),
-      examId: examId as string,
-      questionNumber: '4',
-      learningObjective: 'LO-SCI-01',
-      score: 10,
-      description: '说明光合作用的基本过程',
-      imageUrl: 'https://via.placeholder.com/300x200?text=Question+4',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: uuidv4(),
-      examId: examId as string,
-      questionNumber: '5',
-      learningObjective: 'LO-CHIN-01',
-      score: 20,
-      description: '分析下面这首古诗的主题和写作手法',
-      imageUrl: 'https://via.placeholder.com/300x200?text=Question+5',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ]
-  
-  // 添加到问题数据库
-  questions.push(...mockQuestions)
-  
-  return HttpResponse.json({
-    success: true,
-    message: '导入成功',
-    questions: mockQuestions,
-    count: mockQuestions.length
-  })
+  try {
+    // 模拟PDF识别结果
+    const mockQuestions: Question[] = [
+      {
+        id: uuidv4(),
+        examId: examId as string,
+        questionNumber: '1',
+        learningObjective: 'LO-MATH-01',
+        score: 5,
+        description: '计算 25 + 18 的结果',
+        imageUrl: 'https://via.placeholder.com/300x200?text=Question+1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        examId: examId as string,
+        questionNumber: '2',
+        learningObjective: 'LO-MATH-02',
+        score: 10,
+        description: '解方程 3x + 7 = 22',
+        imageUrl: 'https://via.placeholder.com/300x200?text=Question+2',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        examId: examId as string,
+        questionNumber: '3',
+        learningObjective: 'LO-MATH-03',
+        score: 15,
+        description: '计算三角形的面积，底为6cm，高为8cm',
+        imageUrl: 'https://via.placeholder.com/300x200?text=Question+3',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        examId: examId as string,
+        questionNumber: '4',
+        learningObjective: 'LO-SCI-01',
+        score: 10,
+        description: '说明光合作用的基本过程',
+        imageUrl: 'https://via.placeholder.com/300x200?text=Question+4',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        examId: examId as string,
+        questionNumber: '5',
+        learningObjective: 'LO-CHIN-01',
+        score: 20,
+        description: '分析下面这首古诗的主题和写作手法',
+        imageUrl: 'https://via.placeholder.com/300x200?text=Question+5',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ]
+    
+    // 添加到问题数据库
+    questions.push(...mockQuestions)
+    
+    console.log(`[MSW] PDF导入成功, 创建题目数: ${mockQuestions.length}`)
+    
+    return HttpResponse.json({
+      success: true,
+      message: '导入成功',
+      questions: mockQuestions,
+      count: mockQuestions.length
+    })
+  } catch (error) {
+    console.error('[MSW] PDF导入出错:', error)
+    return HttpResponse.json(
+      { message: '导入失败: ' + String(error) }, 
+      { status: 500 }
+    )
+  }
 })
 
 // 批量更新分数
-export const bulkUpdateScores = http.put('/api/questions/bulk-update-scores', async ({ request }) => {
-  await delay(1000)
-  
+export const bulkUpdateScores = http.post('/api/questions/bulk-update-scores', async ({ request }) => {
   const body = await request.json() as { 
     examId: string; 
     questions: Array<{ 
@@ -477,38 +479,43 @@ export const bulkUpdateScores = http.put('/api/questions/bulk-update-scores', as
   }
   
   const { examId, questions: updatedQuestions } = body
-  
+
   if (!examId || !updatedQuestions || !Array.isArray(updatedQuestions)) {
-    return new Response(
-      JSON.stringify({ message: '缺少必要参数' }), 
-      { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      }
+    return HttpResponse.json(
+      { message: '缺少必要参数：examId或questions' },
+      { status: 400 }
     )
   }
-  
-  // 更新题目分数
-  for (const updatedQuestion of updatedQuestions) {
-    const questionIndex = questions.findIndex(q => q.id === updatedQuestion.id)
-    
-    if (questionIndex !== -1) {
-      questions[questionIndex] = {
-        ...questions[questionIndex],
-        score: updatedQuestion.score,
-        updatedAt: new Date().toISOString()
+
+  try {
+    // 更新问题分数
+    updatedQuestions.forEach((updatedQuestion) => {
+      const questionIndex = questions.findIndex(q => q.id === updatedQuestion.id)
+      if (questionIndex !== -1) {
+        questions[questionIndex] = {
+          ...questions[questionIndex],
+          score: updatedQuestion.score,
+          updatedAt: new Date().toISOString()
+        }
       }
-    }
+    })
+
+    // 获取更新后的题目列表
+    const updatedExamQuestions = questions.filter(q => q.examId === examId)
+
+    console.log(`[MSW] 批量更新分数成功，更新题目数：${updatedQuestions.length}`)
+
+    return HttpResponse.json({
+      message: '批量更新分数成功',
+      questions: updatedExamQuestions
+    })
+  } catch (error) {
+    console.error('[MSW] 批量更新分数失败:', error)
+    return HttpResponse.json(
+      { message: '批量更新分数失败: ' + String(error) },
+      { status: 500 }
+    )
   }
-  
-  // 获取更新后的考试题目
-  const examQuestions = questions.filter(q => q.examId === examId)
-  
-  return HttpResponse.json({
-    success: true,
-    message: '批量更新分数成功',
-    questions: examQuestions
-  })
 })
 
 // 更新导出的处理程序
