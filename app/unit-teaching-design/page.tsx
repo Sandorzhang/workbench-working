@@ -27,13 +27,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { 
   BookOpen, Search, Plus, Filter, 
   SlidersHorizontal, Download, Upload,
   LayoutDashboard, ChevronLeft, ChevronRight,
-  Clock, Users, GraduationCap, CalendarDays
+  Clock, Users, GraduationCap, CalendarDays,
+  FileText, Book, Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -406,6 +408,212 @@ const TeachingPlanCarousel = ({ isOpen, onClose, design }: TeachingPlanCarouselP
         </div>
       </div>
     </div>
+  );
+};
+
+// 添加创建单元教学设计对话框组件
+interface CreateTeachingDesignDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const CreateTeachingDesignDialog = ({ isOpen, onClose }: CreateTeachingDesignDialogProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    subject: '',
+    grade: '',
+    semester: '',
+    file: null as File | null
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData(prev => ({ ...prev, file }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // 创建FormData对象用于文件上传
+      const submitData = new FormData();
+      submitData.append('title', formData.title);
+      submitData.append('subject', formData.subject);
+      submitData.append('grade', formData.grade);
+      submitData.append('semester', formData.semester);
+      
+      if (formData.file) {
+        submitData.append('document', formData.file);
+      }
+
+      console.log('提交数据:', {
+        title: formData.title,
+        subject: formData.subject,
+        grade: formData.grade,
+        semester: formData.semester,
+        file: formData.file ? `${formData.file.name} (${formData.file.size} bytes)` : '无'
+      });
+
+      // 发送请求创建新的教学设计
+      const response = await fetch('/api/teaching-designs', {
+        method: 'POST',
+        body: submitData
+      });
+
+      console.log('响应状态:', response.status);
+
+      if (response.ok) {
+        // 获取响应数据
+        const data = await response.json();
+        console.log('创建成功:', data);
+        
+        // 关闭对话框并重置表单
+        onClose();
+        
+        // 显示成功提示
+        alert('单元教学设计创建成功！');
+        
+        // 刷新页面以显示新创建的设计
+        window.location.reload();
+      } else {
+        // 处理错误
+        const errorData = await response.json();
+        console.error('创建失败:', errorData);
+        alert(`创建失败: ${errorData.error || '未知错误'}`);
+      }
+    } catch (error) {
+      console.error('提交过程中发生错误:', error);
+      alert('提交过程中发生错误，请重试');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 如果对话框未打开，不渲染任何内容
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[550px]">
+        <DialogHeader>
+          <DialogTitle className="text-xl flex items-center">
+            <FileText className="mr-2 h-5 w-5 text-primary" />
+            新建单元教学设计
+          </DialogTitle>
+          <DialogDescription>
+            填写以下信息创建新的单元教学设计
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-5 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">单元教案名称</Label>
+            <Input
+              id="title"
+              name="title"
+              placeholder="请输入单元教案名称"
+              required
+              value={formData.title}
+              onChange={handleChange}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="subject">学科</Label>
+            <Input
+              id="subject"
+              name="subject"
+              placeholder="请输入学科"
+              required
+              value={formData.subject}
+              onChange={handleChange}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="grade">年级</Label>
+              <Input
+                id="grade"
+                name="grade"
+                placeholder="请输入年级"
+                required
+                value={formData.grade}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="semester">学期</Label>
+              <Input
+                id="semester"
+                name="semester"
+                placeholder="请输入学期"
+                required
+                value={formData.semester}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="document">上传Word文档</Label>
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+              <label 
+                htmlFor="document" 
+                className="cursor-pointer flex flex-col items-center justify-center"
+              >
+                <div className="mb-3 bg-primary/10 text-primary rounded-full p-3">
+                  <Upload className="h-6 w-6" />
+                </div>
+                <p className="text-sm mb-1">
+                  {formData.file ? formData.file.name : '点击或拖拽文件到此处上传'}
+                </p>
+                <p className="text-xs text-gray-500">支持 .doc, .docx 格式</p>
+                <input 
+                  id="document" 
+                  name="document"
+                  type="file" 
+                  className="hidden"
+                  accept=".doc,.docx"
+                  onChange={handleFileChange}
+                />
+              </label>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              取消
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="relative"
+            >
+              {isSubmitting && (
+                <div className="absolute inset-0 flex items-center justify-center bg-primary">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              创建设计
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -812,6 +1020,12 @@ export default function UnitTeachingDesignPage() {
           design={currentDesign}
         />
       )}
+      
+      {/* 添加创建教学设计对话框 */}
+      <CreateTeachingDesignDialog
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+      />
     </div>
   );
 } 
