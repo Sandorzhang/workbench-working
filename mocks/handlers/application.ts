@@ -95,10 +95,15 @@ export const getApplicationsHandler = http.get('/api/applications', async ({ req
     // 合并用户可访问的应用ID
     const accessibleAppIds = new Set();
     
-    // 添加角色权限中的应用
+    // 添加角色权限中的应用 - 只添加granted为true的
     rolePermissions.forEach(permission => {
       if (permission.applicationId) {
-        accessibleAppIds.add(permission.applicationId);
+        if (permission.granted) {
+          accessibleAppIds.add(permission.applicationId);
+          console.log(`添加角色权限应用: ${permission.applicationId} (granted: true)`);
+        } else {
+          console.log(`跳过角色权限应用: ${permission.applicationId} (granted: false)`);
+        }
       }
     });
     
@@ -107,8 +112,10 @@ export const getApplicationsHandler = http.get('/api/applications', async ({ req
       if (permission.applicationId) {
         if (permission.granted) {
           accessibleAppIds.add(permission.applicationId);
+          console.log(`添加用户权限应用: ${permission.applicationId} (granted: true)`);
         } else {
           accessibleAppIds.delete(permission.applicationId);
+          console.log(`移除用户权限应用: ${permission.applicationId} (granted: false)`);
         }
       }
     });

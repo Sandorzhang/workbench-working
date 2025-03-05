@@ -73,7 +73,9 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
                 request.url.includes('.png') || 
                 request.url.includes('.jpg') || 
                 request.url.includes('.ico') ||
-                request.url.includes('favicon')
+                request.url.includes('favicon') ||
+                // 忽略Next.js RSC请求
+                request.url.includes('_rsc=')
               ) {
                 return;
               }

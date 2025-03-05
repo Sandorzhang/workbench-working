@@ -1,9 +1,100 @@
 // import { server } from './node'
-import { seedDb, db, loadDb } from './db';
+import { seedDb, db, loadDb, saveDb } from './db';
 import { handlers } from './handlers/index';
 
 // 初始化MSW数据库 - 只有在加载失败时才会执行
 seedDb();
+
+// 手动初始化角色权限
+const initializeRolePermissions = () => {
+  console.log('检查角色权限状态...');
+  
+  // 首先检查是否已经存在角色权限数据
+  const existingAdminPermissions = db.rolePermission.findMany({
+    where: {
+      role: {
+        equals: 'admin'
+      }
+    }
+  });
+  
+  const existingTeacherPermissions = db.rolePermission.findMany({
+    where: {
+      role: {
+        equals: 'teacher'
+      }
+    }
+  });
+  
+  // 如果已有权限数据，则不重新初始化
+  if (existingAdminPermissions.length > 0 || existingTeacherPermissions.length > 0) {
+    console.log(`发现现有权限数据：admin=${existingAdminPermissions.length}，teacher=${existingTeacherPermissions.length}，跳过初始化`);
+    return;
+  }
+  
+  console.log('未找到现有权限数据，开始初始化默认角色权限...');
+  const roles = ['admin', 'teacher']; // 添加teacher角色
+  const allApplications = db.application.getAll();
+  console.log(`找到 ${allApplications.length} 个应用，准备设置权限`);
+  
+  // 为每个角色设置权限
+  roles.forEach(role => {
+    // 清除现有角色权限
+    try {
+      const existingPermissions = db.rolePermission.findMany({
+        where: {
+          role: {
+            equals: role
+          }
+        }
+      });
+      
+      console.log(`找到 ${existingPermissions.length} 个现有${role}权限记录`);
+      
+      db.rolePermission.deleteMany({
+        where: {
+          role: {
+            equals: role
+          }
+        }
+      });
+      console.log(`已删除现有${role}角色权限`);
+    } catch (e) {
+      console.log(`删除${role}角色旧权限时出错或无权限可删除`, e);
+    }
+    
+    // 为角色添加应用权限
+    // 根据角色分配不同的应用权限
+    let applicationsForRole = allApplications;
+    
+    // 如果是教师角色，只分配与教学相关的应用
+    if (role === 'teacher') {
+      // 排除管理员专用应用
+      const adminOnlyAppIds = ['10', '11', '12', '13', '14']; // 教育管理、教师管理、学生管理、年级管理、班级管理
+      applicationsForRole = allApplications.filter(app => !adminOnlyAppIds.includes(app.id));
+    }
+    
+    // 添加权限
+    applicationsForRole.forEach(app => {
+      try {
+        db.rolePermission.create({
+          id: `${role}-${app.id}`,
+          role: role,
+          applicationId: app.id,
+          granted: true,
+          createdAt: new Date().toISOString()
+        });
+        console.log(`已为${role}角色添加应用权限: ${app.name}`);
+      } catch (e) {
+        console.log(`为${role}添加应用权限失败: ${app.name}`, e);
+      }
+    });
+  });
+  
+  // 保存数据库状态
+  saveDb();
+  console.log('权限初始化完成，数据库状态已保存');
+};
 
 // 最大重试次数
 const MAX_RETRIES = 3;
@@ -79,6 +170,9 @@ export const worker = {
             console.error('创建默认会话失败:', e);
           }
         }
+        
+        // 初始化角色权限
+        initializeRolePermissions();
         
         console.log('MSW worker 启动成功，handlers:', handlers.length);
         return worker;

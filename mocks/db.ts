@@ -302,7 +302,10 @@ export function saveDb() {
       teachers: db.teachers,
       students: db.students,
       grades: db.grades,
-      classes: db.classes
+      classes: db.classes,
+      // 确保保存权限数据
+      permission: db.permission.getAll(),
+      rolePermission: db.rolePermission.getAll()
     };
     
     // 保存到localStorage
@@ -388,6 +391,17 @@ export function loadDb(): boolean {
     }
     if (data.school) {
       data.school.forEach((item: any) => db.school.create(item));
+    }
+    
+    // 加载权限数据
+    if (data.permission) {
+      console.log(`加载用户权限数据，数量: ${data.permission.length}`);
+      data.permission.forEach((item: any) => db.permission.create(item));
+    }
+    
+    if (data.rolePermission) {
+      console.log(`加载角色权限数据，数量: ${data.rolePermission.length}`);
+      data.rolePermission.forEach((item: any) => db.rolePermission.create(item));
     }
     
     // 恢复扩展数组
@@ -937,617 +951,44 @@ export function seedDb() {
     roles: ['admin'],
   });
   
-  // 添加角色权限示例
-  db.rolePermission.create({
-    id: 'rp-1',
-    role: 'superadmin',
-    applicationId: '1', // 学业旅程
-    granted: true,
-  });
+  // 初始化角色权限 - 确保这段代码可以被执行
+  console.log('检查角色权限初始化...');
+  // 为admin角色添加所有应用的权限
+  const adminRole = 'admin';
+  const allApplications = db.application.getAll();
+  console.log(`找到 ${allApplications.length} 个应用，准备设置权限`);
   
-  db.rolePermission.create({
-    id: 'rp-2',
-    role: 'admin',
-    applicationId: '1', // 学业旅程
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-3',
-    role: 'teacher',
-    applicationId: '1', // 学业旅程
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-4',
-    role: 'superadmin',
-    applicationId: '2', // 学业标准
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-5',
-    role: 'admin',
-    applicationId: '2', // 学业标准
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-6',
-    role: 'teacher',
-    applicationId: '2', // 学业标准
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-7',
-    role: 'superadmin',
-    applicationId: '3', // 课堂时光机
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-8',
-    role: 'admin',
-    applicationId: '3', // 课堂时光机
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-9',
-    role: 'teacher',
-    applicationId: '3', // 课堂时光机
-    granted: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-10',
-    role: 'superadmin',
-    applicationId: '4', // 大概念地图
-    granted: true,
-  });
-  
-  // 添加用户自定义权限示例
-  db.userPermission.create({
-    id: 'up-1',
-    userId: '2', // 李四（教师）
-    resourceType: 'application',
-    resourceId: '7', // 全员导师
-    allowed: true, // 覆盖角色默认权限
-  });
-  
-  db.userPermission.create({
-    id: 'up-2',
-    userId: '1', // 张三（管理员）
-    resourceType: 'application',
-    resourceId: '9', // 师生信息管理
-    allowed: true, // 允许访问
-  });
-  
-  // 创建一个默认的有效会话（用于开发测试）
-  const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
-  
-  db.session.create({
-    id: 'default-session',
-    userId: '1', // 管理员用户ID
-    token: 'default-token',
-    expiresAt: expiresAt.toISOString(),
-  });
-  
-  console.log('已创建默认会话，token: default-token');
-  
-  // 创建默认日历事件
-  db.calendar.create({
-    id: '1',
-    title: '教师会议',
-    date: '2024-03-20',
-    startTime: '09:00',
-    endTime: '10:30',
-    location: '会议室A',
-    type: 'meeting',
-    description: '讨论本学期教学计划',
-    participants: ['张老师', '李老师', '王老师'],
-  });
-
-  db.calendar.create({
-    id: '2',
-    title: '高等数学课',
-    date: '2024-03-20',
-    startTime: '14:00',
-    endTime: '15:30',
-    location: '教室201',
-    type: 'class',
-    description: '微积分基础',
-    participants: ['一年级数学班'],
-  });
-
-  db.calendar.create({
-    id: '3',
-    title: '期中考试',
-    date: '2024-03-25',
-    startTime: '09:00',
-    endTime: '11:00',
-    location: '考场1',
-    type: 'exam',
-    description: '高等数学期中考试',
-    participants: ['一年级全体学生'],
-  });
-
-  db.calendar.create({
-    id: '4',
-    title: '校园文化节',
-    date: '2024-03-28',
-    startTime: '13:00',
-    endTime: '17:00',
-    location: '学校操场',
-    type: 'activity',
-    description: '年度校园文化节活动',
-    participants: ['全校师生'],
-  });
-
-  db.calendar.create({
-    id: '5',
-    title: '清明节放假',
-    date: '2024-04-05',
-    startTime: '00:00',
-    endTime: '23:59',
-    location: '',
-    type: 'holiday',
-    description: '清明节假期',
-    participants: [],
-  });
-  
-  // 添加概念示例数据 - 数学学科
-  db.concept.create({
-    id: 'c001',
-    name: '数与代数',
-    description: '研究数量关系和数的结构的数学分支',
-    type: 'big', // 大概念
-    targets: ['知识', '技能'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c002',
-    name: '数的认识',
-    description: '理解数的含义、表示方法和基本性质',
-    type: 'big',
-    targets: ['知识'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c003',
-    name: '整数',
-    description: '不含小数部分的数',
-    type: 'small',
-    targets: ['知识'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c004',
-    name: '小数',
-    description: '包含小数部分的数',
-    type: 'small',
-    targets: ['知识'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c005',
-    name: '分数',
-    description: '表示部分与整体关系的数',
-    type: 'small',
-    targets: ['知识'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c006',
-    name: '运算',
-    description: '对数进行加减乘除等数学操作',
-    type: 'big',
-    targets: ['知识', '技能'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c007',
-    name: '加法',
-    description: '将两个或多个数合并为一个数的运算',
-    type: 'small',
-    targets: ['知识', '技能'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c008',
-    name: '减法',
-    description: '求两个数的差的运算',
-    type: 'small',
-    targets: ['知识', '技能'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c009',
-    name: '几何',
-    description: '研究形状、大小、空间位置及其关系的数学分支',
-    type: 'big',
-    targets: ['知识', '技能', '情感'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c010',
-    name: '平面图形',
-    description: '二维空间中的几何图形',
-    type: 'small',
-    targets: ['知识', '技能'],
-    subject: '数学',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  // 添加物理学科的概念
-  db.concept.create({
-    id: 'c011',
-    name: '力学',
-    description: '研究物体运动和相互作用的物理学分支',
-    type: 'big',
-    targets: ['知识', '技能'],
-    subject: '物理',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.concept.create({
-    id: 'c012',
-    name: '牛顿定律',
-    description: '描述物体运动与力的关系的基本定律',
-    type: 'big',
-    targets: ['知识', '技能'],
-    subject: '物理',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  // 添加概念关系示例数据
-  db.conceptRelation.create({
-    id: 'r001',
-    sourceId: 'c001', // 数与代数
-    targetId: 'c002', // 数的认识
-    relationType: 1, // 关系类型1
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r002',
-    sourceId: 'c002', // 数的认识
-    targetId: 'c003', // 整数
-    relationType: 2, // 关系类型2
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r003',
-    sourceId: 'c002', // 数的认识
-    targetId: 'c004', // 小数
-    relationType: 2, // 关系类型2
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r004',
-    sourceId: 'c002', // 数的认识
-    targetId: 'c005', // 分数
-    relationType: 2, // 关系类型2
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r005',
-    sourceId: 'c001', // 数与代数
-    targetId: 'c006', // 运算
-    relationType: 3, // 关系类型3
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r006',
-    sourceId: 'c006', // 运算
-    targetId: 'c007', // 加法
-    relationType: 4, // 关系类型4
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r007',
-    sourceId: 'c006', // 运算
-    targetId: 'c008', // 减法
-    relationType: 4, // 关系类型4
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r008',
-    sourceId: 'c009', // 几何
-    targetId: 'c010', // 平面图形
-    relationType: 5, // 关系类型5
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  db.conceptRelation.create({
-    id: 'r009',
-    sourceId: 'c011', // 力学
-    targetId: 'c012', // 牛顿定律
-    relationType: 6, // 关系类型6
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  // 添加区域示例数据
-  db.region.create({
-    id: '100001',
-    name: '海淀区',
-    status: true,
-  });
-  
-  db.region.create({
-    id: '100002',
-    name: '朝阳区',
-    status: true,
-  });
-  
-  db.region.create({
-    id: '100003',
-    name: '东城区',
-    status: false,
-  });
-  
-  // 添加学校示例数据
-  db.school.create({
-    id: '1',
-    name: '北京第一中学',
-    code: '001',
-    regionId: '100001',
-    type: '九年一贯制',
-    grades: ['初一', '初二', '初三', '高一', '高二', '高三'],
-    status: true,
-    createdAt: new Date().toISOString(),
-  });
-  
-  db.school.create({
-    id: '2',
-    name: '北京第二中学',
-    code: '002',
-    regionId: '100001',
-    type: '完全中学（六年制）',
-    grades: ['初一', '初二', '初三', '高一', '高二', '高三'],
-    status: true,
-    createdAt: new Date().toISOString(),
-  });
-  
-  db.school.create({
-    id: '3',
-    name: '朝阳区实验小学',
-    code: '101',
-    regionId: '100002',
-    type: '小学（六年制）',
-    grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
-    status: true,
-    createdAt: new Date().toISOString(),
-  });
-  
-  // 初始化应用数据
-  if (db.application.count() === 0) {
-    // 教育应用
-    db.application.create({
-      id: '1',
-      name: '学业旅程',
-      description: '跟踪和管理学生的学习进度和成就',
-      icon: 'graduation-cap',
-      url: '/education/academic-journey',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 1,
-      createdAt: new Date().toISOString(),
+  // 先删除可能存在的旧权限
+  try {
+    db.rolePermission.deleteMany({
+      where: {
+        role: {
+          equals: adminRole
+        }
+      }
     });
-    
-    db.application.create({
-      id: '2',
-      name: '学业标准',
-      description: '查看和管理教育标准和课程目标',
-      icon: 'book-open',
-      url: '/education/academic-standards',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 2,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '3',
-      name: '课堂时光机',
-      description: '记录和回顾课堂活动和教学时刻',
-      icon: 'clock',
-      url: '/education/classroom-timemachine',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 3,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '4',
-      name: '大概念地图',
-      description: '可视化展示课程概念和知识点之间的联系',
-      icon: 'map',
-      url: '/education/concept-map',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 4,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '5',
-      name: '数据资产管理',
-      description: '管理和分析教育数据资源',
-      icon: 'database',
-      url: '/education/data-assets',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 5,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '6',
-      name: '考试管理',
-      description: '创建、管理和评估考试和测验',
-      icon: 'file-text',
-      url: '/education/exam-management',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 6,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '7',
-      name: '全员导师',
-      description: '为学生提供全方位的指导和支持',
-      icon: 'users',
-      url: '/education/mentorship',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 7,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '8',
-      name: '单元教学设计',
-      description: '规划和设计教学单元和课程',
-      icon: 'layout',
-      url: '/education/unit-design',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 8,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '9',
-      name: '师生信息管理',
-      description: '管理教师和学生的基本信息',
-      icon: 'user-check',
-      url: '/education/user-management',
-      roles: ['admin', 'teacher', 'superadmin'],
-      order: 9,
-      createdAt: new Date().toISOString(),
-    });
-    
-    // 校端应用
-    db.application.create({
-      id: '10',
-      name: '校园管理',
-      description: '管理学校设施和资源',
-      icon: 'home',
-      url: '/admin/campus',
-      roles: ['admin', 'superadmin'],
-      order: 10,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '11',
-      name: '教务管理',
-      description: '管理教学计划和课程安排',
-      icon: 'calendar',
-      url: '/admin/academic',
-      roles: ['admin', 'superadmin'],
-      order: 11,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '12',
-      name: '人事管理',
-      description: '管理教职工信息和工作安排',
-      icon: 'briefcase',
-      url: '/admin/personnel',
-      roles: ['admin', 'superadmin'],
-      order: 12,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '13',
-      name: '财务管理',
-      description: '管理学校财务和预算',
-      icon: 'dollar-sign',
-      url: '/admin/finance',
-      roles: ['admin', 'superadmin'],
-      order: 13,
-      createdAt: new Date().toISOString(),
-    });
-    
-    db.application.create({
-      id: '14',
-      name: '系统设置',
-      description: '配置系统参数和权限',
-      icon: 'settings',
-      url: '/admin/settings',
-      roles: ['admin', 'superadmin'],
-      order: 14,
-      createdAt: new Date().toISOString(),
-    });
+    console.log('已删除现有admin角色权限');
+  } catch (e) {
+    console.log('删除旧权限时出错或无权限可删除', e);
   }
   
-  // 初始化角色权限
-  if (db.rolePermission.count() === 0) {
-    // 为每个角色添加默认应用权限
-    const roles = ['admin', 'teacher', 'student', 'superadmin'];
-    const allApplications = db.application.getAll();
-    
-    roles.forEach(role => {
-      allApplications.forEach(app => {
-        // 根据应用的roles字段确定默认权限
-        const hasAccess = Array.isArray(app.roles) && app.roles.includes(role);
-        
-        db.rolePermission.create({
-          id: `rp-${role}-${app.id}`,
-          role,
-          applicationId: app.id,
-          granted: hasAccess,
-          createdAt: new Date().toISOString(),
-        });
+  // 添加新权限
+  allApplications.forEach(app => {
+    try {
+      db.rolePermission.create({
+        id: `rp-${adminRole}-${app.id}-${Date.now()}`, // 添加时间戳避免ID冲突
+        role: adminRole,
+        applicationId: app.id,
+        granted: true, // 确保授予权限
+        createdAt: new Date().toISOString(),
       });
-    });
-  }
+      console.log(`已为admin角色添加应用权限: ${app.name}`);
+    } catch (e) {
+      console.error(`为应用 ${app.id} 添加权限时出错:`, e);
+    }
+  });
   
-  // 添加更多初始数据...
+  // 保存数据库状态
+  saveDb();
+  console.log('数据库状态已保存');
 } 

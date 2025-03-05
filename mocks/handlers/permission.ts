@@ -296,6 +296,7 @@ export const updateUserPermissionHandler = http.post('/api/permissions/user', as
           granted: permissionData.granted
         }
       });
+      console.log(`已更新用户 ${permissionData.userId} 对应用 ${permissionData.applicationId} 的权限为 ${permissionData.granted}`);
     } else {
       // 创建新权限
       result = db.permission.create({
@@ -303,9 +304,13 @@ export const updateUserPermissionHandler = http.post('/api/permissions/user', as
         userId: permissionData.userId,
         applicationId: permissionData.applicationId,
         granted: permissionData.granted !== false, // 默认为true
-        createdAt: new Date().toISOString(),
       });
+      console.log(`已创建用户 ${permissionData.userId} 对应用 ${permissionData.applicationId} 的权限为 ${permissionData.granted}`);
     }
+    
+    // 保存数据库状态
+    saveDb();
+    console.log('用户权限更新已保存到数据库');
     
     return HttpResponse.json(result);
   } catch (error) {
@@ -358,6 +363,7 @@ export const updateRolePermissionHandler = http.post('/api/permissions/role', as
           granted: permissionData.granted
         }
       });
+      console.log(`已更新角色 ${permissionData.role} 对应用 ${permissionData.applicationId} 的权限为 ${permissionData.granted}`);
     } else {
       // 创建新权限
       result = db.rolePermission.create({
@@ -367,7 +373,12 @@ export const updateRolePermissionHandler = http.post('/api/permissions/role', as
         granted: permissionData.granted !== false, // 默认为true
         createdAt: new Date().toISOString(),
       });
+      console.log(`已创建角色 ${permissionData.role} 对应用 ${permissionData.applicationId} 的权限为 ${permissionData.granted}`);
     }
+    
+    // 保存数据库状态
+    saveDb();
+    console.log('角色权限更新已保存到数据库');
     
     return HttpResponse.json(result);
   } catch (error) {
@@ -530,6 +541,17 @@ export const updateRolePermissionPutHandler = http.put('/api/permissions/role', 
     
     console.log(`>>> [MSW拦截] 更新角色权限: role=${data.role}, resourceId=${data.resourceId}, allowed=${data.allowed}`);
     
+    // 获取应用信息，用于更详细的日志
+    const app = db.application.findFirst({
+      where: {
+        id: {
+          equals: data.resourceId
+        }
+      }
+    });
+    
+    const appName = app ? app.name : data.resourceId;
+    
     // 查找是否已存在权限
     const existingPermission = db.rolePermission.findFirst({
       where: {
@@ -556,6 +578,7 @@ export const updateRolePermissionPutHandler = http.put('/api/permissions/role', 
           granted: data.allowed
         }
       });
+      console.log(`已更新角色[${data.role}]对应用[${appName}]的权限为[${data.allowed ? '允许' : '禁止'}]`);
     } else {
       // 创建新权限
       result = db.rolePermission.create({
@@ -565,12 +588,13 @@ export const updateRolePermissionPutHandler = http.put('/api/permissions/role', 
         granted: data.allowed,
         createdAt: new Date().toISOString(),
       });
+      console.log(`已创建角色[${data.role}]对应用[${appName}]的权限，设置为[${data.allowed ? '允许' : '禁止'}]`);
     }
     
     // 保存数据
     saveDb();
     
-    console.log('>>> [MSW拦截] 角色权限更新成功');
+    console.log('>>> [MSW拦截] 角色权限更新成功，数据库已保存');
     return HttpResponse.json({ success: true, result });
   } catch (error) {
     console.error('Error updating role permission:', error);
