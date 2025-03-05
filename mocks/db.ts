@@ -252,6 +252,21 @@ export function seedDb() {
     tenantType: '完全中学'
   });
   
+  // 添加超级管理员用户
+  db.user.create({
+    id: '3',
+    name: '王超',
+    email: 'wangchao@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3',
+    createdAt: new Date().toISOString(),
+    username: 'superadmin',
+    password: 'password123',
+    phone: '13700137000',
+    role: 'superadmin',
+    tenant: '教育部',
+    tenantType: '管理部门'
+  });
+  
   // 添加导师和学生示例数据
   // 添加导师数据
   const mentor1 = db.mentor.create({

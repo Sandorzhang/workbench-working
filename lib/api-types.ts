@@ -1,7 +1,7 @@
 // API类型定义
 
 // 角色类型
-export type Role = 'admin' | 'teacher' | 'student';
+export type Role = 'superadmin' | 'admin' | 'teacher' | 'student';
 
 // 用户相关类型
 export interface User {

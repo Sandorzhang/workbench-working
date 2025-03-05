@@ -35,6 +35,19 @@ interface PageInfo {
 // 页面标题映射
 const pageTitleMap: Record<string, PageInfo> = {
   '/dashboard': { title: '工作台' },
+  '/superadmin': { title: '超级管理员控制台' },
+  '/superadmin/users': { 
+    title: '用户和权限管理',
+    parent: { title: '超级管理员控制台', path: '/superadmin' }
+  },
+  '/superadmin/tenants': { 
+    title: '租户管理',
+    parent: { title: '超级管理员控制台', path: '/superadmin' }
+  },
+  '/superadmin/settings': { 
+    title: '系统配置',
+    parent: { title: '超级管理员控制台', path: '/superadmin' }
+  },
   '/classroom-timemachine': { 
     title: '课堂时光机',
     parent: { title: '工作台', path: '/dashboard' }

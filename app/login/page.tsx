@@ -28,19 +28,30 @@ export default function LoginPage() {
   const [countdown, setCountdown] = useState<number>(0);
   
   const router = useRouter();
-  const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading, error } = useAuth();
+  const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading, error, user } = useAuth();
 
   // 处理认证后的重定向
   useEffect(() => {
-    if (isAuthenticated) {
-      toast.success('登录成功，即将跳转到工作台...');
+    if (isAuthenticated && user) {
+      // 根据用户角色决定重定向到不同页面
+      let redirectPath = '/dashboard';
+      
+      // 超级管理员重定向到超级管理员控制台
+      if (user.role === 'superadmin') {
+        redirectPath = '/superadmin';
+        toast.success('登录成功，即将跳转到超级管理员控制台...');
+      } else {
+        toast.success('登录成功，即将跳转到工作台...');
+      }
+      
       // 短暂延迟以显示成功消息
       const timer = setTimeout(() => {
-        router.push('/dashboard');
+        router.push(redirectPath);
       }, 1000);
+      
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   // 显示错误提示
   useEffect(() => {
