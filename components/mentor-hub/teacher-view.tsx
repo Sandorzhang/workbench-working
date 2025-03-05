@@ -1,70 +1,31 @@
 "use client";
 
-import React, { useEffect, useState, FormEvent } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { 
-  BarChart,
   BookOpen,
   Calendar,
-  ChevronLeft,
-  FilterIcon,
   SearchIcon,
-  AlertCircle,
-  CheckCircle,
-  BarChart2,
-  Info,
-  Heart,
-  Award,
-  FileText,
-  History,
   Star,
-  ClipboardEdit,
-  FilePlus2,
-  Pencil,
-  Trash2,
-  BarChart3,
+  History,
   RefreshCw,
   Search,
-  User
+  User,
+  BarChart3,
+  ClipboardEdit
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Skeleton } from "../ui/skeleton";
 import { Progress } from "../ui/progress";
-import { Separator } from "../ui/separator";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { Textarea } from "../ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { Label } from "../ui/label";
-import {
-  ResponsiveContainer,
-  BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  PieChart, Pie, Cell
-} from 'recharts';
 import { StudentCompetencyOverview } from "./student-competency-overview";
-import {
-  LineChart,
-  Legend,
-  Line,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
-} from 'recharts';
+import { EnrichedStudent } from "@/types/student";
 
-// 基础学生类型
-interface Student {
-  id: string;
-  name: string;
-}
-
-// 指标类型
+// 基础类型定义
 interface Indicator {
   id: string;
   name: string;
@@ -73,7 +34,6 @@ interface Indicator {
   description?: string;
 }
 
-// 笔记类型
 interface Note {
   id?: string;
   date: string;
@@ -81,7 +41,6 @@ interface Note {
   author: string;
 }
 
-// 学业记录类型
 interface AcademicRecord {
   id?: string;
   subject: string;
@@ -92,28 +51,7 @@ interface AcademicRecord {
   comment?: string;
 }
 
-// 学生类型定义（丰富了lib/types中的Student）
-interface EnrichedStudent {
-  id: string;
-  name: string;
-  avatar: string;
-  indicators: Indicator[];
-  notes?: Note[];
-  academicRecords?: AcademicRecord[];
-  // K12学生属性
-  studentId: string;
-  grade: string;
-  class: string;
-  gender?: 'male' | 'female';
-  birthday?: string;
-  contact?: string;
-  address?: string;
-  interests?: string[];
-  strengths?: string[];
-  areasToImprove?: string[];
-}
-
-// 修改StudentList组件，改为垂直滚动的简化版
+// 学生列表组件
 function StudentList({ 
   students, 
   onSelectStudent,
@@ -135,9 +73,7 @@ function StudentList({
 
   // 处理刷新
   const handleRefresh = () => {
-    // 显示刷新提示
     toast.success("正在刷新学生数据...");
-    // 调用父组件的刷新方法
     onRefresh();
   };
 
@@ -232,7 +168,7 @@ function StudentList({
           </div>
         ) : (
           <div className="p-3">
-            {filteredStudents.map((student, index) => (
+            {filteredStudents.map((student) => (
               <div 
                 key={student.id} 
                 className={`px-3 py-2.5 rounded-md mb-1 flex items-center cursor-pointer transition-all duration-200 group ${
@@ -286,23 +222,8 @@ function StudentList({
   );
 }
 
-// 修改StudentDetail组件，移除返回按钮
-function StudentDetail({ 
-  student
-}: { 
-  student: EnrichedStudent
-}) {
-  const [newNote, setNewNote] = useState("");
-  
-  // 处理添加笔记
-  const handleAddNote = () => {
-    if (!newNote.trim()) return;
-    
-    // 实际项目中应该通过API保存笔记
-    toast.success("笔记已添加");
-    setNewNote("");
-  };
-
+// 学生详情组件
+function StudentDetail({ student }: { student: EnrichedStudent }) {
   return (
     <div className="space-y-4">
       {/* 学生基本信息 */}
@@ -503,9 +424,6 @@ function StudentDetail({
 function TeacherViewSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="flex justify-end">
-        <Skeleton className="h-8 w-20 rounded-md" />
-      </div>
       <div className="flex h-[calc(100vh-12rem)]">
         <div className="w-1/5 pr-2">
           <Skeleton className="h-full rounded-lg" />
@@ -518,7 +436,7 @@ function TeacherViewSkeleton() {
   );
 }
 
-// 修改TeacherView组件，使用并排布局
+// 教师视图主组件
 export default function TeacherView() {
   const [students, setStudents] = useState<EnrichedStudent[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<EnrichedStudent | null>(null);

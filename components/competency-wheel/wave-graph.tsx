@@ -217,7 +217,6 @@ export function WaveGraph(props: WaveGraphProps) {
                     />
                 ))}
             </g>
-        
             {/* 扇区环弧 */}
             {sectors.map((sector, segmentIndex) => (
                 <g
@@ -232,7 +231,6 @@ export function WaveGraph(props: WaveGraphProps) {
                     )}
                 </g>
             ))}
-            
             {/* 标签 */}
             {segments.map((segment, index) => (
                 <foreignObject

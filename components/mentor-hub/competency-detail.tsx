@@ -5,21 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { Star, CheckCircle, Clock, AlertCircle } from "lucide-react";
-
-interface CompetencyDimension {
-  id: string;
-  name: string;
-  color: string;
-  level: 1 | 2 | 3;
-  parentId?: string;
-  progress?: number;
-  status?: 'completed' | 'in-progress' | 'pending';
-  score?: number;
-  description?: string;
-  lastUpdated?: string;
-  skills?: string[];
-  children?: any[];
-}
+import { CompetencyDimension } from "@/types/competency";
 
 interface CompetencyDetailProps {
   competency: CompetencyDimension | null;

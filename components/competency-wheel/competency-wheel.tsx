@@ -166,27 +166,6 @@ export function CompetencyWheel({
                         layerSpacing={20}
                     />
                 </div>
-
-                <div className="absolute bottom-3 right-3 text-xs text-gray-500">
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-1">
-                            <span className="inline-block w-8 h-[2px] bg-gray-500"></span>
-                            <span>已完成</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <span className="inline-block w-8 h-[2px] bg-gray-500" style={{ strokeDasharray: '4,2' }}></span>
-                            <span>进行中</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <span className="inline-block w-8 h-[2px] bg-gray-500" style={{ strokeDasharray: '2,4' }}></span>
-                            <span>未开始</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <span className="text-red-500">*</span>
-                            <span>高级项目</span>
-                        </div>
-                    </div>
-                </div>
             </CardContent>
         </Card>
     );

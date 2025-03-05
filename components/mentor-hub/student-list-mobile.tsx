@@ -6,23 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, RefreshCw } from 'lucide-react';
+import { StudentWithIndicators } from "@/types/student";
 
-// 学生类型定义
-interface Student {
-  id: string;
-  name: string;
-  studentId: string;
-  grade: string;
-  class: string;
-  avatar?: string;
-  indicators: {
-    id: string;
-    name: string;
-    value: number;
-    maxValue: number;
-    color?: string;
-  }[];
-}
+// 使用类型别名简化接口
+type Student = StudentWithIndicators;
 
 interface StudentListMobileProps {
   title?: string;

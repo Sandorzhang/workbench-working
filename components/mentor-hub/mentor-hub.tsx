@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { MentorList } from "./mentor-list";
 import { MentorDetail } from "./mentor-detail";
 import { Button } from "../ui/button";
-import { Mentor } from "@/lib/types";
+import { Mentor } from "@/types/student";
 import { Loader2 } from "lucide-react";
 import { 
   TabsSkeleton, 

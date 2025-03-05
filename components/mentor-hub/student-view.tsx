@@ -29,30 +29,7 @@ import {
   PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip
 } from 'recharts';
-
-// 导师类型定义
-interface Mentor {
-  id: string;
-  name: string;
-  title: string;
-  department: string;
-  email: string;
-  phone: string;
-  avatar?: string;
-  specialties: string[];
-}
-
-// 学生类型
-interface Student {
-  id: string;
-  name: string;
-  studentId: string;
-  grade: string;
-  class: string;
-  mentorId: string;
-  avatar?: string;
-  mentor?: Mentor;
-}
+import { Student, Mentor } from "@/types/student";
 
 // 学生视图负责展示学生的导师信息和统计数据
 export function StudentView() {
