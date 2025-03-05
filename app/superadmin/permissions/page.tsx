@@ -21,7 +21,6 @@ import {
   Shield, 
   UserCog, 
   Settings, 
-  Route, 
   AppWindow, 
   Info, 
   CheckCircle2, 
@@ -65,14 +64,6 @@ interface UserPermission {
     allowed: boolean;
     hasCustomPermission: boolean;
   }[];
-  routes: {
-    id: string;
-    name: string;
-    description: string;
-    path: string;
-    allowed: boolean;
-    hasCustomPermission: boolean;
-  }[];
 }
 
 // 角色映射
@@ -87,8 +78,7 @@ export default function PermissionsPage() {
   const router = useRouter();
   const { user: currentUser, isAuthenticated, isLoading: authLoading } = useAuth();
   
-  const [activeTab, setActiveTab] = useState<string>('routes');
-  const [routePermissions, setRoutePermissions] = useState<ResourcePermission[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('applications');
   const [appPermissions, setAppPermissions] = useState<ResourcePermission[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<UserPermission | null>(null);
@@ -131,7 +121,6 @@ export default function PermissionsPage() {
     
     console.log('认证通过，开始加载权限数据');
     // 加载初始数据
-    fetchRoutePermissions();
     fetchAppPermissions();
     fetchUsers();
   }, [isAuthenticated, currentUser, router, authLoading]);
@@ -144,29 +133,6 @@ export default function PermissionsPage() {
       setSelectedUser(null);
     }
   }, [selectedUserId]);
-  
-  // 获取路由权限
-  const fetchRoutePermissions = async () => {
-    try {
-      setIsLoading(true);
-      console.log('开始获取路由权限...');
-      const response = await fetch(`/api/permissions/routes?role=${roleFilter === 'all' ? '' : roleFilter}`);
-      
-      if (!response.ok) {
-        throw new Error(`API错误: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log(`成功获取路由权限: ${data.length}个路由`);
-      setRoutePermissions(data);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('获取路由权限失败:', error);
-      toast.error('获取路由权限失败');
-      setRoutePermissions([]);
-      setIsLoading(false);
-    }
-  };
   
   // 获取应用权限
   const fetchAppPermissions = async () => {
@@ -221,7 +187,14 @@ export default function PermissionsPage() {
       setIsLoading(true);
       const response = await fetch(`/api/permissions/user/${userId}`);
       const data = await response.json();
-      setSelectedUser(data);
+      
+      // 移除路由权限数据，只保留应用权限
+      const userPermission: UserPermission = {
+        user: data.user,
+        applications: data.applications
+      };
+      
+      setSelectedUser(userPermission);
       setIsLoading(false);
     } catch (error) {
       console.error('获取用户权限失败:', error);
@@ -231,7 +204,7 @@ export default function PermissionsPage() {
   };
   
   // 更新角色权限
-  const updateRolePermission = async (role: string, resourceType: 'route' | 'application', resourceId: string, allowed: boolean) => {
+  const updateRolePermission = async (role: string, resourceType: 'application', resourceId: string, allowed: boolean) => {
     try {
       const response = await fetch('/api/permissions/role', {
         method: 'PUT',
@@ -253,11 +226,7 @@ export default function PermissionsPage() {
       toast.success(`已${allowed ? '授予' : '移除'} ${roleMap[role]} 的权限`);
       
       // 刷新权限数据
-      if (resourceType === 'route') {
-        fetchRoutePermissions();
-      } else {
-        fetchAppPermissions();
-      }
+      fetchAppPermissions();
     } catch (error) {
       console.error('更新角色权限失败:', error);
       toast.error('更新角色权限失败');
@@ -265,7 +234,7 @@ export default function PermissionsPage() {
   };
   
   // 更新用户权限
-  const updateUserPermission = async (userId: string, resourceType: 'route' | 'application', resourceId: string, allowed: boolean) => {
+  const updateUserPermission = async (userId: string, resourceType: 'application', resourceId: string, allowed: boolean) => {
     try {
       const response = await fetch('/api/permissions/user', {
         method: 'PUT',
@@ -289,12 +258,8 @@ export default function PermissionsPage() {
       // 刷新用户权限
       fetchUserPermissions(userId);
       
-      // 刷新资源权限列表
-      if (resourceType === 'route') {
-        fetchRoutePermissions();
-      } else {
-        fetchAppPermissions();
-      }
+      // 刷新应用权限列表
+      fetchAppPermissions();
     } catch (error) {
       console.error('更新用户权限失败:', error);
       toast.error('更新用户权限失败');
@@ -302,7 +267,7 @@ export default function PermissionsPage() {
   };
   
   // 删除用户特定权限（恢复到角色默认）
-  const resetUserPermission = async (userId: string, resourceType: 'route' | 'application', resourceId: string) => {
+  const resetUserPermission = async (userId: string, resourceType: 'application', resourceId: string) => {
     try {
       const response = await fetch(`/api/permissions/user?userId=${userId}&resourceType=${resourceType}&resourceId=${resourceId}`, {
         method: 'DELETE',
@@ -317,12 +282,8 @@ export default function PermissionsPage() {
       // 刷新用户权限
       fetchUserPermissions(userId);
       
-      // 刷新资源权限列表
-      if (resourceType === 'route') {
-        fetchRoutePermissions();
-      } else {
-        fetchAppPermissions();
-      }
+      // 刷新应用权限列表
+      fetchAppPermissions();
     } catch (error) {
       console.error('重置用户权限失败:', error);
       toast.error('重置用户权限失败');
@@ -331,19 +292,11 @@ export default function PermissionsPage() {
   
   // 刷新数据
   const refreshData = () => {
-    fetchRoutePermissions();
     fetchAppPermissions();
     if (selectedUserId) {
       fetchUserPermissions(selectedUserId);
     }
   };
-  
-  // 过滤路由权限数据
-  const filteredRoutes = routePermissions.filter(route => 
-    route.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    route.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (route.path && route.path.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
   
   // 过滤应用权限数据
   const filteredApps = appPermissions.filter(app => 
@@ -357,9 +310,9 @@ export default function PermissionsPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">权限管理</h1>
+            <h1 className="text-2xl font-bold tracking-tight">应用权限管理</h1>
             <p className="text-muted-foreground mt-1">
-              管理系统路由和应用的访问权限
+              管理系统应用的访问权限
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -415,12 +368,8 @@ export default function PermissionsPage() {
                           <span className="font-semibold">{selectedUser.applications.filter(a => a.allowed).length}/{selectedUser.applications.length}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>路由权限:</span>
-                          <span className="font-semibold">{selectedUser.routes.filter(r => r.allowed).length}/{selectedUser.routes.length}</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span>自定义权限:</span>
-                          <span className="font-semibold">{selectedUser.applications.filter(a => a.hasCustomPermission).length + selectedUser.routes.filter(r => r.hasCustomPermission).length}</span>
+                          <span className="font-semibold">{selectedUser.applications.filter(a => a.hasCustomPermission).length}</span>
                         </div>
                       </div>
                     </div>
@@ -445,7 +394,7 @@ export default function PermissionsPage() {
                 <div>
                   <CardTitle className="text-lg">权限详情</CardTitle>
                   <CardDescription>
-                    管理路由和应用的访问权限
+                    管理应用的访问权限
                   </CardDescription>
                 </div>
                 
@@ -465,8 +414,6 @@ export default function PermissionsPage() {
                     value={roleFilter} 
                     onValueChange={(value) => {
                       setRoleFilter(value);
-                      setActiveTab('routes'); // 重置为路由标签
-                      fetchRoutePermissions();
                       fetchAppPermissions();
                     }}
                   >
@@ -489,10 +436,6 @@ export default function PermissionsPage() {
             <CardContent className="px-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
                 <TabsList>
-                  <TabsTrigger value="routes" className="flex items-center">
-                    <Route className="mr-2 h-4 w-4" />
-                    路由权限
-                  </TabsTrigger>
                   <TabsTrigger value="applications" className="flex items-center">
                     <AppWindow className="mr-2 h-4 w-4" />
                     应用权限
@@ -504,121 +447,6 @@ export default function PermissionsPage() {
                     </TabsTrigger>
                   )}
                 </TabsList>
-                
-                {/* 路由权限标签页 */}
-                <TabsContent value="routes" className="space-y-4">
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="min-w-[200px]">路由名称</TableHead>
-                          <TableHead>路径</TableHead>
-                          <TableHead className="hidden md:table-cell">超级管理员</TableHead>
-                          <TableHead className="hidden md:table-cell">管理员</TableHead>
-                          <TableHead className="hidden md:table-cell">教师</TableHead>
-                          <TableHead className="hidden md:table-cell">学生</TableHead>
-                          <TableHead className="min-w-[100px]">操作</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredRoutes.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={7} className="h-24 text-center">
-                              <div className="flex flex-col items-center justify-center gap-1 py-4">
-                                <Route className="h-8 w-8 text-muted-foreground/40" />
-                                <p className="text-sm text-muted-foreground">无匹配路由</p>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredRoutes.map(route => (
-                            <TableRow key={route.id}>
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium">{route.name}</div>
-                                  <div className="text-sm text-muted-foreground">{route.description}</div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                                  {route.path}
-                                </code>
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                <Switch 
-                                  checked={route.allowedRoles.superadmin} 
-                                  onCheckedChange={(checked) => {
-                                    updateRolePermission('superadmin', 'route', route.id, checked);
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                <Switch 
-                                  checked={route.allowedRoles.admin} 
-                                  onCheckedChange={(checked) => {
-                                    updateRolePermission('admin', 'route', route.id, checked);
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                <Switch 
-                                  checked={route.allowedRoles.teacher} 
-                                  onCheckedChange={(checked) => {
-                                    updateRolePermission('teacher', 'route', route.id, checked);
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                <Switch 
-                                  checked={route.allowedRoles.student} 
-                                  onCheckedChange={(checked) => {
-                                    updateRolePermission('student', 'route', route.id, checked);
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex md:hidden space-x-1 mb-2">
-                                  <Badge variant="outline" className={route.allowedRoles.superadmin ? "bg-green-100" : "bg-red-100"}>
-                                    超管
-                                  </Badge>
-                                  <Badge variant="outline" className={route.allowedRoles.admin ? "bg-green-100" : "bg-red-100"}>
-                                    管理员
-                                  </Badge>
-                                  <Badge variant="outline" className={route.allowedRoles.teacher ? "bg-green-100" : "bg-red-100"}>
-                                    教师
-                                  </Badge>
-                                  <Badge variant="outline" className={route.allowedRoles.student ? "bg-green-100" : "bg-red-100"}>
-                                    学生
-                                  </Badge>
-                                </div>
-                                
-                                {selectedUserId && (
-                                  <Button 
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      // 检查用户当前权限状态
-                                      const userOverride = route.userOverrides?.find(uo => uo.userId === selectedUserId);
-                                      const userRole = users.find(u => u.id === selectedUserId)?.role || '';
-                                      const roleAllowed = userRole ? route.allowedRoles[userRole] : false;
-                                      
-                                      // 如果有自定义权限，则相反；否则根据角色权限相反
-                                      const newAllowed = userOverride !== undefined ? !userOverride.allowed : !roleAllowed;
-                                      
-                                      updateUserPermission(selectedUserId, 'route', route.id, newAllowed);
-                                    }}
-                                  >
-                                    自定义权限
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
                 
                 {/* 应用权限标签页 */}
                 <TabsContent value="applications" className="space-y-4">
@@ -803,86 +631,6 @@ export default function PermissionsPage() {
                                           size="sm"
                                           onClick={() => {
                                             resetUserPermission(selectedUser.user.id, 'application', app.id);
-                                          }}
-                                        >
-                                          重置
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                    
-                    {/* 路由权限 */}
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4">路由权限</h3>
-                      <div className="rounded-md border">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="min-w-[200px]">路由名称</TableHead>
-                              <TableHead>路径</TableHead>
-                              <TableHead className="w-[100px]">状态</TableHead>
-                              <TableHead className="min-w-[100px]">操作</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {selectedUser.routes.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">
-                                  无路由权限数据
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              selectedUser.routes.map(route => (
-                                <TableRow key={route.id}>
-                                  <TableCell>
-                                    <div>
-                                      <div className="font-medium">{route.name}</div>
-                                      <div className="text-sm text-muted-foreground">{route.description}</div>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                                      {route.path}
-                                    </code>
-                                  </TableCell>
-                                  <TableCell>
-                                    {route.allowed ? (
-                                      <div className="flex items-center text-green-600">
-                                        <CheckCircle2 className="h-4 w-4 mr-1" />
-                                        <span>允许</span>
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center text-red-600">
-                                        <XCircle className="h-4 w-4 mr-1" />
-                                        <span>禁止</span>
-                                      </div>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex gap-2">
-                                      <Button 
-                                        variant={route.allowed ? "destructive" : "default"}
-                                        size="sm"
-                                        onClick={() => {
-                                          updateUserPermission(selectedUser.user.id, 'route', route.id, !route.allowed);
-                                        }}
-                                      >
-                                        {route.allowed ? '禁止' : '允许'}
-                                      </Button>
-                                      
-                                      {route.hasCustomPermission && (
-                                        <Button 
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => {
-                                            resetUserPermission(selectedUser.user.id, 'route', route.id);
                                           }}
                                         >
                                           重置

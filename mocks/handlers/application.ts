@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 import { db } from '../db';
 
 // 定义应用类型
@@ -11,112 +11,313 @@ interface Application {
   roles: string[];
 }
 
-export const applicationHandlers = [
-  // 获取所有应用
-  http.get('/api/applications', async ({ request }) => {
-    console.log('📝 GET /api/applications - 请求应用列表');
+// 获取应用列表处理程序
+export const getApplicationsHandler = http.get('/api/applications', async ({ request }) => {
+  await delay(300);
+  
+  try {
+    console.log('Fetching applications...');
     
-    try {
-      // 获取用户角色参数
-      const url = new URL(request.url);
-      const userRole = url.searchParams.get('role') || '';
-      const userId = url.searchParams.get('userId') || '';
-      
-      // 获取所有应用
-      const allApplications = db.application.getAll();
-      
-      // 如果没有指定用户角色或ID，返回所有应用
-      if (!userRole && !userId) {
-        console.log(`✅ GET /api/applications - 成功返回所有 ${allApplications.length} 个应用`);
-        return HttpResponse.json(allApplications);
-      }
-      
-      let filteredApplications = [];
-      
-      if (userId) {
-        // 如果指定了用户ID，获取该用户的角色
-        const user = db.user.findFirst({
-          where: { id: { equals: userId } }
-        });
-        
-        if (!user) {
-          return new HttpResponse(
-            JSON.stringify({ error: '用户不存在' }), 
-            { status: 404 }
-          );
+    // 获取当前用户信息
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
+      console.log('No token provided');
+      return new HttpResponse(
+        JSON.stringify({ error: '未授权访问' }),
+        { status: 401 }
+      );
+    }
+    
+    // 从会话中获取用户ID
+    const session = db.session.findFirst({
+      where: {
+        token: {
+          equals: token
         }
-        
-        const role = user.role;
-        
-        // 获取用户自定义权限覆盖
-        const userPermissions = db.userPermission.findMany({
-          where: {
-            userId: { equals: userId },
-            resourceType: { equals: 'application' }
-          }
-        });
-        
-        // 用户权限映射
-        const userPermissionMap = userPermissions.reduce((map, perm) => {
-          map[perm.resourceId] = perm.allowed;
-          return map;
-        }, {} as Record<string, boolean>);
-        
-        // 过滤应用
-        filteredApplications = allApplications.filter(app => {
-          // 1. 检查用户是否有特定的权限覆盖
-          if (userPermissionMap.hasOwnProperty(app.id)) {
-            return userPermissionMap[app.id];
-          }
-          
-          // 2. 否则检查应用是否对该角色可用
-          return Array.isArray(app.roles) && app.roles.includes(role);
-        });
-      } else if (userRole) {
-        // 如果只指定了角色，按角色过滤应用
-        filteredApplications = allApplications.filter(app => 
-          Array.isArray(app.roles) && app.roles.includes(userRole)
-        );
+      }
+    });
+    
+    if (!session) {
+      console.log('No session found for token');
+      return new HttpResponse(
+        JSON.stringify({ error: '会话无效' }),
+        { status: 401 }
+      );
+    }
+    
+    const userId = session.userId;
+    
+    // 获取用户信息
+    const user = db.user.findFirst({
+      where: {
+        id: {
+          equals: userId
+        }
+      }
+    });
+    
+    if (!user) {
+      console.log('User not found');
+      return new HttpResponse(
+        JSON.stringify({ error: '用户不存在' }),
+        { status: 404 }
+      );
+    }
+    
+    console.log(`User found: ${user.name}, role: ${user.role}`);
+    
+    // 获取所有应用
+    const allApplications = db.application.getAll();
+    console.log(`Total applications: ${allApplications.length}`);
+    
+    // 获取用户特定权限
+    const userPermissions = db.permission.findMany({
+      where: {
+        userId: {
+          equals: userId
+        }
+      }
+    });
+    
+    console.log(`User specific permissions: ${userPermissions.length}`);
+    
+    // 获取角色权限
+    const rolePermissions = db.rolePermission.findMany({
+      where: {
+        role: {
+          equals: user.role
+        }
+      }
+    });
+    
+    console.log(`Role permissions: ${rolePermissions.length}`);
+    
+    // 合并用户可访问的应用ID
+    const accessibleAppIds = new Set();
+    
+    // 添加角色权限中的应用
+    rolePermissions.forEach(permission => {
+      if (permission.applicationId) {
+        accessibleAppIds.add(permission.applicationId);
+      }
+    });
+    
+    // 添加用户特定权限中的应用
+    userPermissions.forEach(permission => {
+      if (permission.applicationId) {
+        if (permission.granted) {
+          accessibleAppIds.add(permission.applicationId);
+        } else {
+          accessibleAppIds.delete(permission.applicationId);
+        }
+      }
+    });
+    
+    console.log(`Accessible application IDs: ${Array.from(accessibleAppIds).join(', ')}`);
+    
+    // 过滤用户可访问的应用
+    let accessibleApplications = allApplications.filter(app => 
+      accessibleAppIds.has(app.id)
+    );
+    
+    console.log(`Filtered applications: ${accessibleApplications.length}`);
+    
+    // 按照排序字段排序
+    accessibleApplications = accessibleApplications.sort((a, b) => {
+      // 首先按照 order 字段排序
+      if (a.order !== b.order) {
+        return a.order - b.order;
       }
       
-      console.log(`✅ GET /api/applications - 成功返回过滤后的 ${filteredApplications.length} 个应用`);
-      return HttpResponse.json(filteredApplications);
-    } catch (error) {
-      console.error('❌ GET /api/applications - 获取应用列表失败:', error);
-      return new HttpResponse(
-        JSON.stringify({ error: '获取应用列表失败' }), 
-        { status: 500 }
-      );
-    }
-  }),
-
-  // 获取单个应用
-  http.get('/api/applications/:id', ({ params }) => {
-    const { id } = params;
-    console.log(`📝 GET /api/applications/${id} - 请求单个应用`);
+      // 如果 order 相同，则按照 name 字段排序
+      return a.name.localeCompare(b.name);
+    });
     
-    try {
-      const application = db.application.findFirst({
-        where: {
-          id: {
-            equals: id as string,
-          },
-        },
-      });
+    return HttpResponse.json(accessibleApplications);
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    return new HttpResponse(
+      JSON.stringify({ error: '获取应用列表失败' }),
+      { status: 500 }
+    );
+  }
+});
 
-      if (!application) {
-        console.log(`❌ GET /api/applications/${id} - 未找到应用`);
-        return new HttpResponse(null, { status: 404 });
+// 获取单个应用处理程序
+export const getApplicationHandler = http.get('/api/applications/:id', async ({ params }) => {
+  await delay(300);
+  
+  try {
+    const { id } = params;
+    
+    const application = db.application.findFirst({
+      where: {
+        id: {
+          equals: id as string
+        }
       }
-
-      console.log(`✅ GET /api/applications/${id} - 成功返回应用: ${application.name}`);
-      return HttpResponse.json(application);
-    } catch (error) {
-      console.error(`❌ GET /api/applications/${id} - 获取应用失败:`, error);
+    });
+    
+    if (!application) {
       return new HttpResponse(
-        JSON.stringify({ error: '获取应用失败' }), 
-        { status: 500 }
+        JSON.stringify({ error: '应用不存在' }),
+        { status: 404 }
       );
     }
-  }),
+    
+    return HttpResponse.json(application);
+  } catch (error) {
+    console.error('Error fetching application:', error);
+    return new HttpResponse(
+      JSON.stringify({ error: '获取应用信息失败' }),
+      { status: 500 }
+    );
+  }
+});
+
+// 创建应用处理程序
+export const createApplicationHandler = http.post('/api/applications', async ({ request }) => {
+  await delay(500);
+  
+  try {
+    const applicationData = await request.json();
+    
+    // 检查必要字段
+    if (!applicationData.name || !applicationData.description || !applicationData.icon) {
+      return new HttpResponse(
+        JSON.stringify({ error: '缺少必要字段' }),
+        { status: 400 }
+      );
+    }
+    
+    // 创建新应用
+    const newApplication = db.application.create({
+      id: String(Date.now()),
+      name: applicationData.name,
+      description: applicationData.description,
+      icon: applicationData.icon,
+      url: applicationData.url || '#',
+      order: applicationData.order || 0,
+      createdAt: new Date().toISOString(),
+    });
+    
+    return HttpResponse.json(newApplication, { status: 201 });
+  } catch (error) {
+    console.error('Error creating application:', error);
+    return new HttpResponse(
+      JSON.stringify({ error: '创建应用失败' }),
+      { status: 500 }
+    );
+  }
+});
+
+// 更新应用处理程序
+export const updateApplicationHandler = http.put('/api/applications/:id', async ({ params, request }) => {
+  await delay(500);
+  
+  try {
+    const { id } = params;
+    const applicationData = await request.json();
+    
+    // 检查应用是否存在
+    const existingApplication = db.application.findFirst({
+      where: {
+        id: {
+          equals: id as string
+        }
+      }
+    });
+    
+    if (!existingApplication) {
+      return new HttpResponse(
+        JSON.stringify({ error: '应用不存在' }),
+        { status: 404 }
+      );
+    }
+    
+    // 更新应用
+    const updatedApplication = db.application.update({
+      where: {
+        id: {
+          equals: id as string
+        }
+      },
+      data: applicationData
+    });
+    
+    return HttpResponse.json(updatedApplication);
+  } catch (error) {
+    console.error('Error updating application:', error);
+    return new HttpResponse(
+      JSON.stringify({ error: '更新应用失败' }),
+      { status: 500 }
+    );
+  }
+});
+
+// 删除应用处理程序
+export const deleteApplicationHandler = http.delete('/api/applications/:id', async ({ params }) => {
+  await delay(400);
+  
+  try {
+    const { id } = params;
+    
+    // 检查应用是否存在
+    const existingApplication = db.application.findFirst({
+      where: {
+        id: {
+          equals: id as string
+        }
+      }
+    });
+    
+    if (!existingApplication) {
+      return new HttpResponse(
+        JSON.stringify({ error: '应用不存在' }),
+        { status: 404 }
+      );
+    }
+    
+    // 删除应用
+    db.application.delete({
+      where: {
+        id: {
+          equals: id as string
+        }
+      }
+    });
+    
+    // 同时删除相关的权限
+    db.permission.deleteMany({
+      where: {
+        applicationId: {
+          equals: id as string
+        }
+      }
+    });
+    
+    db.rolePermission.deleteMany({
+      where: {
+        applicationId: {
+          equals: id as string
+        }
+      }
+    });
+    
+    return new HttpResponse(null, { status: 204 });
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    return new HttpResponse(
+      JSON.stringify({ error: '删除应用失败' }),
+      { status: 500 }
+    );
+  }
+});
+
+export const applicationHandlers = [
+  getApplicationsHandler,
+  getApplicationHandler,
+  createApplicationHandler,
+  updateApplicationHandler,
+  deleteApplicationHandler,
 ]; 

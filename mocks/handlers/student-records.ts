@@ -34,7 +34,7 @@ let studentRecords: StudentRecord[] = [
 const defaultStudentId = "1";
 
 // 获取学生记录
-export const getStudentRecordsHandler = http.get('*/api/student/:studentId/records', async ({ params }) => {
+export const getStudentRecordsHandler = http.get('/api/student/:studentId/records', async ({ params }) => {
   await delay(500);
   
   const { studentId } = params;
@@ -60,7 +60,7 @@ interface AddRecordRequest {
 }
 
 // 添加学生记录 - 原始端点（通配符匹配）
-export const addStudentRecordHandler = http.post('*/api/student/records', async ({ request }) => {
+export const addStudentRecordHandler = http.post('/api/student/records', async ({ request }) => {
   await delay(700);
   
   const record = await request.json() as AddRecordRequest;
@@ -86,7 +86,7 @@ export const addStudentRecordHandler = http.post('*/api/student/records', async 
 });
 
 // 添加学生记录 - 新端点，支持在路径中指定学生ID（通配符匹配）
-export const addStudentRecordByIdHandler = http.post('*/api/student/:studentId/records', async ({ params, request }) => {
+export const addStudentRecordByIdHandler = http.post('/api/student/:studentId/records', async ({ params, request }) => {
   await delay(700);
   
   const studentId = params.studentId as string;

@@ -31,6 +31,8 @@ const dbFactory = factory({
     icon: String,
     url: String,
     roles: Array, // Which roles can access this app
+    order: Number, // 添加排序字段
+    createdAt: String,
   },
   // 路由权限模型
   route: {
@@ -52,10 +54,10 @@ const dbFactory = factory({
   // 角色权限模型
   rolePermission: {
     id: primaryKey(String),
-    role: String,         // 角色名称: 'superadmin', 'admin', 'teacher', 'student'
-    resourceType: String, // 资源类型: 'application' 或 'route'
-    resourceId: String,   // 资源ID
-    allowed: Boolean,     // 是否允许
+    role: String,
+    applicationId: String,
+    granted: Boolean,
+    createdAt: String,
   },
   calendar: {
     id: primaryKey(String),
@@ -206,6 +208,14 @@ const dbFactory = factory({
     grades: Array,             // 学校年级
     status: Boolean,           // 启用/停用状态
     createdAt: String,         // 创建时间
+  },
+  // 用户权限模型
+  permission: {
+    id: primaryKey(String),
+    userId: String,
+    applicationId: String,
+    granted: Boolean,
+    createdAt: String,
   },
   // 可以添加更多模型
 });
@@ -417,6 +427,21 @@ export function seedDb() {
     role: 'admin',
     tenant: '北京第一中学',
     tenantType: '九年一贯制'
+  });
+  
+  // 添加另一个校端管理员用户
+  db.user.create({
+    id: '4',
+    name: '王校长',
+    email: 'wangxiaozhang@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=4',
+    createdAt: new Date().toISOString(),
+    username: 'schooladmin',
+    password: 'password123',
+    phone: '13600136000',
+    role: 'admin',
+    tenant: '上海市第二中学',
+    tenantType: '完全中学（六年制）'
   });
   
   db.user.create({
@@ -784,36 +809,18 @@ export function seedDb() {
     type: 'attitude',
   });
   
-  // 添加应用示例数据
+  // 添加应用权限数据
   db.application.create({
     id: '1',
-    name: '用户管理',
-    description: '管理系统用户',
-    icon: 'users',
-    url: '/dashboard/users',
-    roles: ['admin', 'superadmin'],
-  });
-  
-  db.application.create({
-    id: '2',
-    name: '课程管理',
-    description: '管理教学课程',
-    icon: 'book',
-    url: '/dashboard/courses',
+    name: '学业旅程',
+    description: '跟踪学生的学业标准达成进度，了解班级整体情况',
+    icon: 'graduationCap',
+    url: '/academic-journey',
     roles: ['teacher', 'admin', 'superadmin'],
   });
   
   db.application.create({
-    id: '3',
-    name: '成绩录入',
-    description: '录入学生成绩',
-    icon: 'fileText',
-    url: '/dashboard/grades',
-    roles: ['teacher', 'superadmin'],
-  });
-  
-  db.application.create({
-    id: '4',
+    id: '2',
     name: '学业标准',
     description: '浏览和查询各学科学业标准',
     icon: 'book',
@@ -821,159 +828,184 @@ export function seedDb() {
     roles: ['teacher', 'admin', 'superadmin'],
   });
   
-  // 添加路由权限数据
-  // 公共路由
-  db.route.create({
-    id: 'route-1',
-    path: '/login',
-    name: '登录页面',
-    description: '用户登录界面',
-    roles: [],
-    isPublic: true,
+  db.application.create({
+    id: '3',
+    name: '课堂时光机',
+    description: '记录和回顾课堂教学活动',
+    icon: 'clock',
+    url: '/classroom-timemachine',
+    roles: ['teacher', 'admin', 'superadmin'],
   });
   
-  db.route.create({
-    id: 'route-2',
-    path: '/dashboard',
-    name: '工作台',
-    description: '用户工作台主页',
-    roles: ['superadmin', 'admin', 'teacher', 'student'],
-    isPublic: false,
-  });
-  
-  db.route.create({
-    id: 'route-3',
-    path: '/superadmin',
-    name: '超级管理员控制台',
-    description: '超级管理员专用控制台',
-    roles: ['superadmin'],
-    isPublic: false,
-  });
-  
-  db.route.create({
-    id: 'route-4',
-    path: '/superadmin/users',
-    name: '用户管理',
-    description: '管理所有用户',
-    roles: ['superadmin'],
-    isPublic: false,
-  });
-  
-  db.route.create({
-    id: 'route-5',
-    path: '/superadmin/permissions',
-    name: '权限管理',
-    description: '管理系统权限',
-    roles: ['superadmin'],
-    isPublic: false,
-  });
-  
-  db.route.create({
-    id: 'route-6',
-    path: '/admin/education',
-    name: '教育管理',
-    description: '学校教育相关管理功能',
-    roles: ['superadmin', 'admin'],
-    isPublic: false,
-  });
-  
-  db.route.create({
-    id: 'route-7',
-    path: '/academic-standards',
-    name: '学业标准',
-    description: '浏览和查询各学科学业标准',
-    roles: ['admin', 'teacher'],
-    isPublic: false,
-  });
-  
-  db.route.create({
-    id: 'route-8',
-    path: '/concept-map',
+  db.application.create({
+    id: '4',
     name: '大概念地图',
-    description: '查看不同学科的概念节点和关系',
-    roles: ['teacher', 'admin', 'student'],
-    isPublic: false,
+    description: '查看不同学科的概念节点和关系，了解知识体系结构',
+    icon: 'network',
+    url: '/concept-map',
+    roles: ['teacher', 'admin', 'student', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '5',
+    name: '数据资产管理',
+    description: '管理和浏览教学相关的各类数据资源',
+    icon: 'database',
+    url: '/data-assets',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '6',
+    name: '考试管理',
+    description: '创建、编辑和管理各类考试及试卷',
+    icon: 'fileText',
+    url: '/exam-management',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '7',
+    name: '全员导师',
+    description: '管理学生导师体系和师生关系',
+    icon: 'userPlus',
+    url: '/mentor-system',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '8',
+    name: '单元教学设计',
+    description: '创建和管理教学单元设计',
+    icon: 'layout',
+    url: '/unit-teaching-design',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '9',
+    name: '师生信息管理',
+    description: '管理教师和学生基本信息',
+    icon: 'users',
+    url: '/teacher-student-info',
+    roles: ['admin', 'superadmin'],
+  });
+  
+  // 添加校端特有的应用权限
+  db.application.create({
+    id: '10',
+    name: '教育管理',
+    description: '学校教育管理系统入口',
+    icon: 'school',
+    url: '/admin/education',
+    roles: ['admin'],
+  });
+  
+  db.application.create({
+    id: '11',
+    name: '教师管理',
+    description: '管理学校教师信息',
+    icon: 'users',
+    url: '/admin/education/teachers',
+    roles: ['admin'],
+  });
+  
+  db.application.create({
+    id: '12',
+    name: '学生管理',
+    description: '管理学生基本信息',
+    icon: 'graduationCap',
+    url: '/admin/education/students',
+    roles: ['admin'],
+  });
+  
+  db.application.create({
+    id: '13',
+    name: '年级管理',
+    description: '管理学校年级信息',
+    icon: 'book',
+    url: '/admin/education/grades',
+    roles: ['admin'],
+  });
+  
+  db.application.create({
+    id: '14',
+    name: '班级管理',
+    description: '管理学校班级信息',
+    icon: 'school',
+    url: '/admin/education/classes',
+    roles: ['admin'],
   });
   
   // 添加角色权限示例
   db.rolePermission.create({
     id: 'rp-1',
     role: 'superadmin',
-    resourceType: 'application',
-    resourceId: '1', // 用户管理
-    allowed: true,
+    applicationId: '1', // 学业旅程
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-2',
     role: 'admin',
-    resourceType: 'application',
-    resourceId: '1', // 用户管理
-    allowed: true,
+    applicationId: '1', // 学业旅程
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-3',
-    role: 'superadmin',
-    resourceType: 'application',
-    resourceId: '2', // 课程管理
-    allowed: true,
+    role: 'teacher',
+    applicationId: '1', // 学业旅程
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-4',
-    role: 'admin',
-    resourceType: 'application',
-    resourceId: '2', // 课程管理
-    allowed: true,
+    role: 'superadmin',
+    applicationId: '2', // 学业标准
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-5',
-    role: 'teacher',
-    resourceType: 'application',
-    resourceId: '2', // 课程管理
-    allowed: true,
+    role: 'admin',
+    applicationId: '2', // 学业标准
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-6',
-    role: 'superadmin',
-    resourceType: 'application',
-    resourceId: '3', // 成绩录入
-    allowed: true,
+    role: 'teacher',
+    applicationId: '2', // 学业标准
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-7',
-    role: 'teacher',
-    resourceType: 'application',
-    resourceId: '3', // 成绩录入
-    allowed: true,
+    role: 'superadmin',
+    applicationId: '3', // 课堂时光机
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-8',
-    role: 'superadmin',
-    resourceType: 'application',
-    resourceId: '4', // 学业标准
-    allowed: true,
+    role: 'admin',
+    applicationId: '3', // 课堂时光机
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-9',
-    role: 'admin',
-    resourceType: 'application',
-    resourceId: '4', // 学业标准
-    allowed: true,
+    role: 'teacher',
+    applicationId: '3', // 课堂时光机
+    granted: true,
   });
   
   db.rolePermission.create({
     id: 'rp-10',
-    role: 'teacher',
-    resourceType: 'application',
-    resourceId: '4', // 学业标准
-    allowed: true,
+    role: 'superadmin',
+    applicationId: '4', // 大概念地图
+    granted: true,
   });
   
   // 添加用户自定义权限示例
@@ -981,7 +1013,7 @@ export function seedDb() {
     id: 'up-1',
     userId: '2', // 李四（教师）
     resourceType: 'application',
-    resourceId: '3', // 成绩录入
+    resourceId: '7', // 全员导师
     allowed: true, // 覆盖角色默认权限
   });
   
@@ -989,7 +1021,7 @@ export function seedDb() {
     id: 'up-2',
     userId: '1', // 张三（管理员）
     resourceType: 'application',
-    resourceId: '4', // 学业标准
+    resourceId: '9', // 师生信息管理
     allowed: true, // 允许访问
   });
   
@@ -1335,6 +1367,187 @@ export function seedDb() {
     status: true,
     createdAt: new Date().toISOString(),
   });
+  
+  // 初始化应用数据
+  if (db.application.count() === 0) {
+    // 教育应用
+    db.application.create({
+      id: '1',
+      name: '学业旅程',
+      description: '跟踪和管理学生的学习进度和成就',
+      icon: 'graduation-cap',
+      url: '/education/academic-journey',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 1,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '2',
+      name: '学业标准',
+      description: '查看和管理教育标准和课程目标',
+      icon: 'book-open',
+      url: '/education/academic-standards',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 2,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '3',
+      name: '课堂时光机',
+      description: '记录和回顾课堂活动和教学时刻',
+      icon: 'clock',
+      url: '/education/classroom-timemachine',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 3,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '4',
+      name: '大概念地图',
+      description: '可视化展示课程概念和知识点之间的联系',
+      icon: 'map',
+      url: '/education/concept-map',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 4,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '5',
+      name: '数据资产管理',
+      description: '管理和分析教育数据资源',
+      icon: 'database',
+      url: '/education/data-assets',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 5,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '6',
+      name: '考试管理',
+      description: '创建、管理和评估考试和测验',
+      icon: 'file-text',
+      url: '/education/exam-management',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 6,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '7',
+      name: '全员导师',
+      description: '为学生提供全方位的指导和支持',
+      icon: 'users',
+      url: '/education/mentorship',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 7,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '8',
+      name: '单元教学设计',
+      description: '规划和设计教学单元和课程',
+      icon: 'layout',
+      url: '/education/unit-design',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 8,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '9',
+      name: '师生信息管理',
+      description: '管理教师和学生的基本信息',
+      icon: 'user-check',
+      url: '/education/user-management',
+      roles: ['admin', 'teacher', 'superadmin'],
+      order: 9,
+      createdAt: new Date().toISOString(),
+    });
+    
+    // 校端应用
+    db.application.create({
+      id: '10',
+      name: '校园管理',
+      description: '管理学校设施和资源',
+      icon: 'home',
+      url: '/admin/campus',
+      roles: ['admin', 'superadmin'],
+      order: 10,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '11',
+      name: '教务管理',
+      description: '管理教学计划和课程安排',
+      icon: 'calendar',
+      url: '/admin/academic',
+      roles: ['admin', 'superadmin'],
+      order: 11,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '12',
+      name: '人事管理',
+      description: '管理教职工信息和工作安排',
+      icon: 'briefcase',
+      url: '/admin/personnel',
+      roles: ['admin', 'superadmin'],
+      order: 12,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '13',
+      name: '财务管理',
+      description: '管理学校财务和预算',
+      icon: 'dollar-sign',
+      url: '/admin/finance',
+      roles: ['admin', 'superadmin'],
+      order: 13,
+      createdAt: new Date().toISOString(),
+    });
+    
+    db.application.create({
+      id: '14',
+      name: '系统设置',
+      description: '配置系统参数和权限',
+      icon: 'settings',
+      url: '/admin/settings',
+      roles: ['admin', 'superadmin'],
+      order: 14,
+      createdAt: new Date().toISOString(),
+    });
+  }
+  
+  // 初始化角色权限
+  if (db.rolePermission.count() === 0) {
+    // 为每个角色添加默认应用权限
+    const roles = ['admin', 'teacher', 'student', 'superadmin'];
+    const allApplications = db.application.getAll();
+    
+    roles.forEach(role => {
+      allApplications.forEach(app => {
+        // 根据应用的roles字段确定默认权限
+        const hasAccess = Array.isArray(app.roles) && app.roles.includes(role);
+        
+        db.rolePermission.create({
+          id: `rp-${role}-${app.id}`,
+          role,
+          applicationId: app.id,
+          granted: hasAccess,
+          createdAt: new Date().toISOString(),
+        });
+      });
+    });
+  }
   
   // 添加更多初始数据...
 } 

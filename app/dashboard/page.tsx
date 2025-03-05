@@ -11,12 +11,16 @@ import {
   BookOpen, Users, FileText, Calendar, 
   Sparkles, TrendingUp, Activity, Clock,
   Database, Loader2, Network, GraduationCap,
-  School, Pencil, UserCheck, FileSpreadsheet
+  School, Pencil, UserCheck, FileSpreadsheet,
+  AlertCircle
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
 import { CardContainer } from '@/components/ui/card-container';
 import { ResponsiveGrid } from '@/components/ui/responsive-grid';
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
+import { ApplicationsSkeleton } from '@/components/ui/applications-skeleton';
+import { ApplicationCard } from '@/components/application-card';
 
 // 应用类型定义
 interface Application {
@@ -25,7 +29,6 @@ interface Application {
   description: string;
   icon: string;
   url: string;
-  roles: string[];
 }
 
 // 角色映射
@@ -79,7 +82,7 @@ export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   
   const [applications, setApplications] = useState<Application[]>([]);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [currentDate] = useState(new Date());
   const [authChecked, setAuthChecked] = useState(false);
   
@@ -95,6 +98,13 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!authLoading) {
       // 认证检查完成
+      console.log("认证检查完成，状态:", { 
+        isAuthenticated, 
+        userId: user?.id, 
+        userName: user?.name, 
+        userRole: user?.role 
+      });
+      
       setAuthChecked(true);
       
       if (!isAuthenticated) {
@@ -104,12 +114,14 @@ export default function DashboardPage() {
       } else {
         console.log('用户已登录:', user?.name, user?.id);
         
-        // 验证token是否存在，确保用户真的登录了
-        const token = localStorage.getItem('token');
+        // 检查localStorage中是否有token
+        const token = localStorage.getItem("token");
+        console.log("Token检查:", token ? "存在" : "不存在");
+        
         if (!token) {
-          console.warn('登录状态异常：用户已认证但没有token');
-          toast.error('登录状态异常，请重新登录');
-          router.push('/login');
+          console.warn("Token不存在，重定向到登录页面");
+          toast.warning("会话已过期，请重新登录");
+          router.push("/login");
         }
       }
     }
@@ -118,28 +130,53 @@ export default function DashboardPage() {
   // 应用获取逻辑
   useEffect(() => {
     // 只有在用户认证后才加载应用
-    if (!authChecked || !isAuthenticated || !user) return;
+    if (!authChecked || !isAuthenticated || !user) {
+      console.log("不满足加载应用条件:", { authChecked, isAuthenticated, userExists: !!user });
+      return;
+    }
     
-    console.log('开始获取应用数据');
+    console.log('开始获取应用数据, 用户ID:', user.id);
     
     const fetchApplications = async () => {
       try {
-        setIsLoading(true);
-        // 调用API并传递用户ID
-        const response = await fetch(`/api/applications?userId=${user.id}`);
+        console.log("开始获取应用数据...");
+        setLoading(true);
+        
+        // 构建API请求URL
+        const apiUrl = '/api/applications';
+        console.log("API请求URL:", apiUrl);
+        
+        // 发送请求获取应用列表
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        console.log("API响应状态:", response.status);
         
         if (!response.ok) {
-          throw new Error('获取应用列表失败');
+          const errorData = await response.json();
+          console.error("获取应用列表失败:", errorData);
+          toast.error("获取应用列表失败");
+          setLoading(false);
+          return;
         }
         
         const data = await response.json();
-        console.log('应用数据加载完成', data);
+        console.log(`获取到 ${data.length} 个应用`);
+        
+        // 打印应用详情
+        data.forEach((app: Application, index: number) => {
+          console.log(`应用 ${index + 1}:`, app.id, app.name, app.url);
+        });
+        
         setApplications(data);
-        setIsLoading(false);
+        setLoading(false);
       } catch (error) {
-        console.error('获取应用列表失败:', error);
-        toast.error('获取应用列表失败');
-        setIsLoading(false);
+        console.error("获取应用列表时出错:", error);
+        toast.error("获取应用列表失败");
+        setLoading(false);
       }
     };
     
@@ -198,12 +235,14 @@ export default function DashboardPage() {
   
   // 如果用户未登录，页面将被重定向，显示空内容
   if (!isAuthenticated) {
-    return null;
+    return <DashboardSkeleton />;
   }
+  
+  console.log("准备渲染Dashboard页面，应用数量:", applications.length);
   
   return (
     <PageContainer
-      loading={isLoading}
+      loading={loading}
     >
       {/* 欢迎和统计卡片区域 */}
       <SectionContainer
@@ -222,6 +261,12 @@ export default function DashboardPage() {
               {user?.name || '同学'}
             </h2>
             <p className="text-gray-500 mt-1">{formatDate()} · 欢迎回到工作台</p>
+            {user?.tenant && (
+              <p className="text-sm text-primary mt-1">
+                <School className="inline-block h-3.5 w-3.5 mr-1" />
+                {user.tenant} · {user.tenantType || '学校'}
+              </p>
+            )}
           </div>
           
           <div className="flex items-center space-x-2">
@@ -292,43 +337,30 @@ export default function DashboardPage() {
       
       {/* 应用列表区域 */}
       <SectionContainer
-        title="应用列表"
+        title={`应用列表 (${applications.length}个)`}
         className="mt-6"
         divider
       >
-        <ResponsiveGrid xs={1} sm={2} lg={4} gap="md">
-          {applications.map((app) => {
-            const IconComponent = iconComponents[app.icon];
-            const gradientColor = colorMap[app.icon] || 'from-gray-400 to-gray-600';
-            
-            return (
-              <CardContainer
-                key={app.id}
-                elevated
-                clickable
-                onClick={() => handleAppClick(app.url)}
-                className="h-full transform transition-all duration-200 hover:scale-[1.02]"
-              >
-                <div className="flex items-start p-1">
-                  <div className={`p-3 rounded-lg bg-gradient-to-br ${gradientColor} mr-4 shadow-md`}>
-                    {IconComponent && <IconComponent className="h-6 w-6 text-white" />}
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{app.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{app.description}</p>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {app.roles.map((role) => (
-                        <Badge key={role} variant="secondary" className="text-xs">
-                          {getRoleDisplay(role)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContainer>
-            );
-          })}
-        </ResponsiveGrid>
+        {loading ? (
+          <ApplicationsSkeleton />
+        ) : applications.length === 0 ? (
+          <div className="p-8 text-center border rounded-lg">
+            <div className="mb-4">
+              <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">没有可用的应用</h3>
+            <p className="text-muted-foreground mb-4">
+              您当前没有权限访问任何应用。
+              {user && <span> 用户角色: {user.role}</span>}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {applications.map((app) => (
+              <ApplicationCard key={app.id} application={app} />
+            ))}
+          </div>
+        )}
       </SectionContainer>
     </PageContainer>
   );

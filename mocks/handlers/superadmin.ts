@@ -47,7 +47,7 @@ interface UpdateUserStatusData {
 
 export const superadminHandlers = [
   // 获取所有用户
-  http.get('*/api/superadmin/users', async ({ request }) => {
+  http.get('/api/superadmin/users', async ({ request }) => {
     await delay(300);
     
     // 获取基础用户数据
@@ -92,7 +92,7 @@ export const superadminHandlers = [
   }),
   
   // 创建用户
-  http.post('*/api/superadmin/users', async ({ request }) => {
+  http.post('/api/superadmin/users', async ({ request }) => {
     await delay(500);
     const data = await request.json() as CreateUserData;
     
@@ -150,7 +150,7 @@ export const superadminHandlers = [
   }),
   
   // 更新用户
-  http.put('*/api/superadmin/users/:id', async ({ params, request }) => {
+  http.put('/api/superadmin/users/:id', async ({ params, request }) => {
     await delay(300);
     const { id } = params;
     const data = await request.json() as UpdateUserData;
@@ -223,7 +223,7 @@ export const superadminHandlers = [
   }),
   
   // 删除用户
-  http.delete('*/api/superadmin/users/:id', async ({ params }) => {
+  http.delete('/api/superadmin/users/:id', async ({ params }) => {
     await delay(300);
     const { id } = params;
     
@@ -270,7 +270,7 @@ export const superadminHandlers = [
   }),
   
   // 修改用户状态（锁定/解锁/激活）
-  http.patch('*/api/superadmin/users/:id', async ({ params, request }) => {
+  http.patch('/api/superadmin/users/:id', async ({ params, request }) => {
     await delay(300);
     const { id } = params;
     const data = await request.json() as UpdateUserStatusData;

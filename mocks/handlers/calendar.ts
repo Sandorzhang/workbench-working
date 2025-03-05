@@ -172,397 +172,229 @@ const createTestSession = () => {
 createTestSession();
 
 export const calendarHandlers = [
-  // 获取日历事件列表
-  http.get('*/api/calendar-events', async ({ request }) => {
+  // 获取月份事件
+  http.get('/api/calendar/month/:year/:month', async ({ params }) => {
     await delay(300);
     
-    // 解析URL参数
-    const url = new URL(request.url);
-    const yearParam = url.searchParams.get('year');
-    const monthParam = url.searchParams.get('month');
-    const userIdParam = url.searchParams.get('userId');
-    
-    console.log(`收到获取日历事件请求 - 参数: 年=${yearParam}, 月=${monthParam}, 用户ID=${userIdParam}`);
-    
-    // 从请求头中获取令牌
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('日历API: 未提供授权头或格式不正确');
-      return new HttpResponse(
-        JSON.stringify({ error: '未授权' }),
-        { 
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-    
-    const token = authHeader.split(' ')[1];
-    console.log(`日历API: 收到token: ${token}`);
-    
-    // 查找会话
-    const session = db.session.findFirst({
-      where: {
-        token: {
-          equals: token,
-        },
-      },
-    });
-    
-    if (!session) {
-      console.log(`日历API: 未找到会话，token: ${token}`);
-      return new HttpResponse(
-        JSON.stringify({ error: '会话不存在' }),
-        { 
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-    
-    // 验证会话是否过期
-    if (new Date(session.expiresAt) < new Date()) {
-      console.log('日历API: 会话已过期');
-      return new HttpResponse(
-        JSON.stringify({ error: '会话已过期' }),
-        { 
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-    
-    // 查找用户
-    const user = db.user.findFirst({
-      where: {
-        id: {
-          equals: session.userId,
-        },
-      },
-    });
-    
-    if (!user) {
-      console.log('日历API: 未找到用户');
-      return new HttpResponse(
-        JSON.stringify({ error: '用户不存在' }),
-        { 
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-    
-    console.log(`日历API: 找到用户 ${user.name}, ID: ${user.id}`);
-    
-    // 获取所有日历事件 - 使用原始数组而不是db对象以避免类型错误
-    let events = [...mockEvents];
-    
-    // 根据用户生成特定的事件
-    if (user.id === '2') { // 李四（教师）
-      console.log('为李四教师生成特定的日历事件');
-      
-      // 添加李四特有的事件
-      const teacherEvents = [
-        {
-          id: 'teacher-1',
-          title: '数学教研组会议',
-          date: '2024-03-15',
-          startTime: '14:00',
-          endTime: '16:00',
-          location: '教研室',
-          type: 'meeting',
-          description: '讨论本学期教学重点',
-          participants: ['李四', '教研组成员']
-        },
-        {
-          id: 'teacher-2',
-          title: '李四的教学观摩课',
-          date: '2024-03-18',
-          startTime: '09:00',
-          endTime: '10:30',
-          location: '201教室',
-          type: 'class',
-          description: '优秀教师示范课',
-          participants: ['李四', '其他教师']
-        },
-        {
-          id: 'teacher-3',
-          title: '家长会',
-          date: '2024-03-20',
-          startTime: '19:00',
-          endTime: '21:00',
-          location: '会议厅',
-          type: 'meeting',
-          description: '与学生家长沟通本学期学习情况',
-          participants: ['李四', '学生家长']
-        }
-      ];
-      
-      // 合并事件列表
-      events = [...events, ...teacherEvents];
-    }
-    
-    // 如果有年月参数，进行过滤
-    if (yearParam && monthParam) {
-      const year = parseInt(yearParam);
-      const month = parseInt(monthParam);
-      
-      // 生成过滤用的月份前缀，例如 '2024-03-'
-      const filterPrefix = `${year}-${month.toString().padStart(2, '0')}-`;
-      
-      // 过滤出当月的事件
-      events = events.filter(event => event.date.startsWith(filterPrefix));
-      
-      // 也包含前后一个月的事件，以覆盖日历视图中可能显示的上下月日期
-      const prevMonth = month === 1 ? 12 : month - 1;
-      const prevYear = month === 1 ? year - 1 : year;
-      const prevMonthPrefix = `${prevYear}-${prevMonth.toString().padStart(2, '0')}-`;
-      
-      const nextMonth = month === 12 ? 1 : month + 1;
-      const nextYear = month === 12 ? year + 1 : year;
-      const nextMonthPrefix = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-`;
-      
-      // 也添加前后月的事件
-      const prevMonthEvents = mockEvents.filter(event => 
-        event.date.startsWith(prevMonthPrefix)
-      );
-      
-      const nextMonthEvents = mockEvents.filter(event => 
-        event.date.startsWith(nextMonthPrefix)
-      );
-      
-      // 合并前后月份事件
-      events = [...events, ...prevMonthEvents, ...nextMonthEvents];
-      
-      console.log(`日历API: 过滤后返回 ${events.length} 个事件 (年: ${year}, 月: ${month})`);
-    } else {
-      console.log(`日历API: 返回所有 ${events.length} 个事件`);
-    }
-    
-    return HttpResponse.json(events);
-  }),
-  
-  // 创建日历事件
-  http.post('*/api/calendar-events', async ({ request }) => {
-    await delay(300);
-    
-    // 验证授权
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new HttpResponse(null, { status: 401 });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    const session = db.session.findFirst({
-      where: {
-        token: {
-          equals: token,
-        },
-      },
-    });
-    
-    if (!session || new Date(session.expiresAt) < new Date()) {
-      return new HttpResponse(null, { status: 401 });
-    }
+    const { year, month } = params;
+    console.log(`获取日历月度数据: ${year}年${month}月`);
     
     try {
-      // 创建事件
-      const data = await request.json() as CalendarEvent;
-      const event = db.calendar.create({
-        id: String(Date.now()),
-        title: data.title || '',
-        date: data.date || '',
-        startTime: data.startTime || '',
-        endTime: data.endTime || '',
-        location: data.location || '',
-        type: data.type || '',
-        description: data.description || '',
-        participants: data.participants || [],
+      // 验证年月参数
+      const yearNum = parseInt(year as string);
+      const monthNum = parseInt(month as string);
+      
+      if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+        return new HttpResponse(
+          JSON.stringify({ error: '无效的日期参数' }),
+          { status: 400 }
+        );
+      }
+      
+      // 获取指定月份的所有日历事件
+      const events = db.calendar.findMany({
+        where: {
+          date: {
+            // 使用起始日期匹配月份 (例如 2024-03-*)
+            startsWith: `${yearNum}-${String(monthNum).padStart(2, '0')}`
+          }
+        }
       });
       
-      return HttpResponse.json(event);
+      return HttpResponse.json(events);
     } catch (error) {
+      console.error('获取月度日历失败:', error);
       return new HttpResponse(
-        JSON.stringify({ error: '无效的请求数据' }),
-        { 
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+        JSON.stringify({ error: '获取日历数据失败' }),
+        { status: 500 }
       );
     }
   }),
   
-  // 更新日历事件
-  http.put('*/api/calendar-events/:id', async ({ request, params }) => {
+  // 获取日期事件
+  http.get('/api/calendar/date/:date', async ({ params }) => {
     await delay(300);
     
-    // 验证授权
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new HttpResponse(null, { status: 401 });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    const session = db.session.findFirst({
-      where: {
-        token: {
-          equals: token,
-        },
-      },
-    });
-    
-    if (!session || new Date(session.expiresAt) < new Date()) {
-      return new HttpResponse(null, { status: 401 });
-    }
-    
-    // 查找要更新的事件
-    const existingEvent = db.calendar.findFirst({
-      where: {
-        id: {
-          equals: params.id
-        }
-      }
-    });
-    
-    if (!existingEvent) {
-      return new HttpResponse(null, { status: 404 });
-    }
+    const { date } = params;
+    console.log(`获取日期事件: ${date}`);
     
     try {
+      // 验证日期格式 (YYYY-MM-DD)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date as string)) {
+        return new HttpResponse(
+          JSON.stringify({ error: '无效的日期格式，请使用YYYY-MM-DD' }),
+          { status: 400 }
+        );
+      }
+      
+      // 获取特定日期的所有事件
+      const events = db.calendar.findMany({
+        where: {
+          date: {
+            equals: date as string
+          }
+        }
+      });
+      
+      return HttpResponse.json(events);
+    } catch (error) {
+      console.error('获取日期事件失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '获取日历数据失败' }),
+        { status: 500 }
+      );
+    }
+  }),
+  
+  // 创建新事件
+  http.post('/api/calendar/event', async ({ request }) => {
+    await delay(400);
+    
+    try {
+      const eventData = await request.json();
+      
+      // 验证必要字段
+      if (!eventData.title || !eventData.date || !eventData.startTime || !eventData.endTime) {
+        return new HttpResponse(
+          JSON.stringify({ error: '标题、日期、开始时间和结束时间不能为空' }),
+          { status: 400 }
+        );
+      }
+      
+      // 创建新事件
+      const newEvent = db.calendar.create({
+        ...eventData,
+        id: String(Date.now())
+      });
+      
+      return HttpResponse.json(newEvent, { status: 201 });
+    } catch (error) {
+      console.error('创建日历事件失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '创建事件失败' }),
+        { status: 500 }
+      );
+    }
+  }),
+  
+  // 更新事件
+  http.put('/api/calendar/event/:id', async ({ params, request }) => {
+    await delay(400);
+    
+    const { id } = params;
+    
+    try {
+      // 检查事件是否存在
+      const existingEvent = db.calendar.findFirst({
+        where: {
+          id: {
+            equals: id as string
+          }
+        }
+      });
+      
+      if (!existingEvent) {
+        return new HttpResponse(
+          JSON.stringify({ error: '事件不存在' }),
+          { status: 404 }
+        );
+      }
+      
+      // 获取更新数据
+      const updateData = await request.json();
+      
       // 更新事件
-      const data = await request.json() as Partial<CalendarEvent>;
       const updatedEvent = db.calendar.update({
         where: {
           id: {
-            equals: params.id
+            equals: id as string
           }
         },
-        data: {
-          title: data.title,
-          date: data.date,
-          startTime: data.startTime,
-          endTime: data.endTime,
-          location: data.location,
-          type: data.type,
-          description: data.description,
-          participants: data.participants,
-        }
+        data: updateData
       });
       
       return HttpResponse.json(updatedEvent);
     } catch (error) {
+      console.error('更新日历事件失败:', error);
       return new HttpResponse(
-        JSON.stringify({ error: '无效的请求数据' }),
-        { 
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+        JSON.stringify({ error: '更新事件失败' }),
+        { status: 500 }
       );
     }
   }),
   
-  // 删除日历事件
-  http.delete('*/api/calendar-events/:id', async ({ request, params }) => {
+  // 删除事件
+  http.delete('/api/calendar/event/:id', async ({ params }) => {
     await delay(300);
     
-    // 验证授权
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new HttpResponse(null, { status: 401 });
-    }
+    const { id } = params;
     
-    const token = authHeader.split(' ')[1];
-    const session = db.session.findFirst({
-      where: {
-        token: {
-          equals: token,
-        },
-      },
-    });
-    
-    if (!session || new Date(session.expiresAt) < new Date()) {
-      return new HttpResponse(null, { status: 401 });
-    }
-    
-    // 删除事件
-    db.calendar.delete({
-      where: {
-        id: {
-          equals: params.id
+    try {
+      // 检查事件是否存在
+      const existingEvent = db.calendar.findFirst({
+        where: {
+          id: {
+            equals: id as string
+          }
         }
+      });
+      
+      if (!existingEvent) {
+        return new HttpResponse(
+          JSON.stringify({ error: '事件不存在' }),
+          { status: 404 }
+        );
       }
-    });
-    
-    return new HttpResponse(null, { status: 204 });
+      
+      // 删除事件
+      db.calendar.delete({
+        where: {
+          id: {
+            equals: id as string
+          }
+        }
+      });
+      
+      return new HttpResponse(null, { status: 204 });
+    } catch (error) {
+      console.error('删除日历事件失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '删除事件失败' }),
+        { status: 500 }
+      );
+    }
   }),
   
-  // 获取特定年月的日历事件
-  http.get('*/api/calendar-events', async ({ request }) => {
-    await delay(300);
+  // 获取单个事件
+  http.get('/api/calendar/event/:id', async ({ params }) => {
+    await delay(200);
     
-    // 解析查询参数
-    const url = new URL(request.url);
-    const year = url.searchParams.get('year');
-    const month = url.searchParams.get('month');
+    const { id } = params;
     
-    console.log(`获取日历事件: 年=${year}, 月=${month}`);
-    
-    if (!year || !month) {
-      return new HttpResponse(null, { status: 400, statusText: '缺少必要的查询参数' });
-    }
-    
-    // 获取当前月份的第一天和最后一天
-    const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-    const endDate = new Date(parseInt(year), parseInt(month), 0);
-    
-    // 将日期转换为字符串格式，便于比较
-    const startDateStr = formatDate(startDate);
-    const endDateStr = formatDate(endDate);
-    
-    // 筛选当前月份的事件
-    const events = mockEvents.filter(event => {
-      return event.date >= startDateStr && event.date <= endDateStr;
-    });
-    
-    // 如果没有事件，生成一些示例事件
-    if (events.length === 0) {
-      // 为当前月份生成一些随机事件
-      const generatedEvents = [];
+    try {
+      // 查找事件
+      const event = db.calendar.findFirst({
+        where: {
+          id: {
+            equals: id as string
+          }
+        }
+      });
       
-      // 生成3个随机事件
-      for (let i = 1; i <= 3; i++) {
-        // 随机一个当月的日期
-        const day = Math.floor(Math.random() * endDate.getDate()) + 1;
-        const eventDate = new Date(parseInt(year), parseInt(month) - 1, day);
-        
-        generatedEvents.push({
-          id: `generated-${i}`,
-          title: ['教师会议', '班级活动', '教研讨论', '教师培训'][Math.floor(Math.random() * 4)],
-          date: formatDate(eventDate),
-          startTime: '09:00',
-          endTime: '11:00',
-          location: ['会议室A', '教室201', '多功能厅', '在线会议'][Math.floor(Math.random() * 4)],
-          type: ['meeting', 'class', 'training', 'other'][Math.floor(Math.random() * 4)],
-          description: '自动生成的日历事件',
-          participants: ['张老师', '李老师', '王老师']
-        });
+      if (!event) {
+        return new HttpResponse(
+          JSON.stringify({ error: '事件不存在' }),
+          { status: 404 }
+        );
       }
       
-      return HttpResponse.json(generatedEvents);
+      return HttpResponse.json(event);
+    } catch (error) {
+      console.error('获取日历事件失败:', error);
+      return new HttpResponse(
+        JSON.stringify({ error: '获取事件失败' }),
+        { status: 500 }
+      );
     }
-    
-    return HttpResponse.json(events);
   }),
 ]; 

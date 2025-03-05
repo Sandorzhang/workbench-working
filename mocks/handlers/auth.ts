@@ -30,7 +30,7 @@ interface CodeLoginRequest {
 
 export const authHandlers = [
   // 账号密码登录
-  http.post(new RegExp('.*/api/auth/login'), async ({ request }) => {
+  http.post('/api/auth/login', async ({ request }) => {
     await delay(500);
     const { username, password } = await request.json() as LoginRequest;
     
@@ -98,8 +98,8 @@ export const authHandlers = [
     });
   }),
   
-  // 获取当前登录用户信息 - 确保更广泛的匹配模式
-  http.get('*/api/auth/me', async ({ request }) => {
+  // 获取当前登录用户信息
+  http.get('/api/auth/me', async ({ request }) => {
     try {
       await delay(300);
       
@@ -252,12 +252,12 @@ export const authHandlers = [
         }
       );
     } catch (error) {
-      console.error('处理 /api/auth/me 请求时出错:', error);
+      console.error('获取当前用户信息失败:', error);
       return new HttpResponse(
         JSON.stringify({
-          message: '服务器内部错误',
+          message: '获取用户信息失败',
           code: '500',
-          details: { error: String(error) }
+          details: { reason: 'server_error' }
         }),
         { 
           status: 500,
@@ -269,142 +269,212 @@ export const authHandlers = [
     }
   }),
   
-  // 发送短信验证码
-  http.post('*/api/auth/send-code', async ({ request }) => {
+  // 发送验证码
+  http.post('/api/auth/send-code', async ({ request }) => {
     await delay(500);
-    const { phone } = await request.json() as PhoneRequest;
     
-    // 检查手机号是否存在
-    const user = db.user.findFirst({
-      where: {
-        phone: {
-          equals: phone,
-        },
-      },
-    });
-    
-    if (!user) {
+    try {
+      const { phone } = await request.json() as PhoneRequest;
+      
+      // 验证手机号格式（简单示例）
+      if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+        return HttpResponse.json(
+          {
+            message: '手机号格式不正确',
+            code: '400',
+            details: { reason: 'invalid_phone' }
+          },
+          { status: 400 }
+        );
+      }
+      
+      // 生成随机验证码 或 使用测试验证码
+      const code = TEST_MODE ? TEST_VERIFICATION_CODE : Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // 存储验证码（实际应用中应该有过期时间）
+      verificationCodes.set(phone, {
+        code,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log(`为手机号 ${phone} 生成验证码: ${code}`);
+      
+      // 模拟发送过程
+      return HttpResponse.json({
+        message: '验证码已发送',
+        expireIn: 300, // 5分钟过期
+        testMode: TEST_MODE,
+        // 仅在测试模式下返回验证码
+        ...(TEST_MODE && { testCode: code })
+      });
+    } catch (error) {
+      console.error('发送验证码失败:', error);
       return HttpResponse.json(
         {
-          message: '手机号未注册',
-          code: '404',
-          details: { reason: 'phone_not_registered' }
+          message: '发送验证码失败',
+          code: '500',
+          details: { reason: 'server_error' }
         },
-        { status: 404 }
+        { status: 500 }
       );
     }
-    
-    // 生成6位验证码
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // 存储验证码 (实际应用中会发送到用户手机)
-    verificationCodes.set(phone, {
-      code,
-      createdAt: new Date().toISOString(),
-    });
-    
-    return HttpResponse.json({
-      message: '验证码已发送',
-    });
   }),
   
   // 验证码登录
-  http.post('*/api/auth/login-with-code', async ({ request }) => {
+  http.post('/api/auth/login-with-code', async ({ request }) => {
     await delay(500);
-    const { phone, code } = await request.json() as CodeLoginRequest;
     
-    const storedCode = verificationCodes.get(phone);
-    
-    // 检查验证码是否存在
-    if (!storedCode) {
-      return HttpResponse.json(
-        {
-          message: '验证码不存在或已过期',
-          code: '401',
-          details: { reason: 'code_not_found' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    // 检查验证码是否过期（10分钟有效期）
-    const createdAt = new Date(storedCode.createdAt);
-    const now = new Date();
-    const expirationTime = 10 * 60 * 1000; // 10分钟（毫秒）
-    
-    if (now.getTime() - createdAt.getTime() > expirationTime) {
-      // 验证码过期，删除并返回错误
+    try {
+      const { phone, code } = await request.json() as CodeLoginRequest;
+      
+      console.log(`尝试验证码登录: 手机号 ${phone}, 验证码 ${code}`);
+      
+      // 验证手机号格式
+      if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+        console.log('手机号格式不正确');
+        return HttpResponse.json(
+          {
+            message: '手机号格式不正确',
+            code: '400',
+            details: { reason: 'invalid_phone' }
+          },
+          { status: 400 }
+        );
+      }
+      
+      // 获取存储的验证码
+      const storedData = verificationCodes.get(phone);
+      
+      // 测试模式下跳过验证码检查
+      if (!TEST_MODE) {
+        if (!storedData) {
+          console.log('验证码不存在');
+          return HttpResponse.json(
+            {
+              message: '验证码不存在或已过期',
+              code: '400',
+              details: { reason: 'code_expired' }
+            },
+            { status: 400 }
+          );
+        }
+        
+        // 验证码不匹配
+        if (storedData.code !== code) {
+          console.log('验证码不正确');
+          return HttpResponse.json(
+            {
+              message: '验证码不正确',
+              code: '400',
+              details: { reason: 'invalid_code' }
+            },
+            { status: 400 }
+          );
+        }
+        
+        // 验证码过期检查 (5分钟)
+        const codeTime = new Date(storedData.createdAt).getTime();
+        const currentTime = new Date().getTime();
+        if (currentTime - codeTime > 5 * 60 * 1000) {
+          console.log('验证码已过期');
+          return HttpResponse.json(
+            {
+              message: '验证码已过期',
+              code: '400',
+              details: { reason: 'code_expired' }
+            },
+            { status: 400 }
+          );
+        }
+      } else {
+        // 测试模式下，验证测试验证码
+        if (code !== TEST_VERIFICATION_CODE) {
+          console.log('测试验证码不正确');
+          return HttpResponse.json(
+            {
+              message: '验证码不正确',
+              code: '400',
+              details: { reason: 'invalid_code' }
+            },
+            { status: 400 }
+          );
+        }
+      }
+      
+      // 验证通过后，清除验证码
       verificationCodes.delete(phone);
+      
+      // 查找与手机号关联的用户
+      let user = db.user.findFirst({
+        where: {
+          phone: {
+            equals: phone,
+          },
+        },
+      });
+      
+      // 如果用户不存在，创建新用户（自动注册）
+      if (!user) {
+        console.log(`用户不存在，创建新用户，手机号: ${phone}`);
+        
+        // 自动生成用户信息
+        const userId = `user_${Date.now()}`;
+        const userName = `用户${phone.substring(7)}`;
+        
+        user = db.user.create({
+          id: userId,
+          name: userName,
+          email: `${phone}@example.com`,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${phone}`,
+          phone: phone,
+          username: phone,
+          password: '', // 验证码登录的用户没有密码
+          role: 'user', // 默认角色
+          createdAt: new Date().toISOString(),
+        });
+        
+        console.log('自动创建用户成功:', user);
+      }
+      
+      // 创建会话
+      const token = generateToken();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
+      
+      db.session.create({
+        id: String(Date.now()),
+        userId: user.id,
+        token,
+        expiresAt: expiresAt.toISOString(),
+      });
+      
+      // 保存数据库状态
+      saveDb();
+      
+      const { password: _, ...userWithoutPassword } = user;
+      
+      console.log(`验证码登录成功，返回用户信息: ${userWithoutPassword.name}`);
+      
+      return HttpResponse.json({
+        user: userWithoutPassword,
+        token,
+        isNewUser: !user.password, // 如果没有密码，说明是新用户
+      });
+    } catch (error) {
+      console.error('验证码登录失败:', error);
       return HttpResponse.json(
         {
-          message: '验证码已过期，请重新获取',
-          code: '401',
-          details: { reason: 'code_expired' }
+          message: '验证码登录失败',
+          code: '500',
+          details: { reason: 'server_error' }
         },
-        { status: 401 }
+        { status: 500 }
       );
     }
-    
-    // 检查验证码是否匹配
-    if (storedCode.code !== code && !(TEST_MODE && code === TEST_VERIFICATION_CODE)) {
-      return HttpResponse.json(
-        {
-          message: '验证码错误',
-          code: '401',
-          details: { reason: 'invalid_code' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    // 找到用户
-    const user = db.user.findFirst({
-      where: {
-        phone: {
-          equals: phone,
-        },
-      },
-    });
-    
-    if (!user) {
-      return HttpResponse.json(
-        {
-          message: '用户不存在',
-          code: '404',
-          details: { reason: 'user_not_found' }
-        },
-        { status: 404 }
-      );
-    }
-    
-    // 验证成功后删除验证码
-    verificationCodes.delete(phone);
-    
-    // 创建会话
-    const token = generateToken();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
-    
-    db.session.create({
-      id: String(Date.now()),
-      userId: user.id,
-      token,
-      expiresAt: expiresAt.toISOString(),
-    });
-    
-    // 保存数据库状态
-    saveDb();
-    
-    const { password: _, ...userWithoutPassword } = user;
-    
-    return HttpResponse.json({
-      user: userWithoutPassword,
-      token,
-    });
   }),
   
-  // 注销
-  http.post('*/api/auth/logout', async ({ request }) => {
+  // 退出登录
+  http.post('/api/auth/logout', async ({ request }) => {
     await delay(300);
     
     // 从请求头获取令牌
@@ -412,55 +482,8 @@ export const authHandlers = [
     const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
     
     if (!token) {
-      return HttpResponse.json(
-        { message: '未提供有效的令牌', code: '400' },
-        { status: 400 }
-      );
+      return new HttpResponse(null, { status: 204 });
     }
-    
-    // 查找并删除会话
-    const session = db.session.findFirst({
-      where: {
-        token: {
-          equals: token,
-        },
-      },
-    });
-    
-    if (session) {
-      db.session.delete({
-        where: {
-          id: {
-            equals: session.id,
-          },
-        },
-      });
-      
-      // 保存数据库状态
-      saveDb();
-    }
-    
-    return HttpResponse.json({ message: '成功注销' });
-  }),
-  
-  // 获取用户可访问的应用
-  http.get('*/api/applications', async ({ request }) => {
-    await delay(300);
-    
-    // 从请求头中获取令牌
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return HttpResponse.json(
-        {
-          message: '未授权访问',
-          code: '401',
-          details: { reason: 'missing_token' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    const token = authHeader.split(' ')[1];
     
     // 查找会话
     const session = db.session.findFirst({
@@ -471,174 +494,22 @@ export const authHandlers = [
       },
     });
     
-    if (!session) {
-      return HttpResponse.json(
-        {
-          message: '无效的访问令牌',
-          code: '401',
-          details: { reason: 'invalid_token' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    // 验证会话是否过期
-    if (new Date(session.expiresAt) < new Date()) {
-      return HttpResponse.json(
-        {
-          message: '会话已过期',
-          code: '401',
-          details: { reason: 'session_expired' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    // 查找用户
-    const user = db.user.findFirst({
-      where: {
-        id: {
-          equals: session.userId,
-        },
-      },
-    });
-    
-    if (!user) {
-      return HttpResponse.json(
-        {
-          message: '用户不存在',
-          code: '404',
-          details: { reason: 'user_not_found' }
-        },
-        { status: 404 }
-      );
-    }
-    
-    // 获取所有应用
-    const allApplications = db.application.getAll();
-    
-    // 根据用户角色过滤应用
-    const userApplications = allApplications.filter(app => 
-      app.roles.includes(user.role)
-    );
-    
-    return HttpResponse.json(userApplications);
-  }),
-  
-  // 添加额外的精确匹配处理器，确保能捕获所有请求
-  http.get('/api/auth/me', async ({ request }) => {
-    console.log('匹配精确路径 /api/auth/me');
-    // 复制完整的处理逻辑
-    try {
-      await delay(300);
-      
-      console.log('收到 /api/auth/me 精确路径请求', request.url);
-    
-      // 从请求头获取令牌
-      const authHeader = request.headers.get('Authorization');
-      console.log('Authorization 头:', authHeader ? authHeader.substring(0, 20) + '...' : 'undefined');
-      
-      // 始终记录当前存储的token，帮助调试
-      if (typeof window !== 'undefined') {
-        const localToken = localStorage.getItem('token');
-        console.log('本地存储token:', localToken ? localToken.substring(0, 10) + '...' : 'null');
-      }
-      
-      // 检查是否为开发环境下的默认token
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
-      
-      // 开发环境中，如果没有有效的token或使用默认token，返回默认用户
-      if (!token || token === 'default-token') {
-        console.log('[精确路径] 使用默认用户响应，token:', token);
-        const defaultUser = db.user.findFirst({
-          where: {
-            id: {
-              equals: '1', // 默认管理员
-            },
-          },
-        });
-        
-        if (defaultUser) {
-          const { password: _, ...userWithoutPassword } = defaultUser;
-          console.log('[精确路径] 返回默认用户信息:', userWithoutPassword.name);
-          return new HttpResponse(
-            JSON.stringify(userWithoutPassword),
-            { 
-              status: 200,
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-        } else {
-          console.error('[精确路径] 无法找到默认用户，请检查数据库初始化');
-          return new HttpResponse(
-            JSON.stringify({
-              message: '无法找到默认用户，请检查数据库初始化',
-              code: '404',
-              details: { reason: 'default_user_not_found' }
-            }),
-            { 
-              status: 404,
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-        }
-      }
-      
-      // 直接返回默认用户，简化精确路径处理
-      console.log('[精确路径] 对于精确路径，始终返回默认用户以简化处理');
-      const defaultUser = db.user.findFirst({
+    if (session) {
+      // 删除会话
+      db.session.delete({
         where: {
           id: {
-            equals: '1', // 默认管理员
+            equals: session.id,
           },
         },
       });
       
-      if (defaultUser) {
-        const { password: _, ...userWithoutPassword } = defaultUser;
-        return new HttpResponse(
-          JSON.stringify(userWithoutPassword),
-          { 
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
+      // 保存数据库状态
+      saveDb();
       
-      return new HttpResponse(
-        JSON.stringify({
-          message: '无法找到默认用户',
-          code: '404'
-        }),
-        { 
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-    } catch (error) {
-      console.error('[精确路径] 处理 /api/auth/me 请求时出错:', error);
-      return new HttpResponse(
-        JSON.stringify({
-          message: '服务器内部错误',
-          code: '500',
-          details: { error: String(error) }
-        }),
-        { 
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      console.log('用户登出成功，删除会话:', session.id);
     }
+    
+    return new HttpResponse(null, { status: 204 });
   }),
 ]; 
