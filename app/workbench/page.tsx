@@ -18,7 +18,7 @@ import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
 import { CardContainer } from '@/components/ui/card-container';
 import { ResponsiveGrid } from '@/components/ui/responsive-grid';
-import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
+import { WorkbenchSkeleton } from '@/components/ui/workbench-skeleton';
 import { ApplicationsSkeleton } from '@/components/ui/applications-skeleton';
 import { ApplicationCard } from '@/components/application-card';
 
@@ -77,7 +77,7 @@ const colorMap: Record<string, string> = {
   'network': 'from-violet-400 to-indigo-600', // 概念地图使用紫色渐变
 };
 
-export default function DashboardPage() {
+export default function WorkbenchPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   
@@ -235,10 +235,10 @@ export default function DashboardPage() {
   
   // 如果用户未登录，页面将被重定向，显示空内容
   if (!isAuthenticated) {
-    return <DashboardSkeleton />;
+    return <WorkbenchSkeleton />;
   }
   
-  console.log("准备渲染Dashboard页面，应用数量:", applications.length);
+  console.log("准备渲染Workbench页面，应用数量:", applications.length);
   
   return (
     <PageContainer

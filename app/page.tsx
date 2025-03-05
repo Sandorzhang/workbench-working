@@ -15,7 +15,7 @@ export default function HomePage() {
         if (user?.role === 'superadmin') {
           router.push('/superadmin');
         } else {
-          router.push('/dashboard');
+          router.push('/workbench');
         }
       } else {
         router.push('/login');

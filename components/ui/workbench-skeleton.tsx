@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function DashboardSkeleton() {
+export function WorkbenchSkeleton() {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-8">

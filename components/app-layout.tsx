@@ -38,7 +38,7 @@ interface PageInfo {
 
 // 页面标题映射
 const pageTitleMap: Record<string, PageInfo> = {
-  '/dashboard': { title: '工作台' },
+  '/workbench': { title: '工作台' },
   '/superadmin': { title: '超级管理员控制台' },
   '/superadmin/users': { 
     title: '用户管理',
@@ -58,38 +58,38 @@ const pageTitleMap: Record<string, PageInfo> = {
   },
   '/classroom-timemachine': { 
     title: '课堂时光机',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/unit-teaching-design': {
     title: '单元教学设计',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/mentor-hub': {
     title: '全员导师',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/ai-library': {
     title: '智能体库',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/concept-map': {
     title: '大概念地图',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/calendar': {
     title: '我的日历'
   },
   '/admin/users': {
     title: '师生信息管理',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/academic-standards': {
     title: '学业标准',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/exam-management': {
     title: '考试管理',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/exam-management/create': {
     title: '创建考试',
@@ -97,11 +97,11 @@ const pageTitleMap: Record<string, PageInfo> = {
   },
   '/data-assets': {
     title: '数据资产管理',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/academic-journey': {
     title: '学业旅程',
-    parent: { title: '工作台', path: '/dashboard' }
+    parent: { title: '工作台', path: '/workbench' }
   },
   '/academic-journey/overview': {
     title: '班级学业概览',
@@ -252,7 +252,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       title: dynamicPageTitle || '标准详情',
       parent: { title: '学业标准', path: '/academic-standards' }
     };
-    dynamicParent = { title: '工作台', path: '/dashboard' };
+    dynamicParent = { title: '工作台', path: '/workbench' };
   } 
   // 对于考试编辑页
   else if (pathname.startsWith('/exam-management/edit/')) {
@@ -260,7 +260,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       title: dynamicPageTitle || '编辑考试',
       parent: { title: '考试管理', path: '/exam-management' }
     };
-    dynamicParent = { title: '工作台', path: '/dashboard' };
+    dynamicParent = { title: '工作台', path: '/workbench' };
   }
   // 对于考试详情页
   else if (pathname.startsWith('/exam-management/detail/')) {
@@ -268,7 +268,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       title: dynamicPageTitle || '考试详情',
       parent: { title: '考试管理', path: '/exam-management' }
     };
-    dynamicParent = { title: '工作台', path: '/dashboard' };
+    dynamicParent = { title: '工作台', path: '/workbench' };
   }
   // 对于数据资产详情页
   else if (pathname.startsWith('/data-assets/') && pathname !== '/data-assets') {
@@ -276,7 +276,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       title: dynamicPageTitle || '资产详情',
       parent: { title: '数据资产管理', path: '/data-assets' }
     };
-    dynamicParent = { title: '工作台', path: '/dashboard' };
+    dynamicParent = { title: '工作台', path: '/workbench' };
   }
   // 对于学业旅程学生详情页
   else if (pathname.startsWith('/academic-journey/students/') && pathname !== '/academic-journey/students') {

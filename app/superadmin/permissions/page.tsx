@@ -115,7 +115,7 @@ export default function PermissionsPage() {
     if (currentUser.role !== 'superadmin') {
       console.log('无权限访问，重定向到首页');
       toast.error('您没有权限访问此页面');
-      router.push('/dashboard');
+      router.push('/workbench');
       return;
     }
     

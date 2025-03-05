@@ -107,8 +107,8 @@ export default function SuperAdminPage() {
       
       if (user?.role !== 'superadmin') {
         console.log('非超级管理员，重定向到工作台');
-        toast.error('您没有权限访问此页面');
-        router.push('/dashboard');
+        toast.error('您没有权限访问超级管理员区域');
+        router.push('/workbench');
         return;
       }
       

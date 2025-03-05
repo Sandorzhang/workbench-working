@@ -1,6 +1,6 @@
 import { factory, primaryKey } from '@mswjs/data';
 
-// 创建模拟数据库模型
+// 创建模拟数据库模�?
 const dbFactory = factory({
   // 用户模型
   user: {
@@ -13,7 +13,7 @@ const dbFactory = factory({
     password: String,
     phone: String,
     role: String, // 'admin' or 'teacher'
-    school: String, // 用户所属学校
+    school: String, // 用户所属学�?
     schoolType: String, // 学校类型
   },
   // 用户会话模型
@@ -23,7 +23,7 @@ const dbFactory = factory({
     token: String,
     expiresAt: String,
   },
-  // 应用模型 - 用于工作台
+  // 应用模型 - 用于工作�?
   application: {
     id: primaryKey(String),
     name: String,
@@ -38,14 +38,14 @@ const dbFactory = factory({
     path: String,         // 路由路径，如 /admin/users
     name: String,         // 路由名称，如 用户管理
     description: String,  // 路由描述
-    roles: Array,         // 允许访问的角色数组
-    isPublic: Boolean,    // 是否为公开路由（无需登录）
+    roles: Array,         // 允许访问的角色数�?
+    isPublic: Boolean,    // 是否为公开路由（无需登录�?
   },
-  // 用户自定义权限模型
+  // 用户自定义权限模�?
   userPermission: {
     id: primaryKey(String),
     userId: String,       // 用户ID
-    resourceType: String, // 资源类型: 'application' 或 'route'
+    resourceType: String, // 资源类型: 'application' �?'route'
     resourceId: String,   // 资源ID
     allowed: Boolean,     // 是否允许
   },
@@ -53,7 +53,7 @@ const dbFactory = factory({
   rolePermission: {
     id: primaryKey(String),
     role: String,         // 角色名称: 'superadmin', 'admin', 'teacher', 'student'
-    resourceType: String, // 资源类型: 'application' 或 'route'
+    resourceType: String, // 资源类型: 'application' �?'route'
     resourceId: String,   // 资源ID
     allowed: Boolean,     // 是否允许
   },
@@ -78,8 +78,8 @@ const dbFactory = factory({
     phone: String,
     bio: String,
     specialties: Array,
-    isAssigned: Boolean, // 是否已分配学生
-    students: Array, // 指导的学生列表
+    isAssigned: Boolean, // 是否已分配学�?
+    students: Array, // 指导的学生列�?
   },
   // 学生模型 (用于导师-学生关系)
   student: {
@@ -120,7 +120,7 @@ const dbFactory = factory({
     gender: String,              // 性别 ('male' | 'female')
     enrollmentYear: Number,      // 入学年份
     birthDate: String,           // 出生日期
-    studentNumber: String,       // 学籍号
+    studentNumber: String,       // 学籍�?
     externalAppIds: Array,       // 外部应用ID信息数组
     classId: String,             // 班级ID
     gradeId: String,             // 年级ID
@@ -130,8 +130,8 @@ const dbFactory = factory({
   // 年级管理模型
   gradeManagement: {
     id: primaryKey(String),
-    gradeLevel: String,          // 年级枚举（一年级、二年级...）
-    academicYear: String,        // 所属学年
+    gradeLevel: String,          // 年级枚举（一年级、二年级...�?
+    academicYear: String,        // 所属学�?
   },
 
   // 班级管理模型
@@ -156,7 +156,7 @@ const dbFactory = factory({
   academicStandard: {
     id: primaryKey(String),
     title: String,
-    category: String, // 'competencies' 或 'domains'
+    category: String, // 'competencies' �?'domains'
     subject: String, // 关联学科ID
     grade: String,
     description: String,
@@ -174,9 +174,9 @@ const dbFactory = factory({
     id: primaryKey(String),
     name: String,
     description: String,
-    type: String, // 'big' for 大概念, 'small' for 小概念
-    targets: Array, // 三维目标：知识、技能、情感 (可多选)
-    subject: String, // 所属学科
+    type: String, // 'big' for 大概�? 'small' for 小概�?
+    targets: Array, // 三维目标：知识、技能、情�?(可多�?
+    subject: String, // 所属学�?
     createdAt: String,
     updatedAt: String,
   },
@@ -193,18 +193,18 @@ const dbFactory = factory({
   region: {
     id: primaryKey(String),    // 六位数字编码ID
     name: String,              // 区域名称
-    status: Boolean,           // 启用/停用状态
+    status: Boolean,           // 启用/停用状�?
   },
   
   // 学校模型
   school: {
     id: primaryKey(String),    // 系统生成的唯一ID
     name: String,              // 学校名称
-    code: String,              // 学校编号（3位数字编码）
+    code: String,              // 学校编号�?位数字编码）
     regionId: String,          // 所属区域ID
     type: String,              // 阶段学制
     grades: Array,             // 学校年级
-    status: Boolean,           // 启用/停用状态
+    status: Boolean,           // 启用/停用状�?
     createdAt: String,         // 创建时间
   },
   // 可以添加更多模型
@@ -255,7 +255,7 @@ export type Class = {
   gradeId: string;
 };
 
-// 将数据库扩展为包含直接数组
+// 将数据库扩展为包含直接数�?
 export const db = {
   ...dbFactory,
   teachers: [] as Teacher[],
@@ -269,7 +269,7 @@ export function saveDb() {
   if (typeof window === 'undefined') return;
   
   try {
-    // 获取数据库中的所有数据
+    // 获取数据库中的所有数�?
     const data = {
       user: db.user.getAll(),
       session: db.session.getAll(),
@@ -299,11 +299,11 @@ export function saveDb() {
     localStorage.setItem('msw-db', JSON.stringify(data));
     console.log('数据库状态已保存到localStorage');
   } catch (error) {
-    console.error('保存数据库状态失败:', error);
+    console.error('保存数据库状态失�?', error);
   }
 }
 
-// 从localStorage加载数据库状态
+// 从localStorage加载数据库状�?
 export function loadDb(): boolean {
   if (typeof window === 'undefined') return false;
   
@@ -319,12 +319,12 @@ export function loadDb(): boolean {
         try {
           (db as any)[key].deleteMany({});
         } catch (e) {
-          // 忽略可能的错误
+          // 忽略可能的错�?
         }
       }
     });
     
-    // 恢复所有数据
+    // 恢复所有数�?
     if (data.user) {
       data.user.forEach((item: any) => db.user.create(item));
     }
@@ -389,16 +389,16 @@ export function loadDb(): boolean {
     console.log('数据库状态已从localStorage恢复');
     return true;
   } catch (error) {
-    console.error('加载数据库状态失败:', error);
+    console.error('加载数据库状态失�?', error);
     return false;
   }
 }
 
-// 初始化一些模拟数据
+// 初始化一些模拟数�?
 export function seedDb() {
-  // 尝试从localStorage加载数据库状态
+  // 尝试从localStorage加载数据库状�?
   if (loadDb()) {
-    console.log('从localStorage恢复了数据库状态，跳过初始化');
+    console.log('从localStorage恢复了数据库状态，跳过初始�?);
     return;
   }
   
@@ -433,7 +433,7 @@ export function seedDb() {
     schoolType: '完全中学'
   });
   
-  // 添加超级管理员用户
+  // 添加超级管理员用�?
   db.user.create({
     id: '3',
     name: '张天一',
@@ -448,14 +448,14 @@ export function seedDb() {
     schoolType: '超级管理'
   });
   
-  // 添加导师和学生示例数据
+  // 添加导师和学生示例数�?
   // 添加导师数据
   const mentor1 = db.mentor.create({
-    id: '2', // 与用户ID匹配，用于教师角色
+    id: '2', // 与用户ID匹配，用于教师角�?
     name: '李四',
     email: 'lisi@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisi',
-    title: '副教授',
+    title: '副教�?,
     phone: '13900139000',
     bio: '计算机科学教授，专注于人工智能和机器学习领域',
     specialties: ['人工智能', '机器学习', '数据结构'],
@@ -471,7 +471,7 @@ export function seedDb() {
     title: '讲师',
     phone: '13700137000',
     bio: '数学系讲师，主要研究方向为高等代数和数学分析',
-    specialties: ['高等代数', '数学分析', '概率论'],
+    specialties: ['高等代数', '数学分析', '概率�?],
     isAssigned: false,
     students: [],
   });
@@ -479,7 +479,7 @@ export function seedDb() {
   // 添加学生数据
   const student1 = db.student.create({
     id: 's1',
-    name: '张晓明',
+    name: '张晓�?,
     email: 'xiaoming@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaoming',
     grade: '初三',
@@ -513,7 +513,7 @@ export function seedDb() {
     mentorId: '2',
   });
   
-  // 更新导师的学生列表
+  // 更新导师的学生列�?
   db.mentor.update({
     where: { id: { equals: '2' } },
     data: {
@@ -550,7 +550,7 @@ export function seedDb() {
     description: '科学学科',
   });
   
-  // 添加数学学科的学业标准
+  // 添加数学学科的学业标�?
   // 核心素养类别
   db.academicStandard.create({
     id: 'math-competency-1',
@@ -558,7 +558,7 @@ export function seedDb() {
     category: 'competencies',
     subject: 'math',
     grade: '一年级',
-    description: '数学抽象是数学的基本思维特征，是在数学活动中借助于符号对客观事物的本质属性和关系加以抽提并进行形式化的思维过程。',
+    description: '数学抽象是数学的基本思维特征，是在数学活动中借助于符号对客观事物的本质属性和关系加以抽提并进行形式化的思维过程�?,
     count: 6,
   });
   
@@ -568,7 +568,7 @@ export function seedDb() {
     category: 'competencies',
     subject: 'math',
     grade: '一年级',
-    description: '逻辑推理是遵循逻辑规则，由已知的判断得出新判断的思维过程。它是人们认识事物、解决问题的基本方式。',
+    description: '逻辑推理是遵循逻辑规则，由已知的判断得出新判断的思维过程。它是人们认识事物、解决问题的基本方式�?,
     count: 4,
   });
   
@@ -577,8 +577,8 @@ export function seedDb() {
     title: '数学建模',
     category: 'competencies',
     subject: 'math',
-    grade: '二年级',
-    description: '数学建模是从实际问题中抽象出数学模型，利用数学方法求解并解释结果的过程。',
+    grade: '二年�?,
+    description: '数学建模是从实际问题中抽象出数学模型，利用数学方法求解并解释结果的过程�?,
     count: 5,
   });
   
@@ -587,8 +587,8 @@ export function seedDb() {
     title: '直观想象',
     category: 'competencies',
     subject: 'math',
-    grade: '二年级',
-    description: '直观想象是借助于图形等形象思维来理解和表达数学内容的过程。',
+    grade: '二年�?,
+    description: '直观想象是借助于图形等形象思维来理解和表达数学内容的过程�?,
     count: 3,
   });
   
@@ -597,8 +597,8 @@ export function seedDb() {
     title: '数据分析',
     category: 'competencies',
     subject: 'math',
-    grade: '三年级',
-    description: '数据分析是收集、整理、分析数据，从数据中发现规律和趋势的过程。',
+    grade: '三年�?,
+    description: '数据分析是收集、整理、分析数据，从数据中发现规律和趋势的过程�?,
     count: 8,
   });
   
@@ -609,27 +609,27 @@ export function seedDb() {
     category: 'domains',
     subject: 'math',
     grade: '一年级',
-    description: '数与代数是数学的基础领域，包括数的认识、运算和代数初步等内容。',
+    description: '数与代数是数学的基础领域，包括数的认识、运算和代数初步等内容�?,
     count: 12,
   });
   
   db.academicStandard.create({
     id: 'math-domain-2',
-    title: '图形与几何',
+    title: '图形与几�?,
     category: 'domains',
     subject: 'math',
-    grade: '二年级',
-    description: '图形与几何是研究图形的性质和空间关系的数学领域。',
+    grade: '二年�?,
+    description: '图形与几何是研究图形的性质和空间关系的数学领域�?,
     count: 7,
   });
   
   db.academicStandard.create({
     id: 'math-domain-3',
-    title: '统计与概率',
+    title: '统计与概�?,
     category: 'domains',
     subject: 'math',
-    grade: '三年级',
-    description: '统计与概率是收集、整理、分析数据并进行概率计算的数学领域。',
+    grade: '三年�?,
+    description: '统计与概率是收集、整理、分析数据并进行概率计算的数学领域�?,
     count: 6,
   });
   
@@ -638,18 +638,18 @@ export function seedDb() {
     title: '量与计量',
     category: 'domains',
     subject: 'math',
-    grade: '四年级',
-    description: '量与计量是研究各种量的测量和计算的数学领域。',
+    grade: '四年�?,
+    description: '量与计量是研究各种量的测量和计算的数学领域�?,
     count: 5,
   });
   
   db.academicStandard.create({
     id: 'math-domain-5',
-    title: '综合与实践',
+    title: '综合与实�?,
     category: 'domains',
     subject: 'math',
-    grade: '五年级',
-    description: '综合与实践是应用数学知识解决实际问题的领域。',
+    grade: '五年�?,
+    description: '综合与实践是应用数学知识解决实际问题的领域�?,
     count: 4,
   });
   
@@ -665,7 +665,7 @@ export function seedDb() {
   db.standardDetail.create({
     id: 'math-comp-1-detail-2',
     standardId: 'math-competency-1',
-    content: '能够使用数学符号表示抽象的数学关系',
+    content: '能够使用数学符号表示抽象的数学关�?,
     type: 'skill',
   });
   
@@ -693,7 +693,7 @@ export function seedDb() {
   db.standardDetail.create({
     id: 'math-comp-1-detail-6',
     standardId: 'math-competency-1',
-    content: '能够从具体事物中抽象出数量关系',
+    content: '能够从具体事物中抽象出数量关�?,
     type: 'skill',
   });
   
@@ -715,7 +715,7 @@ export function seedDb() {
   db.standardDetail.create({
     id: 'math-comp-2-detail-3',
     standardId: 'math-competency-2',
-    content: '能够判断简单结论的正确性',
+    content: '能够判断简单结论的正确�?,
     type: 'skill',
   });
   
@@ -744,7 +744,7 @@ export function seedDb() {
   db.standardDetail.create({
     id: 'math-domain-1-detail-3',
     standardId: 'math-domain-1',
-    content: '能够运用加减法解决实际问题',
+    content: '能够运用加减法解决实际问�?,
     type: 'skill',
   });
   
@@ -755,7 +755,7 @@ export function seedDb() {
     type: 'attitude',
   });
   
-  // 统计与概率领域详情
+  // 统计与概率领域详�?
   db.standardDetail.create({
     id: 'math-domain-3-detail-1',
     standardId: 'math-domain-3',
@@ -780,7 +780,7 @@ export function seedDb() {
   db.standardDetail.create({
     id: 'math-domain-3-detail-4',
     standardId: 'math-domain-3',
-    content: '对数据分析有好奇心',
+    content: '对数据分析有好奇�?,
     type: 'attitude',
   });
   
@@ -796,7 +796,7 @@ export function seedDb() {
   
   db.application.create({
     id: '2',
-    name: '课堂时光机',
+    name: '课堂时光�?,
     description: '记录和回放课堂教学过程，辅助教学分析',
     icon: 'school',
     url: '/classroom-timemachine',
@@ -806,7 +806,7 @@ export function seedDb() {
   db.application.create({
     id: '3',
     name: '单元教学设计',
-    description: '创建和管理单元教学设计方案',
+    description: '创建和管理单元教学设计方�?,
     icon: 'pencil',
     url: '/unit-teaching-design',
     roles: ['teacher', 'admin', 'superadmin'],
@@ -814,8 +814,8 @@ export function seedDb() {
   
   db.application.create({
     id: '4',
-    name: '全员导师制',
-    description: '浏览、管理和分配导师资源，促进师生共同成长',
+    name: '全员导师�?,
+    description: '浏览、管理和分配导师资源，促进师生共同成�?,
     icon: 'userCheck',
     url: '/mentor-hub',
     roles: ['teacher', 'admin', 'superadmin'],
@@ -833,7 +833,7 @@ export function seedDb() {
   db.application.create({
     id: '6',
     name: '考试管理',
-    description: '创建、编辑和管理各类考试及试卷',
+    description: '创建、编辑和管理各类考试及试�?,
     icon: 'fileText',
     url: '/exam-management',
     roles: ['teacher', 'admin', 'superadmin'],
@@ -850,8 +850,8 @@ export function seedDb() {
   
   db.application.create({
     id: '8',
-    name: '大概念地图',
-    description: '查看不同学科的概念节点和关系，了解知识体系结构',
+    name: '大概念地�?,
+    description: '查看不同学科的概念节点和关系，了解知识体系结�?,
     icon: 'network',
     url: '/concept-map',
     roles: ['teacher', 'admin', 'student', 'superadmin'],
@@ -879,9 +879,9 @@ export function seedDb() {
   
   db.route.create({
     id: 'route-2',
-    path: '/dashboard',
-    name: '工作台',
-    description: '用户工作台主页',
+    path: '/workbench',
+    name: '工作�?,
+    description: '用户工作台主�?,
     roles: ['superadmin', 'admin', 'teacher', 'student'],
     isPublic: false,
   });
@@ -899,7 +899,7 @@ export function seedDb() {
     id: 'route-4',
     path: '/superadmin/users',
     name: '用户管理',
-    description: '管理所有用户',
+    description: '管理所有用�?,
     roles: ['superadmin'],
     isPublic: false,
   });
@@ -934,7 +934,7 @@ export function seedDb() {
   db.route.create({
     id: 'route-8',
     path: '/concept-map',
-    name: '大概念地图',
+    name: '大概念地�?,
     description: '查看不同学科的概念节点和关系',
     roles: ['teacher', 'admin', 'student'],
     isPublic: false,
@@ -953,7 +953,7 @@ export function seedDb() {
     id: 'rp-2',
     role: 'admin',
     resourceType: 'application',
-    resourceId: '2', // 课堂时光机
+    resourceId: '2', // 课堂时光�?
     allowed: true,
   });
   
@@ -965,24 +965,24 @@ export function seedDb() {
     allowed: true,
   });
   
-  // 添加用户自定义权限示例
+  // 添加用户自定义权限示�?
   db.userPermission.create({
     id: 'up-1',
     userId: '2', // 李四（教师）
     resourceType: 'application',
     resourceId: '2', // 课程管理应用
-    allowed: false, // 覆盖角色默认权限，禁止访问
+    allowed: false, // 覆盖角色默认权限，禁止访�?
   });
   
   db.userPermission.create({
     id: 'up-2',
-    userId: '1', // 张三（管理员）
+    userId: '1', // 张三（管理员�?
     resourceType: 'route',
     resourceId: 'route-7', // 学业标准路由
     allowed: true, // 允许访问
   });
   
-  // 为超级管理员添加其他应用的权限
+  // 为超级管理员添加其他应用的权�?
   db.rolePermission.create({
     id: 'rp-4',
     role: 'superadmin',
@@ -1019,7 +1019,7 @@ export function seedDb() {
     id: 'rp-8',
     role: 'superadmin',
     resourceType: 'application',
-    resourceId: '8', // 大概念地图
+    resourceId: '8', // 大概念地�?
     allowed: true,
   });
   
@@ -1068,7 +1068,7 @@ export function seedDb() {
     id: 'rp-15',
     role: 'admin',
     resourceType: 'application',
-    resourceId: '8', // 大概念地图
+    resourceId: '8', // 大概念地�?
     allowed: true,
   });
   
@@ -1080,7 +1080,7 @@ export function seedDb() {
     allowed: true,
   });
   
-  // 为教师添加更多应用权限
+  // 为教师添加更多应用权�?
   db.rolePermission.create({
     id: 'rp-17',
     role: 'teacher',
@@ -1117,7 +1117,7 @@ export function seedDb() {
     id: 'rp-21',
     role: 'teacher',
     resourceType: 'application',
-    resourceId: '8', // 大概念地图
+    resourceId: '8', // 大概念地�?
     allowed: true,
   });
   
@@ -1129,18 +1129,18 @@ export function seedDb() {
     allowed: true,
   });
   
-  // 为学生添加概念地图应用权限
+  // 为学生添加概念地图应用权�?
   db.rolePermission.create({
     id: 'rp-23',
     role: 'student',
     resourceType: 'application',
-    resourceId: '8', // 大概念地图
+    resourceId: '8', // 大概念地�?
     allowed: true,
   });
   
   // 创建一个默认的有效会话（用于开发测试）
   const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
+  expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效�?
   
   db.session.create({
     id: 'default-session',
@@ -1160,20 +1160,20 @@ export function seedDb() {
     endTime: '10:30',
     location: '会议室A',
     type: 'meeting',
-    description: '讨论本学期教学计划',
+    description: '讨论本学期教学计�?,
     participants: ['张老师', '李老师', '王老师'],
   });
 
   db.calendar.create({
     id: '2',
-    title: '高等数学课',
+    title: '高等数学�?,
     date: '2024-03-20',
     startTime: '14:00',
     endTime: '15:30',
     location: '教室201',
     type: 'class',
     description: '微积分基础',
-    participants: ['一年级数学班'],
+    participants: ['一年级数学�?],
   });
 
   db.calendar.create({
@@ -1190,25 +1190,25 @@ export function seedDb() {
 
   db.calendar.create({
     id: '4',
-    title: '校园文化节',
+    title: '校园文化�?,
     date: '2024-03-28',
     startTime: '13:00',
     endTime: '17:00',
     location: '学校操场',
     type: 'activity',
-    description: '年度校园文化节活动',
+    description: '年度校园文化节活�?,
     participants: ['全校师生'],
   });
 
   db.calendar.create({
     id: '5',
-    title: '清明节放假',
+    title: '清明节放�?,
     date: '2024-04-05',
     startTime: '00:00',
     endTime: '23:59',
     location: '',
     type: 'holiday',
-    description: '清明节假期',
+    description: '清明节假�?,
     participants: [],
   });
   
@@ -1217,8 +1217,8 @@ export function seedDb() {
     id: 'c001',
     name: '数与代数',
     description: '研究数量关系和数的结构的数学分支',
-    type: 'big', // 大概念
-    targets: ['知识', '技能'],
+    type: 'big', // 大概�?
+    targets: ['知识', '技�?],
     subject: '数学',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1260,7 +1260,7 @@ export function seedDb() {
   db.concept.create({
     id: 'c005',
     name: '分数',
-    description: '表示部分与整体关系的数',
+    description: '表示部分与整体关系的�?,
     type: 'small',
     targets: ['知识'],
     subject: '数学',
@@ -1271,9 +1271,9 @@ export function seedDb() {
   db.concept.create({
     id: 'c006',
     name: '运算',
-    description: '对数进行加减乘除等数学操作',
+    description: '对数进行加减乘除等数学操�?,
     type: 'big',
-    targets: ['知识', '技能'],
+    targets: ['知识', '技�?],
     subject: '数学',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1282,9 +1282,9 @@ export function seedDb() {
   db.concept.create({
     id: 'c007',
     name: '加法',
-    description: '将两个或多个数合并为一个数的运算',
+    description: '将两个或多个数合并为一个数的运�?,
     type: 'small',
-    targets: ['知识', '技能'],
+    targets: ['知识', '技�?],
     subject: '数学',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1293,9 +1293,9 @@ export function seedDb() {
   db.concept.create({
     id: 'c008',
     name: '减法',
-    description: '求两个数的差的运算',
+    description: '求两个数的差的运�?,
     type: 'small',
-    targets: ['知识', '技能'],
+    targets: ['知识', '技�?],
     subject: '数学',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1306,7 +1306,7 @@ export function seedDb() {
     name: '几何',
     description: '研究形状、大小、空间位置及其关系的数学分支',
     type: 'big',
-    targets: ['知识', '技能', '情感'],
+    targets: ['知识', '技�?, '情感'],
     subject: '数学',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1317,19 +1317,19 @@ export function seedDb() {
     name: '平面图形',
     description: '二维空间中的几何图形',
     type: 'small',
-    targets: ['知识', '技能'],
+    targets: ['知识', '技�?],
     subject: '数学',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
   
-  // 添加物理学科的概念
+  // 添加物理学科的概�?
   db.concept.create({
     id: 'c011',
     name: '力学',
-    description: '研究物体运动和相互作用的物理学分支',
+    description: '研究物体运动和相互作用的物理学分�?,
     type: 'big',
-    targets: ['知识', '技能'],
+    targets: ['知识', '技�?],
     subject: '物理',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1340,7 +1340,7 @@ export function seedDb() {
     name: '牛顿定律',
     description: '描述物体运动与力的关系的基本定律',
     type: 'big',
-    targets: ['知识', '技能'],
+    targets: ['知识', '技�?],
     subject: '物理',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1431,19 +1431,19 @@ export function seedDb() {
   // 添加区域示例数据
   db.region.create({
     id: '100001',
-    name: '海淀区',
+    name: '海淀�?,
     status: true,
   });
   
   db.region.create({
     id: '100002',
-    name: '朝阳区',
+    name: '朝阳�?,
     status: true,
   });
   
   db.region.create({
     id: '100003',
-    name: '东城区',
+    name: '东城�?,
     status: false,
   });
   
@@ -1464,7 +1464,7 @@ export function seedDb() {
     name: '北京第二中学',
     code: '002',
     regionId: '100001',
-    type: '完全中学（六年制）',
+    type: '完全中学（六年制�?,
     grades: ['初一', '初二', '初三', '高一', '高二', '高三'],
     status: true,
     createdAt: new Date().toISOString(),
@@ -1472,11 +1472,11 @@ export function seedDb() {
   
   db.school.create({
     id: '3',
-    name: '朝阳区实验小学',
+    name: '朝阳区实验小�?,
     code: '101',
     regionId: '100002',
-    type: '小学（六年制）',
-    grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
+    type: '小学（六年制�?,
+    grades: ['一年级', '二年�?, '三年�?, '四年�?, '五年�?, '六年�?],
     status: true,
     createdAt: new Date().toISOString(),
   });

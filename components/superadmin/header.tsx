@@ -87,7 +87,7 @@ export default function SuperAdminHeader() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="/dashboard" className="text-gray-500 hover:text-gray-900 font-medium">
+              <BreadcrumbLink href="/workbench" className="text-gray-500 hover:text-gray-900 font-medium">
                 工作台
               </BreadcrumbLink>
             </BreadcrumbItem>

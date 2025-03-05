@@ -732,7 +732,7 @@ export default function UnitTeachingDesignPage() {
             <Button 
               variant="outline" 
               className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
-              onClick={() => window.location.href = '/dashboard'}
+              onClick={() => window.location.href = '/workbench'}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               返回工作台

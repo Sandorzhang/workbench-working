@@ -34,7 +34,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && user) {
       // 根据用户角色决定重定向到不同页面
-      let redirectPath = '/dashboard';
+      let redirectPath = '/workbench';
       
       // 超级管理员重定向到超级管理员控制台
       if (user.role === 'superadmin') {

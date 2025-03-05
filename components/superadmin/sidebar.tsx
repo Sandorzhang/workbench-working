@@ -86,8 +86,8 @@ export default function SuperAdminSidebar() {
         },
         {
           title: "返回工作台",
-          href: "/dashboard",
-          icon: <Home className="h-5 w-5" />,
+          href: "/workbench",
+          icon: <LayoutDashboard className="h-5 w-5" />,
         }
       ]
     }

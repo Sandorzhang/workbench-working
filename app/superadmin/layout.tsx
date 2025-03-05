@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { redirect, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 interface SuperAdminLayoutProps {
   children: ReactNode;
@@ -11,14 +12,10 @@ interface SuperAdminLayoutProps {
 export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const { user, isAuthenticated } = useAuth();
 
-  // 如果未登录，重定向到登录页面
-  if (isAuthenticated === false) {
-    redirect("/login");
-  }
-
-  // 如果不是超级管理员，重定向到仪表盘
-  if (user?.role !== "superadmin") {
-    redirect("/dashboard");
+  // 如果未认证或不是超级管理员，则重定向到仪表盘
+  if (!isAuthenticated || (user && user.role !== 'superadmin')) {
+    toast.error('您没有权限访问超级管理员区域');
+    redirect("/workbench");
   }
 
   // 不再需要这里的布局代码，因为已经在AppLayout中处理

@@ -217,14 +217,15 @@ export default function RegionsPage() {
 
   // 检查权限并加载数据
   useEffect(() => {
-    if (isAuthenticated === false) {
+    if (!isAuthenticated) {
+      toast.error('请先登录');
       router.push('/login');
       return;
     }
-
+    
     if (user?.role !== 'superadmin') {
-      router.push('/dashboard');
-      toast.error('您没有访问此页面的权限');
+      toast.error('您没有权限访问此页面');
+      router.push('/workbench');
       return;
     }
 

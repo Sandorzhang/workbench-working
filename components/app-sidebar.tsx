@@ -30,7 +30,7 @@ interface AIAgent {
 const navMainData = [
   {
     title: "工作台",
-    url: "/dashboard",
+    url: "/workbench",
     icon: SquareTerminal,
     isActive: true,
   },
