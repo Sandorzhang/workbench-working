@@ -1,8 +1,8 @@
 // import { server } from './node'
-import { seedDb, db } from './db';
+import { seedDb, db, loadDb } from './db';
 import { handlers } from './handlers/index';
 
-// 初始化MSW数据库
+// 初始化MSW数据库 - 只有在加载失败时才会执行
 seedDb();
 
 // 最大重试次数

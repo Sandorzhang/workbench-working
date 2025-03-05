@@ -32,6 +32,31 @@ const dbFactory = factory({
     url: String,
     roles: Array, // Which roles can access this app
   },
+  // 路由权限模型
+  route: {
+    id: primaryKey(String),
+    path: String,         // 路由路径，如 /admin/users
+    name: String,         // 路由名称，如 用户管理
+    description: String,  // 路由描述
+    roles: Array,         // 允许访问的角色数组
+    isPublic: Boolean,    // 是否为公开路由（无需登录）
+  },
+  // 用户自定义权限模型
+  userPermission: {
+    id: primaryKey(String),
+    userId: String,       // 用户ID
+    resourceType: String, // 资源类型: 'application' 或 'route'
+    resourceId: String,   // 资源ID
+    allowed: Boolean,     // 是否允许
+  },
+  // 角色权限模型
+  rolePermission: {
+    id: primaryKey(String),
+    role: String,         // 角色名称: 'superadmin', 'admin', 'teacher', 'student'
+    resourceType: String, // 资源类型: 'application' 或 'route'
+    resourceId: String,   // 资源ID
+    allowed: Boolean,     // 是否允许
+  },
   calendar: {
     id: primaryKey(String),
     title: String,
@@ -239,8 +264,146 @@ export const db = {
   classes: [] as Class[],
 };
 
+// 保存数据库状态到localStorage
+export function saveDb() {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    // 获取数据库中的所有数据
+    const data = {
+      user: db.user.getAll(),
+      session: db.session.getAll(),
+      application: db.application.getAll(),
+      calendar: db.calendar.getAll(),
+      mentor: db.mentor.getAll(),
+      student: db.student.getAll(),
+      exam: db.exam.getAll(),
+      subject: db.subject.getAll(),
+      studentManagement: db.studentManagement.getAll(),
+      gradeManagement: db.gradeManagement.getAll(),
+      classManagement: db.classManagement.getAll(),
+      teacherManagement: db.teacherManagement.getAll(),
+      academicStandard: db.academicStandard.getAll(),
+      standardDetail: db.standardDetail.getAll(),
+      concept: db.concept.getAll(),
+      conceptRelation: db.conceptRelation.getAll(),
+      region: db.region.getAll(),
+      school: db.school.getAll(),
+      teachers: db.teachers,
+      students: db.students,
+      grades: db.grades,
+      classes: db.classes
+    };
+    
+    // 保存到localStorage
+    localStorage.setItem('msw-db', JSON.stringify(data));
+    console.log('数据库状态已保存到localStorage');
+  } catch (error) {
+    console.error('保存数据库状态失败:', error);
+  }
+}
+
+// 从localStorage加载数据库状态
+export function loadDb(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    const savedData = localStorage.getItem('msw-db');
+    if (!savedData) return false;
+    
+    const data = JSON.parse(savedData);
+    
+    // 清空现有数据
+    Object.keys(db).forEach(key => {
+      if (typeof (db as any)[key].deleteMany === 'function') {
+        try {
+          (db as any)[key].deleteMany({});
+        } catch (e) {
+          // 忽略可能的错误
+        }
+      }
+    });
+    
+    // 恢复所有数据
+    if (data.user) {
+      data.user.forEach((item: any) => db.user.create(item));
+    }
+    if (data.session) {
+      data.session.forEach((item: any) => db.session.create(item));
+    }
+    if (data.application) {
+      data.application.forEach((item: any) => db.application.create(item));
+    }
+    if (data.calendar) {
+      data.calendar.forEach((item: any) => db.calendar.create(item));
+    }
+    if (data.mentor) {
+      data.mentor.forEach((item: any) => db.mentor.create(item));
+    }
+    if (data.student) {
+      data.student.forEach((item: any) => db.student.create(item));
+    }
+    if (data.exam) {
+      data.exam.forEach((item: any) => db.exam.create(item));
+    }
+    if (data.subject) {
+      data.subject.forEach((item: any) => db.subject.create(item));
+    }
+    if (data.studentManagement) {
+      data.studentManagement.forEach((item: any) => db.studentManagement.create(item));
+    }
+    if (data.gradeManagement) {
+      data.gradeManagement.forEach((item: any) => db.gradeManagement.create(item));
+    }
+    if (data.classManagement) {
+      data.classManagement.forEach((item: any) => db.classManagement.create(item));
+    }
+    if (data.teacherManagement) {
+      data.teacherManagement.forEach((item: any) => db.teacherManagement.create(item));
+    }
+    if (data.academicStandard) {
+      data.academicStandard.forEach((item: any) => db.academicStandard.create(item));
+    }
+    if (data.standardDetail) {
+      data.standardDetail.forEach((item: any) => db.standardDetail.create(item));
+    }
+    if (data.concept) {
+      data.concept.forEach((item: any) => db.concept.create(item));
+    }
+    if (data.conceptRelation) {
+      data.conceptRelation.forEach((item: any) => db.conceptRelation.create(item));
+    }
+    if (data.region) {
+      data.region.forEach((item: any) => db.region.create(item));
+    }
+    if (data.school) {
+      data.school.forEach((item: any) => db.school.create(item));
+    }
+    
+    // 恢复扩展数组
+    if (data.teachers) db.teachers = data.teachers;
+    if (data.students) db.students = data.students;
+    if (data.grades) db.grades = data.grades;
+    if (data.classes) db.classes = data.classes;
+    
+    console.log('数据库状态已从localStorage恢复');
+    return true;
+  } catch (error) {
+    console.error('加载数据库状态失败:', error);
+    return false;
+  }
+}
+
 // 初始化一些模拟数据
 export function seedDb() {
+  // 尝试从localStorage加载数据库状态
+  if (loadDb()) {
+    console.log('从localStorage恢复了数据库状态，跳过初始化');
+    return;
+  }
+  
+  console.log('初始化模拟数据库...');
+  
   // 添加用户示例数据
   db.user.create({
     id: '1',
@@ -273,7 +436,7 @@ export function seedDb() {
   // 添加超级管理员用户
   db.user.create({
     id: '3',
-    name: '王超',
+    name: '张天一',
     email: 'wangchao@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3',
     createdAt: new Date().toISOString(),
@@ -281,8 +444,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13700137000',
     role: 'superadmin',
-    tenant: '教育部',
-    tenantType: '管理部门'
+    tenant: '五石炼成',
+    tenantType: '超级管理'
   });
   
   // 添加导师和学生示例数据
@@ -657,6 +820,122 @@ export function seedDb() {
     icon: 'book',
     url: '/academic-standards',
     roles: ['admin', 'teacher'],
+  });
+  
+  // 添加路由权限数据
+  // 公共路由
+  db.route.create({
+    id: 'route-1',
+    path: '/login',
+    name: '登录页面',
+    description: '用户登录界面',
+    roles: [],
+    isPublic: true,
+  });
+  
+  db.route.create({
+    id: 'route-2',
+    path: '/dashboard',
+    name: '工作台',
+    description: '用户工作台主页',
+    roles: ['superadmin', 'admin', 'teacher', 'student'],
+    isPublic: false,
+  });
+  
+  db.route.create({
+    id: 'route-3',
+    path: '/superadmin',
+    name: '超级管理员控制台',
+    description: '超级管理员专用控制台',
+    roles: ['superadmin'],
+    isPublic: false,
+  });
+  
+  db.route.create({
+    id: 'route-4',
+    path: '/superadmin/users',
+    name: '用户管理',
+    description: '管理所有用户',
+    roles: ['superadmin'],
+    isPublic: false,
+  });
+  
+  db.route.create({
+    id: 'route-5',
+    path: '/superadmin/permissions',
+    name: '权限管理',
+    description: '管理系统权限',
+    roles: ['superadmin'],
+    isPublic: false,
+  });
+  
+  db.route.create({
+    id: 'route-6',
+    path: '/admin/education',
+    name: '教育管理',
+    description: '学校教育相关管理功能',
+    roles: ['superadmin', 'admin'],
+    isPublic: false,
+  });
+  
+  db.route.create({
+    id: 'route-7',
+    path: '/academic-standards',
+    name: '学业标准',
+    description: '浏览和查询各学科学业标准',
+    roles: ['admin', 'teacher'],
+    isPublic: false,
+  });
+  
+  db.route.create({
+    id: 'route-8',
+    path: '/concept-map',
+    name: '大概念地图',
+    description: '查看不同学科的概念节点和关系',
+    roles: ['teacher', 'admin', 'student'],
+    isPublic: false,
+  });
+  
+  // 添加角色权限示例
+  db.rolePermission.create({
+    id: 'rp-1',
+    role: 'superadmin',
+    resourceType: 'application',
+    resourceId: '1', // 用户管理应用
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-2',
+    role: 'admin',
+    resourceType: 'application',
+    resourceId: '2', // 课程管理应用
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-3',
+    role: 'teacher',
+    resourceType: 'application',
+    resourceId: '3', // 成绩录入应用
+    allowed: true,
+  });
+  
+  // 添加用户自定义权限示例
+  db.userPermission.create({
+    id: 'up-1',
+    userId: '2', // 李四 (教师)
+    resourceType: 'application',
+    resourceId: '2', // 课程管理应用
+    allowed: false, // 特别禁止此用户访问
+  });
+  
+  db.userPermission.create({
+    id: 'up-2',
+    userId: '1', // 张三 (管理员)
+    resourceType: 'route',
+    resourceId: 'route-7', // 学业标准
+    allowed: true, // 特别允许此用户访问
   });
   
   // 创建一个默认的有效会话（用于开发测试）

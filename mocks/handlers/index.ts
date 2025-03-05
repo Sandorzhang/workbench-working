@@ -25,6 +25,9 @@ import { gradeManagementHandlers, classManagementHandlers } from './grade-class-
 import { regionHandlers } from './region';
 import { schoolHandlers } from './school';
 import { userHandlers } from './user';
+import { superadminHandlers } from './superadmin';
+import { applicationHandlers } from './application';
+import { permissionHandlers } from './permission';
 // 导入其他处理器...
 
 export const handlers = [
@@ -65,4 +68,7 @@ export const handlers = [
   ...regionHandlers,
   ...schoolHandlers,
   ...userHandlers,
+  ...superadminHandlers,
+  ...applicationHandlers,
+  ...permissionHandlers,
 ]; 

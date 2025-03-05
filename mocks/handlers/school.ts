@@ -1,5 +1,5 @@
 import { http, HttpResponse, delay } from 'msw';
-import { db } from '../db';
+import { db, saveDb } from '../db';
 import { School, SchoolType } from '../../lib/api-types';
 
 // 定义学校数据类型
@@ -180,6 +180,9 @@ export const schoolHandlers = [
       createdAt: new Date().toISOString()
     });
     
+    // 保存数据库状态
+    saveDb();
+    
     // 获取区域名称
     const schoolWithRegion = {
       ...newSchool,
@@ -291,6 +294,9 @@ export const schoolHandlers = [
       },
     });
     
+    // 保存数据库状态
+    saveDb();
+    
     if (!updatedSchool) {
       return HttpResponse.json(
         { message: '更新学校失败', code: '500' },
@@ -345,7 +351,13 @@ export const schoolHandlers = [
       },
     });
     
-    return new HttpResponse(null, { status: 204 });
+    // 保存数据库状态
+    saveDb();
+    
+    return HttpResponse.json(
+      { message: '学校删除成功' },
+      { status: 200 }
+    );
   }),
   
   // 获取所有学校类型（教育级别）选项

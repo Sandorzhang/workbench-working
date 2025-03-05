@@ -12,7 +12,13 @@ import {
   Lock, FileText, Sparkles, Activity, Globe,
   AlertTriangle, BarChart3, Loader2, Shield,
   School, MapPin, CheckCircle, XCircle,
-  ArrowRight, ArrowUpRight
+  ArrowRight, ArrowUpRight,
+  ShieldCheck,
+  Webhook,
+  Bell,
+  Trophy,
+  BookOpen,
+  GraduationCap
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
@@ -256,6 +262,58 @@ export default function SuperAdminPage() {
     return null;
   }
   
+  // 管理模块列表
+  const adminModules = [
+    {
+      title: '用户管理',
+      description: '管理系统用户、角色和权限',
+      icon: <Users className="h-5 w-5" />,
+      href: '/superadmin/users'
+    },
+    {
+      title: '权限管理',
+      description: '管理路由和应用的访问权限',
+      icon: <ShieldCheck className="h-5 w-5" />,
+      href: '/superadmin/permissions'
+    },
+    {
+      title: 'API 管理',
+      description: '管理系统 API 和集成',
+      icon: <Webhook className="h-5 w-5" />,
+      href: '#'
+    },
+    {
+      title: '通知管理',
+      description: '管理系统通知和消息',
+      icon: <Bell className="h-5 w-5" />,
+      href: '#'
+    },
+    {
+      title: '数据统计',
+      description: '查看系统使用数据和分析',
+      icon: <BarChart3 className="h-5 w-5" />,
+      href: '#'
+    },
+    {
+      title: '积分规则',
+      description: '管理学生积分和奖励机制',
+      icon: <Trophy className="h-5 w-5" />,
+      href: '#'
+    },
+    {
+      title: '课程管理',
+      description: '管理系统课程和学习资源',
+      icon: <BookOpen className="h-5 w-5" />,
+      href: '#'
+    },
+    {
+      title: '学业标准',
+      description: '管理学业标准和评估规则',
+      icon: <GraduationCap className="h-5 w-5" />,
+      href: '#'
+    }
+  ];
+
   return (
     <PageContainer
       loading={isLoading}
@@ -631,6 +689,34 @@ export default function SuperAdminPage() {
             </Card>
           </TabsContent>
         </Tabs>
+      </SectionContainer>
+      
+      <SectionContainer className="mt-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">系统模块</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {adminModules.map((module, index) => (
+            <Card key={index} className="overflow-hidden">
+              <CardHeader className="p-5">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-md bg-primary/10 p-2 text-primary">
+                    {module.icon}
+                  </div>
+                  <CardTitle className="text-lg">{module.title}</CardTitle>
+                </div>
+                <CardDescription>{module.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="p-5 pt-0">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => module.href !== '#' ? router.push(module.href) : toast.info('功能开发中')}
+                >
+                  进入管理
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </SectionContainer>
     </PageContainer>
   );

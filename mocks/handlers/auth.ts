@@ -1,5 +1,5 @@
 import { http, HttpResponse, delay } from 'msw';
-import { db } from '../db';
+import { db, saveDb } from '../db';
 
 // 生成随机令牌
 const generateToken = () => {
@@ -84,6 +84,9 @@ export const authHandlers = [
       token,
       expiresAt: expiresAt.toISOString(),
     });
+    
+    // 保存数据库状态
+    saveDb();
     
     const { password: _, ...userWithoutPassword } = user;
     
@@ -389,6 +392,9 @@ export const authHandlers = [
       expiresAt: expiresAt.toISOString(),
     });
     
+    // 保存数据库状态
+    saveDb();
+    
     const { password: _, ...userWithoutPassword } = user;
     
     return HttpResponse.json({
@@ -401,38 +407,40 @@ export const authHandlers = [
   http.post('*/api/auth/logout', async ({ request }) => {
     await delay(300);
     
-    // 从请求头中获取令牌
+    // 从请求头获取令牌
     const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
+    
+    if (!token) {
       return HttpResponse.json(
-        {
-          message: '未授权访问',
-          code: '401',
-          details: { reason: 'missing_token' }
-        },
-        { status: 401 }
+        { message: '未提供有效的令牌', code: '400' },
+        { status: 400 }
       );
     }
     
-    const token = authHeader.split('Bearer ')[1];
+    // 查找并删除会话
+    const session = db.session.findFirst({
+      where: {
+        token: {
+          equals: token,
+        },
+      },
+    });
     
-    // 删除会话
-    try {
+    if (session) {
       db.session.delete({
         where: {
-          token: {
-            equals: token,
+          id: {
+            equals: session.id,
           },
         },
       });
-    } catch (error) {
-      // 会话不存在，忽略错误
+      
+      // 保存数据库状态
+      saveDb();
     }
     
-    return HttpResponse.json({
-      success: true,
-      message: '已成功注销',
-    });
+    return HttpResponse.json({ message: '成功注销' });
   }),
   
   // 获取用户可访问的应用

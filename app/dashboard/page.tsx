@@ -118,98 +118,24 @@ export default function DashboardPage() {
   // 应用获取逻辑
   useEffect(() => {
     // 只有在用户认证后才加载应用
-    if (!authChecked || !isAuthenticated) return;
+    if (!authChecked || !isAuthenticated || !user) return;
     
     console.log('开始获取应用数据');
     
     const fetchApplications = async () => {
       try {
-        // 这里可以添加真实的API调用
-        // const response = await fetch('/api/applications');
-        // const data = await response.json();
+        setIsLoading(true);
+        // 调用API并传递用户ID
+        const response = await fetch(`/api/applications?userId=${user.id}`);
         
-        // 当前使用模拟数据
-        const mockApplications = [
-          {
-            id: '1',
-            name: '师生信息管理',
-            description: '管理教师和学生的基本信息',
-            icon: 'users',
-            url: '/admin/users',
-            roles: ['管理员']
-          },
-          {
-            id: '2',
-            name: '课堂时光机',
-            description: '记录和回放课堂教学过程，辅助教学分析',
-            icon: 'school',
-            url: '/classroom-timemachine',
-            roles: ['教师']
-          },
-          {
-            id: '3',
-            name: '单元教学设计',
-            description: '创建和管理单元教学设计方案',
-            icon: 'pencil',
-            url: '/unit-teaching-design',
-            roles: ['教师']
-          },
-          {
-            id: '4',
-            name: '全员导师',
-            description: '浏览、管理和分配导师资源，促进师生共同成长',
-            icon: 'userCheck',
-            url: '/mentor-hub',
-            roles: ['教师', '管理员']
-          },
-          {
-            id: '5',
-            name: '数据资产管理',
-            description: '管理和浏览教学相关的各类数据资源',
-            icon: 'database',
-            url: '/data-assets',
-            roles: ['教师', '管理员']
-          },
-          {
-            id: '6',
-            name: '考试管理',
-            description: '创建、编辑和管理各类考试及试卷',
-            icon: 'fileText',
-            url: '/exam-management',
-            roles: ['教师', '管理员']
-          },
-          {
-            id: '7',
-            name: '学业标准',
-            description: '浏览和查询各学科学业标准',
-            icon: 'book',
-            url: '/academic-standards',
-            roles: ['教师', '管理员']
-          },
-          {
-            id: '8',
-            name: '大概念地图',
-            description: '查看不同学科的概念节点和关系，了解知识体系结构',
-            icon: 'network',
-            url: '/concept-map',
-            roles: ['教师', '管理员', '学生']
-          },
-          {
-            id: '9',
-            name: '学业旅程',
-            description: '跟踪学生的学业标准达成进度，了解班级整体情况',
-            icon: 'graduationCap',
-            url: '/academic-journey',
-            roles: ['教师', '管理员']
-          }
-        ];
+        if (!response.ok) {
+          throw new Error('获取应用列表失败');
+        }
         
-        // 模拟加载时间为了展示动画效果
-        setTimeout(() => {
-          console.log('应用数据加载完成');
-          setApplications(mockApplications);
-          setIsLoading(false);
-        }, 500);
+        const data = await response.json();
+        console.log('应用数据加载完成', data);
+        setApplications(data);
+        setIsLoading(false);
       } catch (error) {
         console.error('获取应用列表失败:', error);
         toast.error('获取应用列表失败');
@@ -218,7 +144,7 @@ export default function DashboardPage() {
     };
     
     fetchApplications();
-  }, [authChecked, isAuthenticated]);
+  }, [authChecked, isAuthenticated, user]);
   
   // 应用点击处理函数
   const handleAppClick = (url: string) => {
