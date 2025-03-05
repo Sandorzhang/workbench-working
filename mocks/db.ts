@@ -993,19 +993,19 @@ export function seedDb() {
   }
   
   // 添加新权限
-  allApplications.forEach(app => {
+      allApplications.forEach(app => {
     try {
-      db.rolePermission.create({
+        db.rolePermission.create({
         id: `rp-${adminRole}-${app.id}-${Date.now()}`, // 添加时间戳避免ID冲突
         role: adminRole,
-        applicationId: app.id,
+          applicationId: app.id,
         granted: true, // 确保授予权限
-        createdAt: new Date().toISOString(),
-      });
+          createdAt: new Date().toISOString(),
+        });
       console.log(`已为admin角色添加应用权限: ${app.name}`);
     } catch (e) {
       console.error(`为应用 ${app.id} 添加权限时出错:`, e);
-    }
+  }
   });
   
   // 保存数据库状态
