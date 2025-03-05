@@ -345,5 +345,7 @@ export const api = {
       
     delete: (id: string) => 
       handleRequest(`${API_BASE_URL}/teaching-designs/${id}`, {
+        method: 'DELETE'
+      })
   }
 }; 
