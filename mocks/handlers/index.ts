@@ -18,6 +18,10 @@ import {
   deleteStudentRecordHandler,
   getDefaultStudentHandler
 } from './student-records';
+import { educationManagementHandlers } from './education-management';
+import { teacherManagementHandlers } from './teacher-management';
+import { studentManagementHandlers } from './student-management';
+import { gradeManagementHandlers, classManagementHandlers } from './grade-class-management';
 // 导入其他处理器...
 
 export const handlers = [
@@ -50,4 +54,9 @@ export const handlers = [
       }
     });
   }),
+  ...educationManagementHandlers,
+  ...teacherManagementHandlers,
+  ...studentManagementHandlers,
+  ...gradeManagementHandlers,
+  ...classManagementHandlers,
 ]; 

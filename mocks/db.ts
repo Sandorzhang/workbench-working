@@ -1,7 +1,7 @@
 import { factory, primaryKey } from '@mswjs/data';
 
 // 创建模拟数据库模型
-export const db = factory({
+const dbFactory = factory({
   // 用户模型
   user: {
     id: primaryKey(String),
@@ -86,6 +86,47 @@ export const db = factory({
     icon: String,
     description: String,
   },
+  // 新增模型 - 教育管理相关
+
+  // 学生管理模型（新的完整学生模型）
+  studentManagement: {
+    id: primaryKey(String),
+    name: String,                // 姓名
+    gender: String,              // 性别 ('male' | 'female')
+    enrollmentYear: Number,      // 入学年份
+    birthDate: String,           // 出生日期
+    studentNumber: String,       // 学籍号
+    externalAppIds: Array,       // 外部应用ID信息数组
+    classId: String,             // 班级ID
+    gradeId: String,             // 年级ID
+    avatar: String,              // 头像（可选）
+  },
+
+  // 年级管理模型
+  gradeManagement: {
+    id: primaryKey(String),
+    gradeLevel: String,          // 年级枚举（一年级、二年级...）
+    academicYear: String,        // 所属学年
+  },
+
+  // 班级管理模型
+  classManagement: {
+    id: primaryKey(String),
+    name: String,                // 班名
+    academicYear: String,        // 学年
+    gradeId: String,             // 所属年级ID
+  },
+
+  // 教师管理模型
+  teacherManagement: {
+    id: primaryKey(String),
+    name: String,                // 姓名
+    gender: String,              // 性别 ('male' | 'female')
+    birthDate: String,           // 出生日期
+    subject: String,             // 任教学科
+    externalAppIds: Array,       // 外部应用ID信息数组
+    avatar: String,              // 头像（可选）
+  },
   // 学业标准模型
   academicStandard: {
     id: primaryKey(String),
@@ -125,6 +166,60 @@ export const db = factory({
   },
   // 可以添加更多模型
 });
+
+// 扩展数据库，添加自定义数组以支持直接操作
+export type Teacher = {
+  id: string;
+  name: string;
+  gender: 'male' | 'female';
+  birthDate: string;
+  subject: string;
+  externalAppIds: Array<{
+    appId: string;
+    appName: string;
+    externalId: string;
+  }>;
+  avatar?: string;
+};
+
+export type Student = {
+  id: string;
+  name: string;
+  gender: 'male' | 'female';
+  enrollmentYear: number;
+  birthDate: string;
+  studentNumber: string;
+  classId: string;
+  gradeId: string;
+  externalAppIds: Array<{
+    appId: string;
+    appName: string;
+    externalId: string;
+  }>;
+  avatar?: string;
+};
+
+export type Grade = {
+  id: string;
+  gradeLevel: string;
+  academicYear: string;
+};
+
+export type Class = {
+  id: string;
+  name: string;
+  academicYear: string;
+  gradeId: string;
+};
+
+// 将数据库扩展为包含直接数组
+export const db = {
+  ...dbFactory,
+  teachers: [] as Teacher[],
+  students: [] as Student[],
+  grades: [] as Grade[],
+  classes: [] as Class[],
+};
 
 // 初始化一些模拟数据
 export function seedDb() {
