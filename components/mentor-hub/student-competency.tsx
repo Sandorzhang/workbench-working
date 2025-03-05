@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Star, Info } from "lucide-react";
 import { Indicator } from "@/types/student";
-import { CompetencyWheel } from "@/components/competency-wheel/competency-wheel";
+import { CompetencyWheel } from "../competency-wheel/competency-wheel";
 import { CompetencyDetail } from "./competency-detail";
 import { CompetencyDimension } from "@/types/competency";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,20 +16,19 @@ import {
   TooltipTrigger 
 } from "@/components/ui/tooltip";
 
-interface StudentCompetencyProps {
-  indicators: Indicator[];
-  isLoading?: boolean;
-}
-
-export function StudentCompetency({ indicators, isLoading = false }: StudentCompetencyProps) {
+export function StudentCompetency() {
   const [selectedCompetency, setSelectedCompetency] = useState<CompetencyDimension | null>(null);
 
-  const handleDimensionClick = (dimension: CompetencyDimension) => {
+  const handleDimensionClick = useCallback((dimension: CompetencyDimension) => {
     setSelectedCompetency(dimension);
-  };
+  }, []);
+
+  const resetSelection = useCallback(() => {
+    setSelectedCompetency(null);
+  }, []);
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="text-lg flex items-center">
           <Star className="mr-2 h-5 w-5 text-amber-500" />
@@ -41,91 +40,83 @@ export function StudentCompetency({ indicators, isLoading = false }: StudentComp
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="wheel" className="w-full">
-          <div className="flex justify-between items-center mb-4">
-            <TabsList>
-              <TabsTrigger value="wheel" className="text-sm">轮盘视图</TabsTrigger>
-              <TabsTrigger value="list" className="text-sm">列表视图</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex items-center gap-3">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 cursor-help">
-                      <div className="w-6 h-1.5 bg-emerald-500 rounded-sm"></div>
-                      <span className="text-xs text-muted-foreground">已完成</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">已达到预期水平的项目</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 cursor-help">
-                      <div className="w-6 h-1.5 border-t-2 border-amber-500 border-dashed"></div>
-                      <span className="text-xs text-muted-foreground">进行中</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">正在发展中的能力项目</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 cursor-help">
-                      <span className="text-red-500 text-xs font-bold">*</span>
-                      <span className="text-xs text-muted-foreground">高级项目</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">需要特别关注的发展项目</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
+          <TabsList className="mb-4">
+            <TabsTrigger value="wheel">轮盘视图</TabsTrigger>
+            <TabsTrigger value="list">列表视图</TabsTrigger>
+          </TabsList>
           
-          <TabsContent value="wheel" className="mt-2 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 bg-slate-50 rounded-lg p-4 border border-slate-100">
-                <CompetencyWheel 
-                  isLoading={isLoading}
-                  onDimensionClick={handleDimensionClick}
-                  title=""
-                  description=""
-                />
-                <div className="mt-2 text-xs text-center text-muted-foreground">
-                  点击轮盘上的维度查看详情
+          <TabsContent value="wheel" className="w-full">
+            <div className="md:grid md:grid-cols-3 gap-4">
+              <div className="col-span-2 relative">
+                <div className="bg-slate-50 rounded-md border p-4 mb-4 relative">
+                  <TooltipProvider>
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="text-sm font-medium">素养能力轮盘</h3>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="h-4 w-4 text-slate-500" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="flex flex-col gap-2 p-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                              <span className="text-xs">已完成</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 border border-amber-500 border-dashed rounded-sm"></div>
+                              <span className="text-xs">进行中</span>
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
+                
+                  <div 
+                    className="relative" 
+                    onClick={(e) => {
+                      if (e.currentTarget === e.target) {
+                        resetSelection();
+                      }
+                    }}
+                  >
+                    <CompetencyWheel
+                      onDimensionClick={handleDimensionClick}
+                    />
+                    
+                    {!selectedCompetency && (
+                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm p-2 rounded-md shadow-sm text-center">
+                        <p className="text-xs text-slate-600">点击轮盘选择一个维度查看详情</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-sm font-medium">维度详情</h3>
-                  {selectedCompetency && (
-                    <Badge variant="outline" className="text-xs">
-                      {selectedCompetency.name}
-                    </Badge>
+              
+              <div className="col-span-1">
+                <div className="bg-slate-50 rounded-md border p-4 h-full">
+                  {selectedCompetency ? (
+                    <div>
+                      <h3 className="text-sm font-medium mb-2 flex items-center">
+                        <span>{selectedCompetency.name}</span>
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {selectedCompetency.level || "初级"}
+                        </Badge>
+                      </h3>
+                      <CompetencyDetail competency={selectedCompetency} />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
+                      <Info className="h-8 w-8 mb-2 text-slate-400" />
+                      <p className="text-sm">请先在左侧轮盘中选择一个素养维度</p>
+                    </div>
                   )}
                 </div>
-                <CompetencyDetail competency={selectedCompetency} />
-                {!selectedCompetency && (
-                  <div className="flex flex-col items-center justify-center h-[200px] text-center">
-                    <Info className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                    <p className="text-muted-foreground text-sm">点击轮盘选择一个维度查看详情</p>
-                  </div>
-                )}
               </div>
             </div>
           </TabsContent>
           
-          <TabsContent value="list" className="mt-2">
+          <TabsContent value="list">
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-3">
                 <Info className="h-4 w-4 text-muted-foreground" />
@@ -144,25 +135,7 @@ export function StudentCompetency({ indicators, isLoading = false }: StudentComp
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {indicators.map((indicator) => (
-                      <tr key={indicator.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{indicator.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className="w-24 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-primary h-2 rounded-full" 
-                                style={{width: `${(indicator.value / indicator.maxValue) * 100}%`}}
-                              ></div>
-                            </div>
-                            <Badge variant="outline" className="text-xs">
-                              {indicator.value}/{indicator.maxValue}
-                            </Badge>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{indicator.description || '-'}</td>
-                      </tr>
-                    ))}
+                    {/* 这里将显示所有素养维度的数据 */}
                   </tbody>
                 </table>
               </div>

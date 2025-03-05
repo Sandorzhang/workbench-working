@@ -17,10 +17,10 @@ export interface AcademicRecord {
 }
 
 interface StudentAcademicProps {
-  academicRecords: AcademicRecord[];
+  records: AcademicRecord[];
 }
 
-export function StudentAcademic({ academicRecords }: StudentAcademicProps) {
+export function StudentAcademic({ records }: StudentAcademicProps) {
   return (
     <Card>
       <CardHeader>
@@ -34,7 +34,7 @@ export function StudentAcademic({ academicRecords }: StudentAcademicProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {academicRecords && academicRecords.length > 0 ? (
+          {records && records.length > 0 ? (
             <div className="border rounded-lg overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -47,7 +47,7 @@ export function StudentAcademic({ academicRecords }: StudentAcademicProps) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {academicRecords.map((record, index) => (
+                  {records.map((record, index) => (
                     <tr key={record.id || index}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{record.subject}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">

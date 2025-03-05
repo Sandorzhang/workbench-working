@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { MentorHub } from "@/components/mentor-hub/mentor-hub";
-import { Users, Plus, UserCircle, UserCog } from "lucide-react";
+import { Users, UserCircle, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/ui/hero-section";
 import TeacherView from "@/components/mentor-hub/teacher-view";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import Link from "next/link";
 
 // 用户角色类型
 type UserRole = 'admin' | 'teacher' | 'student';
@@ -51,14 +52,7 @@ export default function MentorHubPage() {
         description: "查看和管理您指导的学生信息",
         icon: UserCircle,
         gradient: "from-blue-50 to-indigo-50",
-        actions: (
-          <Button 
-            className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            添加笔记
-          </Button>
-        )
+        actions: null
       };
     }
     
@@ -68,14 +62,7 @@ export default function MentorHubPage() {
       description: "浏览、管理和分配导师资源",
       icon: Users,
       gradient: "from-amber-50 to-yellow-50",
-      actions: (
-        <Button 
-          className="h-10 px-5 rounded-xl bg-primary shadow-sm hover:bg-primary/90 hover:shadow-md transition-all duration-300 font-medium"
-        >
-          <UserCog className="mr-2 h-4 w-4" />
-          分配导师
-        </Button>
-      )
+      actions: null
     };
   };
   

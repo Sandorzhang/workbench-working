@@ -201,6 +201,24 @@ function StudentList({
 
 // 学生详情组件
 function StudentDetail({ student }: { student: EnrichedStudent }) {
+  const [activeTab, setActiveTab] = useState("competency");
+
+  // 监听记录添加事件，在添加记录后保持在"学生追踪"tab
+  useEffect(() => {
+    const handleRecordAdded = () => {
+      console.log("StudentDetail: 监听到记录添加事件，保持在tracking tab");
+      setActiveTab("tracking");
+    };
+
+    window.addEventListener('record-added', handleRecordAdded);
+    window.addEventListener('refresh-student-records', handleRecordAdded);
+    
+    return () => {
+      window.removeEventListener('record-added', handleRecordAdded);
+      window.removeEventListener('refresh-student-records', handleRecordAdded);
+    };
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* 学生基本信息 */}
@@ -228,7 +246,7 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
       </div>
 
       {/* Tab切换导航 */}
-      <Tabs defaultValue="competency" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-4 mb-3">
           <TabsTrigger value="competency" className="flex items-center gap-1">
             <Star className="h-4 w-4" />
@@ -255,12 +273,12 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
         
         {/* 学生学业 */}
         <TabsContent value="academic" className="mt-0">
-          <StudentAcademic academicRecords={student.academicRecords || []} />
+          <StudentAcademic records={student.academicRecords || []} />
         </TabsContent>
         
         {/* 学生追踪 */}
         <TabsContent value="tracking" className="mt-0">
-          <StudentTracking notes={student.notes || []} />
+          <StudentTracking studentId={student.id} />
         </TabsContent>
         
         {/* 学生评价 */}
@@ -437,6 +455,48 @@ export default function TeacherView() {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  // 添加全局事件监听，响应hero栏中的record-added事件
+  useEffect(() => {
+    const handleRecordAdded = (event: Event) => {
+      console.log("记录添加事件被触发", event);
+      // 检查事件详情
+      const customEvent = event as CustomEvent;
+      console.log("事件详情:", customEvent.detail);
+      
+      // 无论选中了哪个学生，都应该刷新学生列表
+      fetchStudents();
+      
+      if (selectedStudent) {
+        // 刷新学生详情，包括学生记录
+        console.log("刷新学生详情:", selectedStudent.id);
+        fetchStudentDetail(selectedStudent.id);
+        
+        // 这里我们添加一个直接的DOM事件来触发学生记录组件的刷新
+        const refreshEvent = new CustomEvent('refresh-student-records', { 
+          detail: { studentId: selectedStudent.id } 
+        });
+        console.log("触发refresh-student-records事件");
+        window.dispatchEvent(refreshEvent);
+        
+        toast.success("学生记录已更新");
+      } else {
+        // 如果没有选中学生，但学生列表有数据，选择第一个学生
+        setTimeout(() => {
+          if (students.length > 0 && !selectedStudent) {
+            console.log("自动选择第一个学生:", students[0].id);
+            fetchStudentDetail(students[0].id);
+          }
+        }, 1000);
+      }
+    };
+
+    window.addEventListener('record-added', handleRecordAdded);
+    
+    return () => {
+      window.removeEventListener('record-added', handleRecordAdded);
+    };
+  }, [selectedStudent, students]);
 
   // 处理刷新
   const handleRefresh = () => {

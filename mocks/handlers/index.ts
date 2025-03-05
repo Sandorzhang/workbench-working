@@ -10,6 +10,14 @@ import { studentHandlers } from './student';
 import { teacherHandlers } from './teacher';
 import { testHandlers } from './test';
 import { studentEvaluationHandlers } from './student-evaluation';
+import { 
+  getStudentRecordsHandler, 
+  addStudentRecordHandler, 
+  addStudentRecordByIdHandler,
+  updateStudentRecordHandler, 
+  deleteStudentRecordHandler,
+  getDefaultStudentHandler
+} from './student-records';
 // 导入其他处理器...
 
 export const handlers = [
@@ -23,6 +31,13 @@ export const handlers = [
   ...teacherHandlers,
   ...testHandlers,
   ...studentEvaluationHandlers,
+  // 学生记录处理程序
+  getStudentRecordsHandler,
+  addStudentRecordHandler,
+  addStudentRecordByIdHandler,
+  updateStudentRecordHandler,
+  deleteStudentRecordHandler,
+  getDefaultStudentHandler,
   // 其他处理器...
   
   // 处理默认头像
