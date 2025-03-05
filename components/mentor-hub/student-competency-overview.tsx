@@ -19,7 +19,6 @@ export function StudentCompetencyOverview({ isLoading = false }: StudentCompeten
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">学生素养概览</h2>
         <div className="text-xs text-gray-500">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1">

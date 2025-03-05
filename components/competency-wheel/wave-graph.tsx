@@ -58,48 +58,33 @@ export function WaveGraph(props: WaveGraphProps) {
     
     // 标签位置
     const labelPositions = useMemo(() => {
-        // 提取每个段落的层数信息和对应的最外层半径
+        // 提取每个段落的层数信息
         const layerCounts = segments.map(segment => segment.layers || 1);
         
         // 计算每个段落的最外层弧线半径
         const outerRadii: number[] = [];
         
-        // 添加调试日志，查看rings的结构
-        console.log('环结构:', {
-            环数量: rings.length,
-            环半径: rings.map(ring => ring.radius)
-        });
-        
-        if (rings.length > 0) {
-            // 假设rings是按照从内到外排序的
-            // 遍历每个段落
-            for (let i = 0; i < segments.length; i++) {
-                const segmentLayers = layerCounts[i];
-                
-                // 如果段落有多层，使用对应的最外层环半径
-                // 注意：rings是从内到外排序的，0是最内层
-                const outerRingIndex = Math.min(segmentLayers - 1, rings.length - 1);
-                
-                // 确保最小索引为0
-                const safeRingIndex = Math.max(0, outerRingIndex);
-                
-                // 使用对应的环半径
-                const outerRadius = rings[safeRingIndex].radius;
-                
-                // 为了防止遮挡，确保使用的是段落实际对应的外层环半径
-                outerRadii.push(outerRadius);
-                
-                // 添加调试信息，查看每个段落的外层环计算
-                console.log(`段落${i} (${segments[i].label})计算:`, {
-                    层数: segmentLayers,
-                    最外层环索引: safeRingIndex,
-                    使用的半径: outerRadius
-                });
+        // 为每个扇区找到它的最外层弧线半径
+        segments.forEach((segment, index) => {
+            const segmentLayers = segment.layers || 1;
+            
+            // 如果segments没有指定layers，或者layers为0，则使用默认值1
+            const effectiveLayer = Math.max(1, segmentLayers);
+            
+            // 找到对应层数的环半径（考虑索引从0开始）
+            // 环的索引比实际层数少1（第1层的索引是0）
+            const ringIndex = Math.min(effectiveLayer - 1, rings.length - 1);
+            
+            // 如果rings存在且索引有效，则使用对应的环半径
+            if (rings.length > 0 && ringIndex >= 0 && ringIndex < rings.length) {
+                outerRadii.push(rings[ringIndex].radius);
+                console.log(`扇区${index} (${segment.label})使用环索引 ${ringIndex}，半径: ${rings[ringIndex].radius}`);
+            } else {
+                // 如果rings不存在或索引无效，使用基础半径
+                outerRadii.push(radius * 0.35 + (effectiveLayer - 1) * layerSpacing);
+                console.log(`扇区${index} (${segment.label})使用计算半径: ${radius * 0.35 + (effectiveLayer - 1) * layerSpacing}`);
             }
-        } else {
-            // 如果没有rings数据，则所有段落都使用基础半径
-            outerRadii.fill(radius, 0, segments.length);
-        }
+        });
         
         console.log('计算标签位置:', {
             段落数: segments.length,
@@ -108,9 +93,9 @@ export function WaveGraph(props: WaveGraphProps) {
         });
         
         // 增加偏移量，确保标签不会遮挡弧线
-        // 使用6px偏移，而不是4px
-        return getLabelPosList(cx, cy, segments.length, radius, 6, layerCounts, outerRadii);
-    }, [cx, cy, segments.length, radius, segments, rings]);
+        // 使用8px偏移，而不是6px，使标签更远离弧线
+        return getLabelPosList(cx, cy, segments.length, radius, 8, layerCounts, outerRadii);
+    }, [cx, cy, segments.length, radius, segments, rings, layerSpacing]);
     
     // 处理标签点击
     const handleLabelClick = (index: number) => {

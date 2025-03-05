@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WaveGraph } from './wave-graph';
 import { WaveGraphSegment, CompetencySegment } from './types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // 状态对应的虚线样式
@@ -63,7 +62,6 @@ export function CompetencyWheel({
             STATUS_DASH_ARRAY[child.status as keyof typeof STATUS_DASH_ARRAY] || []
         );
         
-        // 移除默认的二级维度那一层，只保留一级维度和已有的二级维度
         // 每个一级维度的层数 = 二级维度数量（如果有的话）
         // 若没有二级维度，则只有一层
         const totalLayers = Math.max(1, secondaryCount);
@@ -79,11 +77,6 @@ export function CompetencyWheel({
         if (finalDashStyles.length === 0) {
             finalDashStyles.push([]);
         }
-        
-        console.log(`维度 ${comp.name}:`, {
-            层数: totalLayers,
-            dash样式: finalDashStyles
-        });
         
         // 创建段落
         return {
@@ -118,55 +111,31 @@ export function CompetencyWheel({
     // 显示加载状态
     if (isLoading) {
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle><Skeleton className="h-8 w-2/3" /></CardTitle>
-                    <CardDescription><Skeleton className="h-4 w-4/5" /></CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-center h-[400px]">
-                        <Skeleton className="h-[300px] w-[300px] rounded-full" />
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="w-full flex justify-center items-center">
+                <Skeleton className="h-[300px] w-[300px] rounded-full" />
+            </div>
         );
     }
     
     // 如果没有数据
     if (competencies.length === 0) {
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>{title}</CardTitle>
-                    <CardDescription>{description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-center h-[400px] text-gray-400">
-                        暂无素养数据
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="w-full flex items-center justify-center h-[350px] text-gray-400">
+                暂无素养数据
+            </div>
         );
     }
     
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col justify-center items-center py-4 relative">
-                <div className="w-full flex justify-center">
-                    <WaveGraph
-                        height={450}
-                        segments={segments}
-                        selectedId={selectedId}
-                        onSelect={handleSelect}
-                        sectorSpacing={4}
-                        layerSpacing={20}
-                    />
-                </div>
-            </CardContent>
-        </Card>
+        <div className="w-full flex justify-center">
+            <WaveGraph
+                height={400}
+                segments={segments}
+                selectedId={selectedId}
+                onSelect={handleSelect}
+                sectorSpacing={2}
+                layerSpacing={20}
+            />
+        </div>
     );
 } 
