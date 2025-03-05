@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 
-// 默认租户数据
+// 默认学校数据
 const defaultSchoolTenant = {
   id: "default",
   name: "通用平台",
@@ -43,7 +43,7 @@ export function SchoolSwitcher() {
     return Building;
   };
   
-  // 根据用户信息创建租户对象
+  // 根据用户信息创建学校对象
   const userTenant = user?.tenant 
     ? {
         id: "user-tenant",
@@ -54,7 +54,7 @@ export function SchoolSwitcher() {
       }
     : defaultSchoolTenant
   
-  // 只显示用户自己的租户
+  // 只显示用户自己的学校
   const schoolTenants = [userTenant];
   const [activeSchool, setActiveSchool] = React.useState(userTenant)
 
@@ -92,7 +92,7 @@ export function SchoolSwitcher() {
               sideOffset={4}
             >
               <DropdownMenuLabel className="text-muted-foreground text-xs">
-                学校租户
+                学校
               </DropdownMenuLabel>
               {schoolTenants.map((school, index) => (
                 <DropdownMenuItem

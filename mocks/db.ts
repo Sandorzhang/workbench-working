@@ -13,8 +13,8 @@ const dbFactory = factory({
     password: String,
     phone: String,
     role: String, // 'admin' or 'teacher'
-    tenant: String, // 用户所属租户
-    tenantType: String, // 租户类型
+    tenant: String, // 用户所属学校
+    tenantType: String, // 学校类型
   },
   // 用户会话模型
   session: {
@@ -198,7 +198,7 @@ const dbFactory = factory({
     status: Boolean,           // 启用/停用状态
   },
   
-  // 学校(租户)模型
+  // 学校模型
   school: {
     id: primaryKey(String),    // 系统生成的唯一ID
     name: String,              // 学校名称

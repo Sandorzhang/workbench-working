@@ -366,10 +366,10 @@ export default function SchoolsPage() {
   return (
     <div className="space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">租户管理（学校）</h2>
+        <h2 className="text-3xl font-bold tracking-tight">学校管理</h2>
         <Button onClick={openAddDialog}>
           <Plus className="mr-2 h-4 w-4" />
-          添加租户
+          添加学校
         </Button>
       </div>
       
@@ -446,7 +446,7 @@ export default function SchoolsPage() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="搜索租户名称、代码或区域..."
+            placeholder="搜索学校、代码或区域..."
             className="pl-8 md:w-[300px] lg:w-[400px]"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -457,8 +457,8 @@ export default function SchoolsPage() {
       {/* 学校列表 */}
       <Card>
         <CardHeader>
-          <CardTitle>租户列表</CardTitle>
-          <CardDescription>管理系统中的所有租户（学校）</CardDescription>
+          <CardTitle>学校</CardTitle>
+          <CardDescription>管理系统中的所有学校</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -469,7 +469,7 @@ export default function SchoolsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>租户名称</TableHead>
+                  <TableHead>学校</TableHead>
                   <TableHead>代码</TableHead>
                   <TableHead>区域</TableHead>
                   <TableHead>学校类型</TableHead>
@@ -481,7 +481,7 @@ export default function SchoolsPage() {
                 {filteredSchools.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
-                      没有找到租户数据
+                      没有找到学校
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -530,9 +530,9 @@ export default function SchoolsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? '编辑租户' : '添加租户'}</DialogTitle>
+            <DialogTitle>{isEditMode ? '编辑学校' : '添加学校'}</DialogTitle>
             <DialogDescription>
-              {isEditMode ? '修改租户信息' : '添加一个新的租户到系统中'}
+              {isEditMode ? '修改学校信息' : '添加一个新的学校到系统中'}
             </DialogDescription>
           </DialogHeader>
           
@@ -732,7 +732,7 @@ export default function SchoolsPage() {
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              您确定要删除租户 "{schoolToDelete?.name}" 吗？此操作不可撤销。
+              您确定要删除学校 "{schoolToDelete?.name}" 吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

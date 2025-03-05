@@ -133,72 +133,40 @@ export default function SuperAdminPage() {
   const adminApplications: AdminApplication[] = [
     {
       id: '1',
-      name: '用户和权限管理',
-      description: '管理系统用户、角色和权限设置',
+      name: '用户管理',
+      description: '管理系统用户、角色和账号设置',
       icon: 'users',
       url: '/superadmin/users'
     },
     {
       id: '2',
-      name: '租户管理',
-      description: '创建和管理系统租户，设置租户级别的配置和权限',
+      name: '学校管理',
+      description: '创建和管理学校，设置学校级别的配置',
       icon: 'building',
-      url: '/superadmin/tenants'
+      url: '/superadmin/schools'
     },
     {
       id: '3',
-      name: '系统配置',
-      description: '管理系统全局设置和参数配置',
-      icon: 'settings',
-      url: '/superadmin/settings'
+      name: '区域管理',
+      description: '管理系统地区划分和区域设置',
+      icon: 'mapPin',
+      url: '/superadmin/regions'
     },
     {
       id: '4',
-      name: '日志与审计',
-      description: '查看系统日志和用户操作记录',
-      icon: 'fileText',
-      url: '/superadmin/logs'
-    },
-    {
-      id: '5',
-      name: '系统监控',
-      description: '监控系统性能和资源使用情况',
-      icon: 'activity',
-      url: '/superadmin/monitor'
-    },
-    {
-      id: '6',
-      name: '数据备份与恢复',
-      description: '管理系统数据备份和恢复任务',
-      icon: 'database',
-      url: '/superadmin/backup'
-    },
-    {
-      id: '7',
-      name: '模块管理',
-      description: '启用/禁用系统功能模块，管理模块配置',
-      icon: 'layers',
-      url: '/superadmin/modules'
-    },
-    {
-      id: '8',
-      name: '安全中心',
-      description: '查看和管理系统安全策略及异常情况',
-      icon: 'shield',
-      url: '/superadmin/security'
+      name: '权限管理',
+      description: '设置系统权限和访问控制策略',
+      icon: 'lock',
+      url: '/superadmin/permissions'
     }
   ];
   
   // 图标映射
   const iconComponents: Record<string, React.ElementType> = {
     'users': Users,
-    'building': Server,
-    'settings': Settings,
-    'fileText': FileText,
-    'activity': Activity,
-    'database': Database,
-    'layers': Globe,
-    'shield': Shield
+    'building': School,
+    'mapPin': MapPin,
+    'lock': Lock
   };
   
   // 应用点击处理函数

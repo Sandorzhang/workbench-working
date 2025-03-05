@@ -26,7 +26,7 @@ export const userHandlers = [
         users = users.filter(user => user.role === role);
       }
       
-      // 按租户过滤
+      // 按学校过滤
       if (tenant) {
         users = users.filter(user => user.tenant === tenant);
       }

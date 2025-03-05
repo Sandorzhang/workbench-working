@@ -45,7 +45,7 @@ const pageTitleMap: Record<string, PageInfo> = {
     parent: { title: '超级管理员控制台', path: '/superadmin' }
   },
   '/superadmin/schools': { 
-    title: '租户管理（学校）',
+    title: '学校管理',
     parent: { title: '超级管理员控制台', path: '/superadmin' }
   },
   '/superadmin/regions': { 

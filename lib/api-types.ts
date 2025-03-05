@@ -174,7 +174,7 @@ export enum SchoolType {
   TWELVE_YEAR = "十二年一贯制"
 }
 
-// 学校（租户）相关类型
+// 学校相关类型
 export interface School {
   id: string;           // 系统生成的唯一ID
   name: string;         // 学校名称
