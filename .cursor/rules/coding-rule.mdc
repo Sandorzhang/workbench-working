@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: 整体遵循此文件
+globs: 
+alwaysApply: true
+---
+
+- 在新版本的 Next.js 中，params 是一个 Promise 对象，应该使用 React.use() 来解析它。
+- toast 使用sonner
+- shadcn相关的安装命令为 npm shadcn@latest 而不是npm shadcn-ui@latest
+- 项目没有 src目录
+- 为MSW的handler按照具体功能命名
