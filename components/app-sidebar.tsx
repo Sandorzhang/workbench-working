@@ -6,6 +6,8 @@ import {
   SquareTerminal,
   Calendar,
   Bot,
+  BookOpen,
+  GraduationCap,
   type LucideIcon
 } from "lucide-react"
 
@@ -38,6 +40,26 @@ const navMainData = [
     title: "我的日历",
     url: "/calendar",
     icon: Calendar,
+  },
+  {
+    title: "学生素养",
+    url: "/student/competency",
+    icon: BookOpen,
+  },
+  {
+    title: "教师管理",
+    url: "/teacher",
+    icon: GraduationCap,
+    items: [
+      {
+        title: "学生素养评估",
+        url: "/teacher/student-competency",
+      },
+      {
+        title: "教学资源管理",
+        url: "/teacher/resources",
+      }
+    ]
   },
 ];
 

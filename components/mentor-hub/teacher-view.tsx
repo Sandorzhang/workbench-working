@@ -10,7 +10,6 @@ import {
   BookOpen,
   Calendar,
   ChevronLeft,
-  User,
   FilterIcon,
   SearchIcon,
   AlertCircle,
@@ -20,7 +19,16 @@ import {
   Heart,
   Award,
   FileText,
-  History
+  History,
+  Star,
+  ClipboardEdit,
+  FilePlus2,
+  Pencil,
+  Trash2,
+  BarChart3,
+  RefreshCw,
+  Search,
+  User
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Skeleton } from "../ui/skeleton";
@@ -37,6 +45,17 @@ import {
   ResponsiveContainer,
   BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   PieChart, Pie, Cell
+} from 'recharts';
+import { StudentCompetencyOverview } from "./student-competency-overview";
+import {
+  LineChart,
+  Legend,
+  Line,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
 } from 'recharts';
 
 // 基础学生类型
@@ -146,11 +165,11 @@ function StudentList({
       
       <div className="px-2 py-1.5 border-b border-gray-100">
         <div className="relative">
-          <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input 
             type="text"
             placeholder="搜索学生姓名或学号..." 
-            className="h-7 text-xs pl-7 rounded-md border-gray-200"
+            className="h-7 text-xs pl-9 rounded-md border-gray-200"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -329,522 +348,283 @@ function StudentDetail({
   student: EnrichedStudent
 }) {
   const [newNote, setNewNote] = useState("");
-  const [noteSubmitted, setNoteSubmitted] = useState(false);
   
-  const handleNoteSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  // 处理添加笔记
+  const handleAddNote = () => {
     if (!newNote.trim()) return;
     
-    setNoteSubmitted(true);
-    setTimeout(() => {
-      setNoteSubmitted(false);
-      setNewNote("");
-    }, 2000);
+    // 实际项目中应该通过API保存笔记
+    toast.success("笔记已添加");
+    setNewNote("");
   };
-  
+
   return (
-    <div className="bg-white rounded-r-xl shadow-md border border-gray-100 overflow-hidden h-full flex flex-col">
-      <div className="px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-slate-50/90 to-white flex items-center">
-        <Badge variant="outline" className="bg-white mr-2.5 border-primary/20 shadow-sm">学生档案</Badge>
-        <h2 className="text-base font-semibold text-gray-800 flex items-center">
-          {student.name}
-          <span className="ml-2 text-xs font-normal text-muted-foreground bg-gray-50 px-2 py-0.5 rounded-full">
-            {student.grade}{student.class}班
-          </span>
-        </h2>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-6 student-detail-scroll">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="mb-5 bg-gray-50/80 p-1.5 rounded-lg w-full border border-gray-200/80 shadow-sm">
-            <TabsTrigger 
-              value="overview" 
-              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              概览
-            </TabsTrigger>
-            <TabsTrigger 
-              value="personal-info" 
-              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              个人信息
-            </TabsTrigger>
-            <TabsTrigger 
-              value="academic" 
-              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              学术记录
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notes" 
-              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              教师笔记
-            </TabsTrigger>
-          </TabsList>
+    <div className="space-y-8">
+      {/* 学生基本信息 */}
+      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+          <Avatar className="h-20 w-20 border-2 border-blue-100">
+            <AvatarImage src={student.avatar || undefined} alt={student.name} />
+            <AvatarFallback className="bg-primary/10 text-primary text-lg">
+              {student.name.slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
           
-          <TabsContent value="overview" className="focus-visible:outline-none focus-visible:ring-0 space-y-6">
-            {/* 学生画像展示 */}
-            <div className="grid grid-cols-1 gap-6">
-              {/* 学生基本信息卡片 */}
-              <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
-                <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <User className="h-4 w-4 mr-2 text-primary" />
-                    个人信息
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2 text-muted-foreground">
-                      <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
-                        <div className="font-medium text-gray-500">姓名</div>
-                        <div className="col-span-2">{student.name}</div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
-                        <div className="font-medium text-gray-500">学号</div>
-                        <div className="col-span-2">{student.studentId}</div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
-                        <div className="font-medium text-gray-500">班级</div>
-                        <div className="col-span-2">{student.grade}{student.class}班</div>
-                      </div>
-                      {student.gender && (
-                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
-                          <div className="font-medium text-gray-500">性别</div>
-                          <div className="col-span-2">{student.gender === 'male' ? '男' : '女'}</div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2 text-muted-foreground">
-                      {student.birthday && (
-                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
-                          <div className="font-medium text-gray-500">生日</div>
-                          <div className="col-span-2">{student.birthday}</div>
-                        </div>
-                      )}
-                      {student.contact && (
-                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
-                          <div className="font-medium text-gray-500">联系方式</div>
-                          <div className="col-span-2">{student.contact}</div>
-                        </div>
-                      )}
-                      {student.interests && student.interests.length > 0 && (
-                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
-                          <div className="font-medium text-gray-500">兴趣爱好</div>
-                          <div className="col-span-2">
-                            <div className="flex flex-wrap gap-1">
-                              {student.interests.map((interest, idx) => (
-                                <Badge key={idx} variant="secondary" className="bg-primary/5 text-xs">
-                                  {interest}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 可持续发展的素养表现旭日图 */}
-              <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
-                <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <PieChart className="h-4 w-4 mr-2 text-primary" />
-                    可持续发展的素养表现
-                  </CardTitle>
-                  <CardDescription>学生核心素养的持续性发展状况</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80 p-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: '创新思维', value: 85, color: '#4f46e5' },
-                            { name: '沟通能力', value: 75, color: '#0ea5e9' },
-                            { name: '团队协作', value: 80, color: '#10b981' },
-                            { name: '自主学习', value: 70, color: '#f59e0b' },
-                            { name: '问题解决', value: 65, color: '#ef4444' },
-                            { name: '批判性思考', value: 60, color: '#8b5cf6' },
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={130}
-                          paddingAngle={3}
-                          dataKey="value"
-                          label={({ name, value }) => `${name}: ${value}`}
-                          labelLine={{ stroke: '#d1d5db', strokeWidth: 1 }}
-                          animationBegin={0}
-                          animationDuration={1200}
-                          animationEasing="ease-out"
-                        >
-                          {[
-                            { name: '创新思维', value: 85, color: '#4f46e5' },
-                            { name: '沟通能力', value: 75, color: '#0ea5e9' },
-                            { name: '团队协作', value: 80, color: '#10b981' },
-                            { name: '自主学习', value: 70, color: '#f59e0b' },
-                            { name: '问题解决', value: 65, color: '#ef4444' },
-                            { name: '批判性思考', value: 60, color: '#8b5cf6' },
-                          ].map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={entry.color} 
-                              stroke="#ffffff" 
-                              strokeWidth={1}
-                            />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip 
-                          formatter={(value, name) => [`${value}分`, name]} 
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            borderRadius: '6px',
-                            border: '1px solid #f3f4f6',
-                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
-                            padding: '8px 12px'
-                          }}
-                          wrapperStyle={{ outline: 'none' }}
-                          itemStyle={{ color: '#4b5563', fontSize: '12px' }}
-                          labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 阶段性测量的素养条形图 */}
-              <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
-                <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <BarChart2 className="h-4 w-4 mr-2 text-primary" />
-                    阶段性素养测量
-                  </CardTitle>
-                  <CardDescription>学生近期素养水平测量结果</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80 p-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsBarChart
-                        data={[
-                          { name: '语言表达', 本学期: 85, 上学期: 75 },
-                          { name: '数学思维', 本学期: 70, 上学期: 65 },
-                          { name: '科学探究', 本学期: 75, 上学期: 60 },
-                          { name: '艺术素养', 本学期: 90, 上学期: 80 },
-                          { name: '身心健康', 本学期: 80, 上学期: 75 },
-                          { name: '社会责任', 本学期: 65, 上学期: 60 },
-                        ]}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-                        barGap={0}
-                        barCategoryGap={16}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                        <XAxis 
-                          dataKey="name" 
-                          axisLine={{ stroke: '#e2e8f0', strokeWidth: 1 }}
-                          tickLine={false}
-                          tick={{ fontSize: 12, fill: '#64748b' }}
-                          dy={8}
-                        />
-                        <YAxis 
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 12, fill: '#64748b' }}
-                          dx={-8}
-                        />
-                        <RechartsTooltip
-                          formatter={(value, name) => [`${value}分`, name === '本学期' ? '本学期' : '上学期']}
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            borderRadius: '6px',
-                            border: '1px solid #f3f4f6',
-                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
-                            padding: '8px 12px'
-                          }}
-                          itemStyle={{ color: '#4b5563', fontSize: '12px' }}
-                          labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
-                        />
-                        <Bar 
-                          dataKey="上学期" 
-                          stackId="a" 
-                          fill="#c7d2fe" 
-                          stroke="#4f46e5" 
-                          strokeWidth={0.5}
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <Bar 
-                          dataKey="本学期" 
-                          stackId="a" 
-                          fill="#4f46e5" 
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </RechartsBarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="flex-1 space-y-4 text-center md:text-left">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center justify-center md:justify-start gap-2">
+                {student.name}
+                <Badge variant="outline" className="ml-2 text-xs font-normal">
+                  {student.grade} {student.class}
+                </Badge>
+              </h2>
+              <p className="text-muted-foreground">学号: {student.studentId}</p>
             </div>
             
-            {/* 保留原有的CSS样式 */}
-            <style jsx global>{`
-              .hexagon-lg {
-                position: relative;
-                width: 70px;
-                height: 80px;
-                overflow: hidden;
-              }
-              
-              .hexagon-background-lg,
-              .hexagon-fill-lg {
-                position: absolute;
-                width: 100%;
-                clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-              }
-              
-              .hexagon-background-lg {
-                height: 100%;
-              }
-              
-              .hexagon-fill-lg {
-                bottom: 0;
-                transition: height 0.3s ease-in-out;
-              }
-            `}</style>
-          </TabsContent>
-          
-          <TabsContent value="personal-info" className="focus-visible:outline-none focus-visible:ring-0">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">学生个人档案</CardTitle>
-                <CardDescription>详细的学生个人信息</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2 pb-1 border-b">基本信息</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">姓名</div>
-                        <div className="font-medium">{student.name}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">学号</div>
-                        <div className="font-medium">{student.studentId}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">年级班级</div>
-                        <div className="font-medium">{student.grade}{student.class}班</div>
-                      </div>
-                      {student.gender && (
-                        <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground">性别</div>
-                          <div className="font-medium">{student.gender === 'male' ? '男' : '女'}</div>
-                        </div>
-                      )}
-                      {student.birthday && (
-                        <div className="space-y-1">
-                          <div className="text-xs text-muted-foreground">出生日期</div>
-                          <div className="font-medium">{student.birthday}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {student.contact && (
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">联系方式</h4>
-                      <div className="space-y-1">
-                        <div className="font-medium">{student.contact}</div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {student.address && (
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">家庭住址</h4>
-                      <div className="space-y-1">
-                        <div className="font-medium">{student.address}</div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {student.interests && student.interests.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">兴趣爱好</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {student.interests.map((interest, index) => (
-                          <Badge key={index} variant="secondary" className="bg-primary/5">
-                            {interest}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {student.strengths && student.strengths.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">个人优势</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {student.strengths.map((strength, index) => (
-                          <Badge key={index} variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                            {strength}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {student.areasToImprove && student.areasToImprove.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">需要改进的领域</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {student.areasToImprove.map((area, index) => (
-                          <Badge key={index} variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                            {area}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-muted-foreground mb-1">班主任评价</p>
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-gray-200 mr-1" />
+                  <span className="ml-1 font-medium">4.0</span>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+              
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-muted-foreground mb-1">教师评价</p>
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <span className="ml-1 font-medium">5.0</span>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <p className="text-muted-foreground mb-1">学生自评</p>
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
+                  <Star className="h-4 w-4 text-gray-200 mr-1" />
+                  <Star className="h-4 w-4 text-gray-200 mr-1" />
+                  <span className="ml-1 font-medium">3.0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 学生素养与能力概览 */}
+      <div>
+        <h3 className="font-medium text-md flex items-center mb-4">
+          <Star className="mr-2 h-5 w-5 text-amber-500" />
+          学生素养与能力概览
+        </h3>
+        <StudentCompetencyOverview />
+      </div>      
+      
+      {/* 学习数据统计 */}
+      <div className="space-y-4">
+        <h3 className="font-medium text-md flex items-center">
+          <BarChart3 className="mr-2 h-5 w-5 text-blue-500" />
+          学习数据统计
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
+            <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <BookOpen className="h-4 w-4 mr-2 text-primary" />
+                学科成绩趋势
+              </CardTitle>
+              <CardDescription>主要学科的学习表现趋势</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 p-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={[
+                      { month: '9月', 数学: 85, 语文: 78, 英语: 92, 科学: 68 },
+                      { month: '10月', 数学: 82, 语文: 80, 英语: 90, 科学: 72 },
+                      { month: '11月', 数学: 88, 语文: 84, 英语: 91, 科学: 77 },
+                      { month: '12月', 数学: 90, 语文: 82, 英语: 94, 科学: 80 },
+                      { month: '1月', 数学: 92, 语文: 85, 英语: 92, 科学: 84 },
+                    ]}
+                    margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" />
+                    <YAxis domain={[60, 100]} />
+                    <Tooltip />
+                    <Legend verticalAlign="top" height={36} />
+                    <Line type="monotone" dataKey="数学" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="语文" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="英语" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="科学" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
           
-          <TabsContent value="academic" className="focus-visible:outline-none focus-visible:ring-0">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">学术记录</CardTitle>
-                <CardDescription>学生的学术表现和成绩记录</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {student.academicRecords && student.academicRecords.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>科目</TableHead>
-                        <TableHead>成绩</TableHead>
-                        <TableHead>类型</TableHead>
-                        <TableHead>日期</TableHead>
-                        <TableHead className="hidden md:table-cell">评价</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {student.academicRecords.map((record) => {
-                        // 根据成绩生成不同的颜色
-                        let scoreClass = "text-gray-800";
-                        if (record.score >= 90) scoreClass = "text-emerald-600 font-semibold";
-                        else if (record.score >= 80) scoreClass = "text-blue-600 font-semibold";
-                        else if (record.score >= 70) scoreClass = "text-amber-600 font-semibold";
-                        else if (record.score < 60) scoreClass = "text-red-600 font-semibold";
-                        
-                        return (
-                          <TableRow key={record.id}>
-                            <TableCell className="font-medium">{record.subject}</TableCell>
-                            <TableCell className={scoreClass}>{record.score}</TableCell>
-                            <TableCell>{record.type}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">{record.date}</TableCell>
-                            <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[300px] truncate">
-                              {record.comment && (
-                                <Tooltip>
-                                  <TooltipTrigger className="cursor-help underline decoration-dotted">
-                                    查看评价
-                                  </TooltipTrigger>
-                                  <TooltipContent className="w-[300px]">
-                                    <p className="text-sm">{record.comment}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                    <p className="text-muted-foreground">暂无学术记录</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
+            <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <BarChart3 className="h-4 w-4 mr-2 text-primary" />
+                学习参与度
+              </CardTitle>
+              <CardDescription>各类学习活动的参与情况</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 p-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart 
+                    outerRadius="80%" 
+                    data={[
+                      { subject: '课堂参与', A: 90, fullMark: 100 },
+                      { subject: '课后作业', A: 85, fullMark: 100 },
+                      { subject: '讨论发言', A: 65, fullMark: 100 },
+                      { subject: '合作学习', A: 80, fullMark: 100 },
+                      { subject: '项目完成', A: 75, fullMark: 100 },
+                      { subject: '自主学习', A: 70, fullMark: 100 },
+                    ]}
+                  >
+                    <PolarGrid stroke="#e5e7eb" />
+                    <PolarAngleAxis dataKey="subject" tickSize={10} stroke="#9ca3af" />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#e5e7eb" />
+                    <Radar name="学生" dataKey="A" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.3} />
+                    <Legend />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
           
-          <TabsContent value="notes" className="focus-visible:outline-none focus-visible:ring-0">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">教师笔记</CardTitle>
-                <CardDescription>记录与学生相关的重要信息和观察</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <form onSubmit={handleNoteSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="note">添加新笔记</Label>
-                    <Textarea 
-                      id="note"
-                      placeholder="输入有关该学生的笔记..."
-                      value={newNote}
-                      onChange={(e) => setNewNote(e.target.value)}
-                      className="min-h-[100px] resize-y max-h-[300px]"
-                    />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-muted-foreground">
-                      笔记将以教师的名义保存
-                    </p>
-                    <Button type="submit" disabled={!newNote.trim()}>保存笔记</Button>
-                  </div>
-                  {noteSubmitted && (
-                    <div className="bg-green-50 text-green-700 text-sm p-2 rounded-md border border-green-200 flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      笔记已成功保存
-                    </div>
-                  )}
-                </form>
-                
-                <div className="space-y-3 pt-4">
-                  <h4 className="font-medium text-sm flex items-center border-b pb-2">
-                    <History className="h-4 w-4 mr-2 text-muted-foreground" />
-                    历史笔记
-                  </h4>
-                  
-                  {student.notes && student.notes.length > 0 ? (
-                    <div className="space-y-2">
-                      {student.notes.map((note, index) => (
-                        <div 
-                          key={note.id || index} 
-                          className="bg-gray-50 p-3 rounded-md border border-gray-100 hover:bg-gray-100 transition-colors cursor-default"
-                        >
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded-full border">
-                              {note.date}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {note.author}
-                            </div>
-                          </div>
-                          <p className="text-sm whitespace-pre-line">{note.content}</p>
-                        </div>
+          <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
+            <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <PieChart className="h-4 w-4 mr-2 text-primary" />
+                可持续发展的素养表现
+              </CardTitle>
+              <CardDescription>学生核心素养的持续性发展状况</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 p-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: '创新思维', value: 85, color: '#4f46e5' },
+                        { name: '沟通能力', value: 75, color: '#0ea5e9' },
+                        { name: '团队协作', value: 80, color: '#10b981' },
+                        { name: '自主学习', value: 70, color: '#f59e0b' },
+                        { name: '问题解决', value: 65, color: '#ef4444' },
+                        { name: '批判性思考', value: 60, color: '#8b5cf6' },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                      labelLine={{ stroke: '#d1d5db', strokeWidth: 1 }}
+                      animationBegin={0}
+                      animationDuration={1200}
+                      animationEasing="ease-out"
+                    >
+                      {[
+                        { name: '创新思维', value: 85, color: '#4f46e5' },
+                        { name: '沟通能力', value: 75, color: '#0ea5e9' },
+                        { name: '团队协作', value: 80, color: '#10b981' },
+                        { name: '自主学习', value: 70, color: '#f59e0b' },
+                        { name: '问题解决', value: 65, color: '#ef4444' },
+                        { name: '批判性思考', value: 60, color: '#8b5cf6' },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {/* 导师笔记 */}
+      <div className="space-y-4">
+        <h3 className="font-medium text-md flex items-center">
+          <ClipboardEdit className="mr-2 h-5 w-5 text-green-500" />
+          导师笔记
+        </h3>
+        
+        <Card className="border-gray-200/80">
+          <CardContent className="p-4 space-y-4">
+            <Textarea
+              placeholder="添加新的导师笔记..."
+              className="min-h-[120px] focus-visible:ring-primary"
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+            />
+            <div className="flex justify-end">
+              <Button 
+                className="gap-1" 
+                disabled={!newNote.trim()}
+                onClick={handleAddNote}
+              >
+                <FilePlus2 className="h-4 w-4" />
+                添加笔记
+              </Button>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4 pt-2">
+              {[
+                {
+                  id: 1,
+                  date: "2024-01-15",
+                  content: "学生在数学学科表现出色，特别是几何和代数方面。建议进一步加强统计学的学习。"
+                },
+                {
+                  id: 2,
+                  date: "2023-12-10",
+                  content: "期中考试后与学生进行了辅导，发现学生在学习方法上需要调整，已提供相关建议。"
+                },
+                {
+                  id: 3,
+                  date: "2023-11-05",
+                  content: "学生展示出良好的团队合作能力，在小组项目中表现积极主动，能够帮助其他同学。"
+                }
+              ].map((note) => (
+                <div key={note.id} className="bg-slate-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-muted-foreground">{note.date}</span>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <Calendar className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                      <p>暂无笔记记录</p>
-                      <p className="text-xs">添加第一条笔记来记录学生情况</p>
-                    </div>
-                  )}
+                  </div>
+                  <p className="text-sm">{note.content}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -871,110 +651,211 @@ function TeacherViewSkeleton() {
 
 // 修改TeacherView组件，使用并排布局
 export default function TeacherView() {
-  const [selectedStudent, setSelectedStudent] = useState<EnrichedStudent | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [students, setStudents] = useState<EnrichedStudent[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<EnrichedStudent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch('/api/teacher/students');
-        
-        if (!response.ok) {
-          throw new Error('获取学生列表失败，请稍后重试');
-        }
-        
-        const data = await response.json();
-        setStudents(data);
-        // 默认选中第一个学生
-        if (data.length > 0 && !selectedStudent) {
-          setSelectedStudent(data[0]);
-        }
-      } catch (err) {
-        console.error('Error fetching students:', err);
-        setError('获取学生列表失败，请稍后重试');
-      } finally {
-        setLoading(false);
+  // 获取教师管理的学生列表
+  const fetchStudents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/teacher/mentored-students');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch students');
       }
-    };
-    
+      
+      const data = await response.json();
+      
+      // 转换数据格式以符合EnrichedStudent类型
+      const enrichedStudents: EnrichedStudent[] = data.map((student: any) => ({
+        id: student.id,
+        name: student.name,
+        avatar: student.avatar,
+        studentId: student.studentId,
+        grade: student.grade,
+        class: student.class,
+        gender: student.gender,
+        indicators: [
+          {
+            id: `academic-${student.id}`,
+            name: '学术素养',
+            value: student.competencyStatus.academic,
+            maxValue: 100,
+            description: '学术和学科知识掌握程度'
+          },
+          {
+            id: `social-${student.id}`,
+            name: '社交素养',
+            value: student.competencyStatus.social,
+            maxValue: 100,
+            description: '人际交往和团队协作能力'
+          },
+          {
+            id: `personal-${student.id}`,
+            name: '个人素养',
+            value: student.competencyStatus.personal,
+            maxValue: 100,
+            description: '自我管理和个人发展能力'
+          },
+          {
+            id: `engineering-${student.id}`,
+            name: '工程素养',
+            value: student.competencyStatus.engineering,
+            maxValue: 100,
+            description: '实践能力和解决实际问题的能力'
+          }
+        ]
+      }));
+      
+      setStudents(enrichedStudents);
+      
+      // 如果有学生数据，默认选择第一个学生
+      if (enrichedStudents.length > 0 && !selectedStudent) {
+        fetchStudentDetail(enrichedStudents[0].id);
+      }
+    } catch (error) {
+      console.error('获取学生列表失败:', error);
+      toast.error('获取学生列表失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 获取学生详细信息
+  const fetchStudentDetail = async (studentId: string) => {
+    try {
+      const response = await fetch(`/api/teacher/student/${studentId}`);
+      
+      if (!response.ok) {
+        throw new Error('获取学生详细信息失败');
+      }
+      
+      const data = await response.json();
+      
+      // 将API返回的数据转换成组件需要的格式
+      const enrichedStudent: EnrichedStudent = {
+        id: data.id,
+        name: data.name,
+        avatar: data.avatar,
+        studentId: data.studentId,
+        grade: data.grade,
+        class: data.class,
+        gender: data.gender,
+        birthday: data.birthday,
+        contact: data.contact,
+        address: data.address,
+        interests: data.interests,
+        strengths: data.strengths,
+        areasToImprove: data.areasToImprove,
+        notes: data.notes,
+        academicRecords: data.academicRecords,
+        indicators: [
+          {
+            id: 'academic',
+            name: '学术素养',
+            value: data.competencyDetail.academic.progress,
+            maxValue: 100,
+            description: data.competencyDetail.academic.description
+          },
+          {
+            id: 'social',
+            name: '社交素养',
+            value: data.competencyDetail.social.progress,
+            maxValue: 100,
+            description: data.competencyDetail.social.description
+          },
+          {
+            id: 'personal',
+            name: '个人素养',
+            value: data.competencyDetail.personal.progress,
+            maxValue: 100,
+            description: data.competencyDetail.personal.description
+          },
+          {
+            id: 'engineering',
+            name: '工程素养',
+            value: data.competencyDetail.engineering.progress,
+            maxValue: 100,
+            description: data.competencyDetail.engineering.description
+          }
+        ]
+      };
+      
+      setSelectedStudent(enrichedStudent);
+    } catch (error) {
+      console.error('获取学生详细信息失败:', error);
+      toast.error('获取学生详细信息失败');
+    }
+  };
+
+  // 处理学生选择
+  const handleSelectStudent = (student: EnrichedStudent) => {
+    fetchStudentDetail(student.id);
+  };
+
+  // 组件挂载时获取学生列表
+  useEffect(() => {
     fetchStudents();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-800">我的学生</h1>
-        <div className="flex h-[calc(100vh-12rem)] bg-gray-50/50 rounded-xl overflow-hidden">
-          <div className="w-1/4 bg-white/80">
-            <Skeleton className="h-10 w-full" />
-            <div className="space-y-2 p-3">
-              {Array(8).fill(0).map((_, i) => (
-                <div key={i} className="flex items-center">
-                  <Skeleton className="h-10 w-10 rounded-full mr-3" />
-                  <div>
-                    <Skeleton className="h-4 w-24 mb-1" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="w-3/4">
-            <Skeleton className="h-10 w-full" />
-            <div className="p-5">
-              <Skeleton className="h-8 w-full mb-4" />
-              <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-40 w-full" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // 处理刷新
+  const handleRefresh = () => {
+    fetchStudents();
+    if (selectedStudent) {
+      fetchStudentDetail(selectedStudent.id);
+    }
+    toast.success('数据已刷新');
+  };
 
-  if (error) {
-    return (
-      <div>
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>错误</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
+  if (isLoading) {
+    return <TeacherViewSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex h-[calc(100vh-8rem)]">
-        <div className="w-1/5">
-          <StudentList 
-            students={students} 
-            onSelectStudent={setSelectedStudent}
-            selectedStudentId={selectedStudent?.id || null}
-          />
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="col-span-1 bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
+          <h2 className="text-lg font-semibold">学生列表</h2>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleRefresh}
+            className="h-8 w-8"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
-        <div className="w-4/5">
-          {selectedStudent ? (
-            <StudentDetail student={selectedStudent} />
-          ) : (
-            <div className="bg-white rounded-r-xl shadow-sm border border-gray-100 h-full flex items-center justify-center">
-              <div className="text-center p-8">
-                <User className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-                <p className="text-muted-foreground font-medium">请从左侧选择一名学生查看详情</p>
-              </div>
+        <div className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="搜索学生..."
+              className="pl-9"
+            />
+          </div>
+        </div>
+        <StudentList 
+          students={students} 
+          onSelectStudent={handleSelectStudent}
+          selectedStudentId={selectedStudent?.id || null}
+        />
+      </div>
+      
+      <div className="col-span-1 lg:col-span-3">
+        {selectedStudent ? (
+          <StudentDetail student={selectedStudent} />
+        ) : (
+          <div className="flex h-[300px] items-center justify-center bg-white rounded-xl shadow border border-gray-100">
+            <div className="text-center">
+              <User className="mx-auto h-12 w-12 text-gray-300" />
+              <h3 className="mt-2 text-lg font-medium">请选择一名学生</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                从左侧列表选择一名学生查看详情
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

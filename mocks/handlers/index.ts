@@ -1,46 +1,26 @@
 import { http } from 'msw';
 
 import { authHandlers } from './auth';
-import { userHandlers } from './user';
-import { calendarHandlers } from './calendar';
-import { dataAssetsHandlers } from './data-assets';
 import { aiLibraryHandlers } from './ai-library';
-import { mentorHandlers } from './mentor';
-import { imageHandlers } from './image';
-import { teachingPlanHandlers } from './teaching-plans';
-import { agentHandlers } from './agents';
-import { classroomTimemachineHandlers } from './classroom-timemachine';
-import { educationHandlers } from './education';
-import { academicStandardsHandlers } from './academic-standards';
-import { aiAssistantHandlers } from './ai-assistant';
 import { conceptMapHandlers } from './concept-map';
 import { academicJourneyHandlers } from './academic-journey';
-import { teachingDesignsHandlers } from './teaching-designs-alt';
 import { examHandlers } from './exam';
 import { questionsHandlers } from './question';
+import { studentHandlers } from './student';
 import { teacherHandlers } from './teacher';
+import { testHandlers } from './test';
 // 导入其他处理器...
 
 export const handlers = [
   ...authHandlers,
-  ...userHandlers,
-  ...examHandlers,
-  ...questionsHandlers,
-  ...calendarHandlers,
-  ...dataAssetsHandlers,
   ...aiLibraryHandlers,
-  ...mentorHandlers,
-  ...teacherHandlers,
-  ...imageHandlers,
-  ...teachingPlanHandlers,
-  ...agentHandlers,
-  ...classroomTimemachineHandlers,
-  ...educationHandlers,
-  ...academicStandardsHandlers,
-  ...aiAssistantHandlers,
   ...conceptMapHandlers,
   ...academicJourneyHandlers,
-  ...teachingDesignsHandlers,
+  ...examHandlers,
+  ...questionsHandlers,
+  ...studentHandlers,
+  ...teacherHandlers,
+  ...testHandlers,
   // 其他处理器...
   
   // 处理默认头像
