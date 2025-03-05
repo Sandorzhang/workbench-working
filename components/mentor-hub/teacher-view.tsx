@@ -22,34 +22,11 @@ import { Skeleton } from "../ui/skeleton";
 import { Progress } from "../ui/progress";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
-import { StudentCompetencyOverview } from "./student-competency-overview";
 import { EnrichedStudent } from "@/types/student";
-
-// 基础类型定义
-interface Indicator {
-  id: string;
-  name: string;
-  value: number;
-  maxValue: number;
-  description?: string;
-}
-
-interface Note {
-  id?: string;
-  date: string;
-  content: string;
-  author: string;
-}
-
-interface AcademicRecord {
-  id?: string;
-  subject: string;
-  score: number;
-  date: string;
-  type: string;
-  rank?: string;
-  comment?: string;
-}
+import { StudentCompetency } from "./student-competency";
+import { StudentAcademic } from "./student-academic";
+import { StudentTracking } from "./student-tracking";
+import { StudentEvaluation } from "./student-evaluation";
 
 // 学生列表组件
 function StudentList({ 
@@ -230,7 +207,7 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
           <Avatar className="h-16 w-16 border-2 border-blue-100">
-            <AvatarImage src={student.avatar || undefined} alt={student.name} />
+            <AvatarImage src={student.avatar} alt={student.name} />
             <AvatarFallback className="bg-primary/10 text-primary text-lg">
               {student.name.slice(0, 2)}
             </AvatarFallback>
@@ -273,147 +250,22 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
         
         {/* 学生轮盘(素养概览和素养详情) */}
         <TabsContent value="competency" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Star className="mr-2 h-5 w-5 text-primary" />
-                学生素养概览
-              </CardTitle>
-              <CardDescription>
-                学生核心素养与能力发展维度图谱
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <StudentCompetencyOverview />
-            </CardContent>
-          </Card>
+          <StudentCompetency indicators={student.indicators} />
         </TabsContent>
         
         {/* 学生学业 */}
         <TabsContent value="academic" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <BookOpen className="mr-2 h-5 w-5 text-primary" />
-                学生学业信息
-              </CardTitle>
-              <CardDescription>
-                展示学生的学科表现、考试成绩和学业进展
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* 学科成绩卡片 */}
-                <div>
-                  <h3 className="text-md font-medium mb-3">最近考试成绩</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {['语文', '数学', '英语', '科学', '历史', '地理'].map((subject) => (
-                      <div key={subject} className="bg-slate-50 p-4 rounded-lg">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-medium">{subject}</span>
-                          <Badge variant="outline">{Math.floor(70 + Math.random() * 30)}分</Badge>
-                        </div>
-                        <Progress value={Math.floor(70 + Math.random() * 30)} className="h-2" />
-                        <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                          <span>班级排名: {Math.floor(1 + Math.random() * 20)}</span>
-                          <span>年级排名: {Math.floor(10 + Math.random() * 50)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* 学习进度 */}
-                <div className="border-t pt-4">
-                  <h3 className="text-md font-medium mb-3">学期学习进度</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium">课程完成率</span>
-                        <span className="text-primary font-medium">85%</span>
-                      </div>
-                      <Progress value={85} className="h-2" />
-                    </div>
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium">作业提交率</span>
-                        <span className="text-primary font-medium">92%</span>
-                      </div>
-                      <Progress value={92} className="h-2" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StudentAcademic academicRecords={student.academicRecords || []} />
         </TabsContent>
         
         {/* 学生追踪 */}
         <TabsContent value="tracking" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <History className="mr-2 h-5 w-5 text-primary" />
-                学生追踪
-              </CardTitle>
-              <CardDescription>
-                记录学生日常表现、活动参与和成长轨迹
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium">尚未开启学生追踪</p>
-                    <p className="text-sm text-muted-foreground">该功能将在未来版本中支持</p>
-                  </div>
-                </div>
-                
-                <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-xl">
-                  <div className="text-center">
-                    <History className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground">学生追踪记录将在这里显示</p>
-                    <p className="text-xs text-muted-foreground/80 mt-1">包括行为记录、活动参与和成长轨迹</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StudentTracking notes={student.notes || []} />
         </TabsContent>
         
         {/* 学生评价 */}
         <TabsContent value="evaluation" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <BarChart3 className="mr-2 h-5 w-5 text-primary" />
-                学生评价
-              </CardTitle>
-              <CardDescription>
-                综合评价学生的表现和发展潜力
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
-                  <ClipboardEdit className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium">尚未开启学生评价</p>
-                    <p className="text-sm text-muted-foreground">该功能将在未来版本中支持</p>
-                  </div>
-                </div>
-                
-                <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-xl">
-                  <div className="text-center">
-                    <ClipboardEdit className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground">学生评价将在这里显示</p>
-                    <p className="text-xs text-muted-foreground/80 mt-1">包括教师评价、家长反馈和自我评估</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StudentEvaluation studentId={student.id} />
         </TabsContent>
       </Tabs>
     </div>

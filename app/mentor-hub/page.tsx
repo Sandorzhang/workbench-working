@@ -47,7 +47,7 @@ export default function MentorHubPage() {
   const getRoleBasedContent = () => {
     if (userRole === 'teacher') {
       return {
-        title: "我的学生",
+        title: "全员导师",
         description: "查看和管理您指导的学生信息",
         icon: UserCircle,
         gradient: "from-blue-50 to-indigo-50",

@@ -54,6 +54,31 @@ export interface StudentWithIndicators extends Student {
   }[];
 }
 
+export interface Indicator {
+  id: string;
+  name: string;
+  value: number;
+  maxValue: number;
+  description?: string;
+}
+
+export interface Note {
+  id?: string;
+  date: string;
+  content: string;
+  author: string;
+}
+
+export interface AcademicRecord {
+  id?: string;
+  subject: string;
+  score: number;
+  date: string;
+  type: string;
+  rank?: string;
+  comment?: string;
+}
+
 // Fully enriched student with all properties
 export interface EnrichedStudent extends Student {
   gender?: 'male' | 'female';
@@ -63,26 +88,7 @@ export interface EnrichedStudent extends Student {
   interests?: string[];
   strengths?: string[];
   areasToImprove?: string[];
-  indicators: {
-    id: string;
-    name: string;
-    value: number;
-    maxValue: number;
-    description?: string;
-  }[];
-  notes?: {
-    id?: string;
-    date: string;
-    content: string;
-    author: string;
-  }[];
-  academicRecords?: {
-    id?: string;
-    subject: string;
-    score: number;
-    date: string;
-    type: string;
-    rank?: string;
-    comment?: string;
-  }[];
+  indicators: Indicator[];
+  notes?: Note[];
+  academicRecords?: AcademicRecord[];
 } 

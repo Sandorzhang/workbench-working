@@ -9,6 +9,7 @@ import { questionsHandlers } from './question';
 import { studentHandlers } from './student';
 import { teacherHandlers } from './teacher';
 import { testHandlers } from './test';
+import { studentEvaluationHandlers } from './student-evaluation';
 // 导入其他处理器...
 
 export const handlers = [
@@ -21,6 +22,7 @@ export const handlers = [
   ...studentHandlers,
   ...teacherHandlers,
   ...testHandlers,
+  ...studentEvaluationHandlers,
   // 其他处理器...
   
   // 处理默认头像
