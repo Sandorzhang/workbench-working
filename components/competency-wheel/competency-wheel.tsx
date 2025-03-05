@@ -155,10 +155,10 @@ export function CompetencyWheel({
                 <CardTitle>{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col justify-center items-center py-8 px-4 relative">
+            <CardContent className="flex flex-col justify-center items-center py-4 relative">
                 <div className="w-full flex justify-center">
                     <WaveGraph
-                        height={600}
+                        height={450}
                         segments={segments}
                         selectedId={selectedId}
                         onSelect={handleSelect}

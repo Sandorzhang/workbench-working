@@ -31,16 +31,16 @@ export function StudentCompetencyOverview({ isLoading = false }: StudentCompeten
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
       <div className="lg:col-span-3">
         <CompetencyWheel 
           isLoading={isLoading}
           onDimensionClick={handleDimensionClick}
-          title="素养概览"
-          description="学生核心素养与能力发展维度"
+          title=""
+          description=""
         />
       </div>
-      <div className="lg:col-span-1">
+      <div className="lg:col-span-2">
         <CompetencyDetail competency={selectedCompetency} />
       </div>
     </div>

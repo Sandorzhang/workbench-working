@@ -28,13 +28,15 @@ interface CompetencyDetailProps {
 export function CompetencyDetail({ competency }: CompetencyDetailProps) {
   if (!competency) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>素养详情</CardTitle>
-          <CardDescription>请选择一个维度查看详细信息</CardDescription>
-        </CardHeader>
-        <CardContent className="text-center text-muted-foreground p-8">
-          点击左侧素养轮中的任意维度查看详情
+      <Card className="h-full border-dashed">
+        <CardContent className="flex flex-col items-center justify-center h-full py-10 text-center">
+          <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+            <Star className="h-6 w-6 text-muted-foreground opacity-30" />
+          </div>
+          <h3 className="font-medium text-muted-foreground mb-1">请选择素养维度</h3>
+          <p className="text-sm text-muted-foreground/70 max-w-[250px]">
+            点击左侧轮盘的任一区域以查看详细信息
+          </p>
         </CardContent>
       </Card>
     );
@@ -57,36 +59,29 @@ export function CompetencyDetail({ competency }: CompetencyDetailProps) {
   };
 
   return (
-    <Card className="w-full overflow-hidden transition-all duration-300 hover:shadow-md">
-      <CardHeader 
-        className="pb-3 space-y-1.5 bg-gradient-to-r border-b border-gray-100/90"
-        style={{ 
-          backgroundImage: competency.color 
-            ? `linear-gradient(to right, ${competency.color}15, ${competency.color}05)` 
-            : 'linear-gradient(to right, rgba(243, 244, 246, 0.5), white)' 
-        }}
-      >
+    <Card className="h-full shadow-none">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium flex items-center">
+          <CardTitle className="text-base flex items-center gap-2">
             <span 
-              className="h-3 w-3 rounded-full mr-2 flex-shrink-0" 
+              className="h-3 w-3 rounded-full flex-shrink-0" 
               style={{ backgroundColor: competency.color || '#4f46e5' }}
             />
             {competency.name}
           </CardTitle>
           
-          {competency.level > 1 && competency.status && (
+          {competency.status && (
             <Badge 
-              className="flex items-center gap-1 font-normal"
               variant={
                 competency.status === 'completed' ? 'default' : 
                 competency.status === 'in-progress' ? 'secondary' : 'outline'
               }
+              className="flex items-center gap-1 font-normal"
             >
               <StatusIcon />
               <span>
-                {competency.status === 'completed' ? '已完成' : 
-                 competency.status === 'in-progress' ? '进行中' : '待开始'}
+                {competency.status === 'completed' ? '已掌握' : 
+                 competency.status === 'in-progress' ? '学习中' : '待学习'}
               </span>
             </Badge>
           )}
@@ -98,28 +93,31 @@ export function CompetencyDetail({ competency }: CompetencyDetailProps) {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="p-4 space-y-4">
-        {/* 描述 */}
-        {competency.description && (
-          <div className="text-sm text-gray-600 leading-relaxed">
-            {competency.description}
-          </div>
-        )}
-        
+      <CardContent className="space-y-4">
         {/* 进度 */}
         {competency.progress !== undefined && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">完成度</span>
+          <div>
+            <div className="flex justify-between items-center mb-2 text-sm">
+              <span className="text-muted-foreground">掌握程度:</span>
               <span className="font-medium">{competency.progress}%</span>
             </div>
             <Progress value={competency.progress} className="h-2" />
           </div>
         )}
+
+        {/* 描述 */}
+        {competency.description && (
+          <div>
+            <h4 className="text-sm font-medium mb-1.5">素养描述</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {competency.description}
+            </p>
+          </div>
+        )}
         
         {/* 得分 */}
         {competency.score !== undefined && (
-          <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+          <div className="bg-slate-50 rounded-lg p-3 flex items-center justify-between">
             <span className="text-sm text-muted-foreground">评估得分</span>
             <div className="flex items-center">
               <span className="font-semibold text-lg mr-1">{competency.score}</span>
@@ -130,11 +128,11 @@ export function CompetencyDetail({ competency }: CompetencyDetailProps) {
         
         {/* 技能列表 */}
         {competency.skills && competency.skills.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">相关技能</p>
-            <div className="flex flex-wrap gap-2">
+          <div>
+            <h4 className="text-sm font-medium mb-2">相关技能</h4>
+            <div className="flex flex-wrap gap-1.5">
               {competency.skills.map((skill, index) => (
-                <Badge key={index} variant="outline" className="bg-gray-50/80">
+                <Badge key={index} variant="secondary" className="font-normal">
                   {skill}
                 </Badge>
               ))}
@@ -144,10 +142,8 @@ export function CompetencyDetail({ competency }: CompetencyDetailProps) {
       </CardContent>
       
       {competency.lastUpdated && (
-        <CardFooter className="pt-0 px-4 pb-4">
-          <p className="text-xs text-muted-foreground">
-            最后更新: {competency.lastUpdated}
-          </p>
+        <CardFooter className="pt-0 text-xs text-muted-foreground">
+          最近更新: {competency.lastUpdated}
         </CardFooter>
       )}
     </Card>
