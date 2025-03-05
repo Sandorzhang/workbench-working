@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 // 高亮索引钩子，用于处理鼠标悬停和选择效果
 export function useHighlightIndex(items: { id: string }[], selectedId?: string) {
@@ -67,6 +67,7 @@ export function useLayerValue(items: { layers?: number }[], defaultLayers: numbe
 // 响应式尺寸钩子
 export function useResize(definedWidth = 0) {
     const [width, setWidth] = useState(definedWidth);
+    const containerRef = useRef<HTMLDivElement>(null);
     
     // 初始化宽度
     useEffect(() => {
@@ -74,7 +75,12 @@ export function useResize(definedWidth = 0) {
             if (definedWidth) {
                 setWidth(definedWidth);
             } else {
-                setWidth(Math.min(window.innerWidth - 100, 600));
+                // 计算容器宽度或使用默认值
+                const containerWidth = containerRef.current ? 
+                    containerRef.current.clientWidth : 
+                    Math.min(window.innerWidth - 40, 600);
+                
+                setWidth(containerWidth);
             }
         };
         
@@ -85,5 +91,5 @@ export function useResize(definedWidth = 0) {
         return () => window.removeEventListener('resize', initializeChart);
     }, [definedWidth]);
     
-    return width;
+    return { width, containerRef };
 } 

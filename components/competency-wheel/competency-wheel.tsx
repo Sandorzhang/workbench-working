@@ -155,71 +155,35 @@ export function CompetencyWheel({
                 <CardTitle>{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="relative">
+            <CardContent className="flex flex-col justify-center items-center py-8 px-4 relative">
+                <div className="w-full flex justify-center">
                     <WaveGraph
-                        height={400}
+                        height={600}
                         segments={segments}
                         selectedId={selectedId}
                         onSelect={handleSelect}
                         sectorSpacing={4}
-                        layerSpacing={30}
+                        layerSpacing={20}
                     />
-                    
-                    {selectedDimension && (
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                            <h4 className="font-medium">{selectedDimension.name}</h4>
-                            <div className="mt-2 text-sm">
-                                {selectedDimension.children.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        {selectedDimension.children.map((sub: any) => (
-                                            <div 
-                                                key={sub.id} 
-                                                className="flex items-center gap-2 p-2 border rounded"
-                                            >
-                                                <div 
-                                                    className="w-3 h-3 rounded-full" 
-                                                    style={{ 
-                                                        backgroundColor: sub.color,
-                                                        opacity: sub.status === 'completed' ? 1 : 0.5 
-                                                    }}
-                                                />
-                                                <span>
-                                                    {sub.name}
-                                                    {sub.isAdvanced && <span className="text-red-500 ml-1">*</span>}
-                                                </span>
-                                                <span className="ml-auto">
-                                                    {sub.status === 'completed' ? '已完成' : 
-                                                     sub.status === 'in-progress' ? '进行中' : '未开始'}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p>该维度暂无子维度数据</p>
-                                )}
-                            </div>
+                </div>
+
+                <div className="absolute bottom-3 right-3 text-xs text-gray-500">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center gap-1">
+                            <span className="inline-block w-8 h-[2px] bg-gray-500"></span>
+                            <span>已完成</span>
                         </div>
-                    )}
-                    
-                    <div className="mt-3 text-xs text-gray-500">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                                <span className="inline-block w-8 h-[2px] bg-gray-500"></span>
-                                <span>已完成</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="inline-block w-8 h-[2px] bg-gray-500" style={{ strokeDasharray: '4,2' }}></span>
-                                <span>进行中</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="inline-block w-8 h-[2px] bg-gray-500" style={{ strokeDasharray: '2,4' }}></span>
-                                <span>未开始</span>
-                            </div>
-                            <div className="flex items-center gap-1 ml-auto">
-                                <span className="text-red-500">*</span>
-                                <span>高级项目</span>
-                            </div>
+                        <div className="flex items-center gap-1">
+                            <span className="inline-block w-8 h-[2px] bg-gray-500" style={{ strokeDasharray: '4,2' }}></span>
+                            <span>进行中</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="inline-block w-8 h-[2px] bg-gray-500" style={{ strokeDasharray: '2,4' }}></span>
+                            <span>未开始</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-red-500">*</span>
+                            <span>高级项目</span>
                         </div>
                     </div>
                 </div>

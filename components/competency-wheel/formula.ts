@@ -21,15 +21,59 @@ export function renderSectors(params: Params) {
 }
 
 // 获取标签位置列表
-export function getLabelPosList(cx: number, cy: number, segmentCount: number, radius: number, offset: number = 20) {
+export function getLabelPosList(
+    cx: number, 
+    cy: number, 
+    segmentCount: number, 
+    radius: number, 
+    offset: number = 6, // 增加基础偏移量
+    segmentLayers?: number[], // 每个段落的层数
+    segmentRadii?: number[] // 每个段落的实际外层弧线半径
+) {
     const positions: Point[] = [];
     for (let i = 0; i < segmentCount; i++) {
         const angle = (360 / segmentCount) * i + (360 / segmentCount) / 2;
         const radians = angle * (Math.PI / 180);
+        
+        // 确定使用哪个半径 - 如果提供了segmentRadii则使用它，否则使用基础radius
+        const effectiveRadius = segmentRadii && segmentRadii[i] ? segmentRadii[i] : radius;
+        
+        // 为特定角度增加额外偏移，避免标签重叠或被遮挡
+        let extraOffset = 0;
+        
+        // 根据不同角度区域，细化调整偏移量
+        if (angle > 180 && angle < 270) {
+            // 左下角区域
+            extraOffset = 3;
+        } else if (angle >= 270 && angle < 360) {
+            // 左上角区域
+            extraOffset = 2;
+        } else if (angle >= 0 && angle < 90) {
+            // 右上角区域
+            extraOffset = 2;
+        } else if (angle >= 90 && angle <= 180) {
+            // 右下角区域
+            extraOffset = 3;
+        }
+        
+        // 使用更大的基础偏移，确保标签不会被弧线遮挡
+        const finalOffset = offset + extraOffset;
+        
+        // 计算最终位置
         positions.push({
-            x: cx + (radius + offset) * Math.cos(radians),
-            y: cy + (radius + offset) * Math.sin(radians)
+            x: cx + (effectiveRadius + finalOffset) * Math.cos(radians),
+            y: cy + (effectiveRadius + finalOffset) * Math.sin(radians)
         });
+        
+        // 添加调试信息
+        if (i === 0 || i === Math.floor(segmentCount / 2)) {
+            console.log(`标签${i}位置计算:`, {
+                角度: angle,
+                有效半径: effectiveRadius,
+                最终偏移: finalOffset,
+                最终位置: positions[i]
+            });
+        }
     }
     return positions;
 }
@@ -43,8 +87,8 @@ export function renderRings(params: Params): Ring[] {
     
     console.log('renderRings:', { layerCount, segmentCount, layerSpacing, radius });
     
-    // 计算内环半径 - 以总半径的30%作为内环基础，更贴近圆心
-    const innerRadius = radius * 0.3;
+    // 计算内环半径 - 以总半径的35%作为内环基础，更贴近圆心
+    const innerRadius = radius * 0.35;
     
     // 生成每个层级的环，从内向外扩展
     for (let layerIndex = 0; layerCount > 0 && layerIndex < layerCount; layerIndex++) {
