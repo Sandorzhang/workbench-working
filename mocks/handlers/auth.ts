@@ -30,7 +30,7 @@ interface CodeLoginRequest {
 
 export const authHandlers = [
   // 账号密码登录
-  http.post('*/api/auth/login', async ({ request }) => {
+  http.post(new RegExp('.*/api/auth/login'), async ({ request }) => {
     await delay(500);
     const { username, password } = await request.json() as LoginRequest;
     

@@ -14,7 +14,13 @@ import {
   FilterIcon,
   SearchIcon,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  BarChart2,
+  Info,
+  Heart,
+  Award,
+  FileText,
+  History
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Skeleton } from "../ui/skeleton";
@@ -24,6 +30,14 @@ import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Textarea } from "../ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Label } from "../ui/label";
+import {
+  ResponsiveContainer,
+  BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  PieChart, Pie, Cell
+} from 'recharts';
 
 // 基础学生类型
 interface Student {
@@ -80,109 +94,239 @@ interface EnrichedStudent {
   areasToImprove?: string[];
 }
 
-// 学生列表组件
+// 修改StudentList组件，改为垂直滚动的简化版
 function StudentList({ 
   students, 
-  onSelectStudent 
+  onSelectStudent,
+  selectedStudentId
 }: { 
   students: EnrichedStudent[], 
-  onSelectStudent: (student: EnrichedStudent) => void 
+  onSelectStudent: (student: EnrichedStudent) => void,
+  selectedStudentId: string | null
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // 过滤学生列表
+  const filteredStudents = students.filter(student => 
+    student.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    student.studentId.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (students.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 bg-slate-50/80">
-          <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-            <User className="mr-2 h-5 w-5 text-primary" />
+      <div className="bg-white rounded-l-xl shadow-sm border border-gray-100 overflow-hidden h-full">
+        <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/80">
+          <h2 className="text-xs font-semibold text-gray-800 flex items-center">
+            <User className="mr-1.5 h-3.5 w-3.5 text-primary" />
             学生列表
           </h2>
         </div>
-        <div className="p-8 text-center py-20 bg-white">
-          <User className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-          <p className="text-muted-foreground font-medium">暂无分配学生</p>
-          <p className="text-muted-foreground text-sm mt-1">请联系管理员分配学生</p>
+        <div className="p-4 text-center py-10 bg-white">
+          <User className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-20" />
+          <p className="text-muted-foreground text-sm">暂无分配学生</p>
+          <p className="text-muted-foreground text-xs mt-1">请联系管理员分配学生</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-100 bg-slate-50/80">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-          <User className="mr-2 h-5 w-5 text-primary" />
-          学生列表
+    <div className="bg-white rounded-l-xl shadow-sm border border-r-0 border-gray-100 overflow-hidden h-full flex flex-col">
+      <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/80 flex items-center justify-between">
+        <h2 className="text-xs font-semibold text-gray-800 flex items-center">
+          <User className="mr-1.5 h-3.5 w-3.5 text-primary" />
+          学生列表 <span className="ml-1 text-[10px] text-muted-foreground">({filteredStudents.length}/{students.length})</span>
         </h2>
+        <div className="flex items-center">
+          <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-gray-50 border-gray-200">
+            {students.length} 人
+          </Badge>
+        </div>
       </div>
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {students.map((student) => (
-            <Card 
+      
+      <div className="px-2 py-1.5 border-b border-gray-100">
+        <div className="relative">
+          <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+          <Input 
+            type="text"
+            placeholder="搜索学生姓名或学号..." 
+            className="h-7 text-xs pl-7 rounded-md border-gray-200"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button 
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground hover:text-gray-700 transition-colors"
+              onClick={() => setSearchQuery("")}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className="overflow-y-auto flex-1 py-1 student-list-scroll">
+        {filteredStudents.length === 0 ? (
+          <div className="px-3 py-6 text-center">
+            <SearchIcon className="h-5 w-5 text-muted-foreground opacity-20 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">未找到匹配的学生</p>
+            <button 
+              className="mt-2 text-xs text-primary hover:underline"
+              onClick={() => setSearchQuery("")}
+            >
+              清除搜索
+            </button>
+          </div>
+        ) : (
+          filteredStudents.map((student, index) => (
+            <div 
               key={student.id} 
-              className="hover:border-primary/50 cursor-pointer transition-all hover:shadow-md overflow-hidden"
+              className={`px-2 py-2 ${index !== filteredStudents.length - 1 ? 'border-b border-gray-100/70' : ''} flex items-center cursor-pointer transition-all duration-200 group ${
+                selectedStudentId === student.id 
+                  ? 'bg-primary/5 border-l-3 border-l-primary' 
+                  : 'hover:bg-slate-50 border-l-3 border-l-transparent hover:border-l-primary/30'
+              }`}
               onClick={() => onSelectStudent(student)}
             >
-              <CardContent className="p-0">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
-                      <AvatarImage src={student.avatar} alt={student.name} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {student.name.substring(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1">
-                      <h4 className="text-lg font-semibold text-gray-800">{student.name}</h4>
-                      <div className="flex items-center text-sm text-gray-600 mt-1">
-                        <div className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
-                          {student.grade}{student.class}班
-                        </div>
-                        <span className="mx-2 text-gray-300">•</span>
-                        <span className="text-xs">学号: {student.studentId}</span>
-                      </div>
-                    </div>
-                  </div>
+              <Avatar className="h-9 w-9 mr-2.5 ring-1 ring-gray-100 transition-shadow group-hover:ring-2 group-hover:ring-primary/10">
+                <AvatarImage src={student.avatar} alt={student.name} />
+                <AvatarFallback className="text-xs bg-slate-100 text-slate-500">{student.name.slice(0, 2)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-sm text-slate-700 truncate group-hover:text-primary transition-colors">
+                    {student.name}
+                    <span className="ml-1.5 font-normal text-xs text-muted-foreground">
+                      {student.studentId}
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground bg-gray-50 px-1.5 py-0.5 rounded">
+                    {student.grade}{student.class}班
+                  </p>
                 </div>
-                <div className="p-4 space-y-3">
-                  {student.indicators.map((indicator) => {
-                    // 根据指标类型选择不同的颜色
-                    let colorClass = "bg-blue-500";
-                    if (indicator.name === '学习态度') colorClass = "bg-emerald-500";
-                    if (indicator.name === '参与度') colorClass = "bg-amber-500";
+                <div className="flex mt-2 space-x-2">
+                  {student.indicators.map((indicator, idx) => {
+                    // Define colors based on indicator name and value
+                    let bgColor = "bg-blue-500";
+                    let lightBgColor = "bg-blue-100";
+                    let borderColor = "border-blue-200";
+                    let textColor = "text-blue-700";
+                    
+                    if (indicator.name === '学习态度') {
+                      bgColor = "bg-emerald-500";
+                      lightBgColor = "bg-emerald-100";
+                      borderColor = "border-emerald-200";
+                      textColor = "text-emerald-700";
+                    } else if (indicator.name === '参与度') {
+                      bgColor = "bg-amber-500";
+                      lightBgColor = "bg-amber-100";
+                      borderColor = "border-amber-200";
+                      textColor = "text-amber-700";
+                    }
+                    
+                    // Calculate percentage for filling the hexagon
+                    const percentage = (indicator.value / indicator.maxValue) * 100;
                     
                     return (
-                      <div key={indicator.id} className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="font-medium text-gray-600">{indicator.name}</span>
-                          <span className="font-semibold">
-                            {indicator.value}/{indicator.maxValue}
-                          </span>
-                        </div>
-                        <Progress 
-                          value={(indicator.value / indicator.maxValue) * 100} 
-                          className={`h-2 ${colorClass}`}
-                        />
-                      </div>
+                      <Tooltip key={indicator.id}>
+                        <TooltipTrigger>
+                          <div className="relative flex items-center justify-center group-hover:scale-105 transition-transform">
+                            <div className={`hexagon w-6 h-6 flex items-center justify-center text-xs font-medium border ${borderColor}`}>
+                              <div className={`hexagon-background ${lightBgColor}`}></div>
+                              <div 
+                                className={`hexagon-fill ${bgColor}`} 
+                                style={{ height: `${percentage}%` }}
+                              ></div>
+                              <span className={`relative z-10 text-[10px] font-semibold ${textColor}`}>
+                                {indicator.value}
+                              </span>
+                            </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" align="center" className="p-2 max-w-xs">
+                          <p className="font-semibold text-xs flex items-center">
+                            {indicator.name} 
+                            <span className="ml-1 px-1 rounded bg-slate-100 text-[10px]">
+                              {indicator.value}/{indicator.maxValue}
+                            </span>
+                          </p>
+                          {indicator.description && (
+                            <p className="text-[10px] opacity-80 mt-1">{indicator.description}</p>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
                     );
                   })}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
+      
+      <style jsx global>{`
+        .hexagon {
+          position: relative;
+          overflow: hidden;
+          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+        
+        .hexagon-background,
+        .hexagon-fill {
+          position: absolute;
+          width: 100%;
+          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+          left: 0;
+          right: 0;
+        }
+        
+        .hexagon-background {
+          height: 100%;
+        }
+        
+        .hexagon-fill {
+          bottom: 0;
+          transition: height 0.3s ease-in-out;
+        }
+        
+        .border-l-3 {
+          border-left-width: 3px;
+        }
+        
+        .student-list-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(203, 213, 225, 0.4) transparent;
+        }
+        
+        .student-list-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .student-list-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .student-list-scroll::-webkit-scrollbar-thumb {
+          background-color: rgba(203, 213, 225, 0.4);
+          border-radius: 6px;
+        }
+        
+        .student-list-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(148, 163, 184, 0.6);
+        }
+      `}</style>
     </div>
   );
 }
 
-// 学生详情视图
+// 修改StudentDetail组件，移除返回按钮
 function StudentDetail({ 
-  student, 
-  onBack 
+  student
 }: { 
-  student: EnrichedStudent, 
-  onBack: () => void 
+  student: EnrichedStudent
 }) {
   const [newNote, setNewNote] = useState("");
   const [noteSubmitted, setNoteSubmitted] = useState(false);
@@ -199,123 +343,342 @@ function StudentDetail({
   };
   
   return (
-    <div>
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={onBack} 
-          className="mr-2 group bg-white hover:bg-gray-50 border border-gray-100 shadow-sm"
-        >
-          <ChevronLeft className="mr-1 h-5 w-5 group-hover:-translate-x-0.5 transition-transform" />
-          返回
-        </Button>
-        <Badge variant="outline" className="ml-2 bg-primary/5 text-primary">
-          学生档案
-        </Badge>
+    <div className="bg-white rounded-r-xl shadow-md border border-gray-100 overflow-hidden h-full flex flex-col">
+      <div className="px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-slate-50/90 to-white flex items-center">
+        <Badge variant="outline" className="bg-white mr-2.5 border-primary/20 shadow-sm">学生档案</Badge>
+        <h2 className="text-base font-semibold text-gray-800 flex items-center">
+          {student.name}
+          <span className="ml-2 text-xs font-normal text-muted-foreground bg-gray-50 px-2 py-0.5 rounded-full">
+            {student.grade}{student.class}班
+          </span>
+        </h2>
       </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 flex items-center">
-          <Avatar className="h-20 w-20 border-2 border-white shadow-sm mr-6">
-            <AvatarImage src={student.avatar} alt={student.name} />
-            <AvatarFallback className="bg-primary/10 text-primary text-xl">
-              {student.name.substring(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">{student.name}</h2>
-            <div className="flex items-center text-sm text-gray-600">
-              <div className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-medium">
-                {student.grade}{student.class}班
-              </div>
-              <span className="mx-2 text-gray-300">•</span>
-              <span className="text-xs">学号: {student.studentId}</span>
-              {student.gender && (
-                <>
-                  <span className="mx-2 text-gray-300">•</span>
-                  <span className="text-xs">{student.gender === 'male' ? '男' : '女'}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
+      
+      <div className="flex-1 overflow-y-auto p-6 student-detail-scroll">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="w-full justify-start px-6 pt-4 border-b bg-gray-50/50">
+          <TabsList className="mb-5 bg-gray-50/80 p-1.5 rounded-lg w-full border border-gray-200/80 shadow-sm">
             <TabsTrigger 
               value="overview" 
-              className="data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none"
+              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               概览
             </TabsTrigger>
             <TabsTrigger 
-              value="personal" 
-              className="data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none"
+              value="personal-info" 
+              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               个人信息
             </TabsTrigger>
             <TabsTrigger 
               value="academic" 
-              className="data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none"
+              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
-              学业记录
+              学术记录
             </TabsTrigger>
             <TabsTrigger 
               value="notes" 
-              className="data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none"
+              className="text-sm data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               教师笔记
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="p-6 space-y-6 focus-visible:outline-none focus-visible:ring-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 个人信息卡片 */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium text-gray-800 flex items-center">
+          <TabsContent value="overview" className="focus-visible:outline-none focus-visible:ring-0 space-y-6">
+            {/* 学生画像展示 */}
+            <div className="grid grid-cols-1 gap-6">
+              {/* 学生基本信息卡片 */}
+              <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
+                <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
+                  <CardTitle className="text-sm font-medium flex items-center">
                     <User className="h-4 w-4 mr-2 text-primary" />
                     个人信息
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm space-y-3 pt-2">
-                  {student.birthday && (
-                    <div className="flex justify-between py-1.5 border-b border-dashed border-gray-100 last:border-0">
-                      <span className="text-gray-500">出生日期</span>
-                      <span className="font-medium">{student.birthday}</span>
+                <CardContent className="text-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 text-muted-foreground">
+                      <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
+                        <div className="font-medium text-gray-500">姓名</div>
+                        <div className="col-span-2">{student.name}</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
+                        <div className="font-medium text-gray-500">学号</div>
+                        <div className="col-span-2">{student.studentId}</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
+                        <div className="font-medium text-gray-500">班级</div>
+                        <div className="col-span-2">{student.grade}{student.class}班</div>
+                      </div>
+                      {student.gender && (
+                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
+                          <div className="font-medium text-gray-500">性别</div>
+                          <div className="col-span-2">{student.gender === 'male' ? '男' : '女'}</div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {student.contact && (
-                    <div className="flex justify-between py-1.5 border-b border-dashed border-gray-100 last:border-0">
-                      <span className="text-gray-500">联系方式</span>
-                      <span className="font-medium">{student.contact}</span>
+                    
+                    <div className="space-y-2 text-muted-foreground">
+                      {student.birthday && (
+                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
+                          <div className="font-medium text-gray-500">生日</div>
+                          <div className="col-span-2">{student.birthday}</div>
+                        </div>
+                      )}
+                      {student.contact && (
+                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
+                          <div className="font-medium text-gray-500">联系方式</div>
+                          <div className="col-span-2">{student.contact}</div>
+                        </div>
+                      )}
+                      {student.interests && student.interests.length > 0 && (
+                        <div className="grid grid-cols-3 gap-1 py-1 border-b border-dashed border-gray-100">
+                          <div className="font-medium text-gray-500">兴趣爱好</div>
+                          <div className="col-span-2">
+                            <div className="flex flex-wrap gap-1">
+                              {student.interests.map((interest, idx) => (
+                                <Badge key={idx} variant="secondary" className="bg-primary/5 text-xs">
+                                  {interest}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {student.address && (
-                    <div className="flex justify-between py-1.5 border-b border-dashed border-gray-100 last:border-0">
-                      <span className="text-gray-500">家庭住址</span>
-                      <span className="font-medium">{student.address}</span>
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
-              
-              {/* 兴趣与能力卡片 */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium text-gray-800 flex items-center">
-                    <BarChart className="h-4 w-4 mr-2 text-primary" />
-                    兴趣与能力
+
+              {/* 可持续发展的素养表现旭日图 */}
+              <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
+                <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <PieChart className="h-4 w-4 mr-2 text-primary" />
+                    可持续发展的素养表现
                   </CardTitle>
+                  <CardDescription>学生核心素养的持续性发展状况</CardDescription>
                 </CardHeader>
-                <CardContent className="text-sm pt-2">
-                  {student.interests && (
-                    <div className="mb-4">
-                      <h4 className="text-gray-500 mb-2 text-xs font-medium">兴趣爱好</h4>
-                      <div className="flex flex-wrap gap-1.5">
+                <CardContent>
+                  <div className="h-80 p-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: '创新思维', value: 85, color: '#4f46e5' },
+                            { name: '沟通能力', value: 75, color: '#0ea5e9' },
+                            { name: '团队协作', value: 80, color: '#10b981' },
+                            { name: '自主学习', value: 70, color: '#f59e0b' },
+                            { name: '问题解决', value: 65, color: '#ef4444' },
+                            { name: '批判性思考', value: 60, color: '#8b5cf6' },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={130}
+                          paddingAngle={3}
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: ${value}`}
+                          labelLine={{ stroke: '#d1d5db', strokeWidth: 1 }}
+                          animationBegin={0}
+                          animationDuration={1200}
+                          animationEasing="ease-out"
+                        >
+                          {[
+                            { name: '创新思维', value: 85, color: '#4f46e5' },
+                            { name: '沟通能力', value: 75, color: '#0ea5e9' },
+                            { name: '团队协作', value: 80, color: '#10b981' },
+                            { name: '自主学习', value: 70, color: '#f59e0b' },
+                            { name: '问题解决', value: 65, color: '#ef4444' },
+                            { name: '批判性思考', value: 60, color: '#8b5cf6' },
+                          ].map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={entry.color} 
+                              stroke="#ffffff" 
+                              strokeWidth={1}
+                            />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip 
+                          formatter={(value, name) => [`${value}分`, name]} 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: '6px',
+                            border: '1px solid #f3f4f6',
+                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+                            padding: '8px 12px'
+                          }}
+                          wrapperStyle={{ outline: 'none' }}
+                          itemStyle={{ color: '#4b5563', fontSize: '12px' }}
+                          labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 阶段性测量的素养条形图 */}
+              <Card className="overflow-hidden border-gray-200/80 hover:shadow-md transition-shadow duration-300">
+                <CardHeader className="pb-2 bg-gradient-to-r from-gray-50/50 to-white border-b border-gray-100/80">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <BarChart2 className="h-4 w-4 mr-2 text-primary" />
+                    阶段性素养测量
+                  </CardTitle>
+                  <CardDescription>学生近期素养水平测量结果</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80 p-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsBarChart
+                        data={[
+                          { name: '语言表达', 本学期: 85, 上学期: 75 },
+                          { name: '数学思维', 本学期: 70, 上学期: 65 },
+                          { name: '科学探究', 本学期: 75, 上学期: 60 },
+                          { name: '艺术素养', 本学期: 90, 上学期: 80 },
+                          { name: '身心健康', 本学期: 80, 上学期: 75 },
+                          { name: '社会责任', 本学期: 65, 上学期: 60 },
+                        ]}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                        barGap={0}
+                        barCategoryGap={16}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                        <XAxis 
+                          dataKey="name" 
+                          axisLine={{ stroke: '#e2e8f0', strokeWidth: 1 }}
+                          tickLine={false}
+                          tick={{ fontSize: 12, fill: '#64748b' }}
+                          dy={8}
+                        />
+                        <YAxis 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 12, fill: '#64748b' }}
+                          dx={-8}
+                        />
+                        <RechartsTooltip
+                          formatter={(value, name) => [`${value}分`, name === '本学期' ? '本学期' : '上学期']}
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: '6px',
+                            border: '1px solid #f3f4f6',
+                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+                            padding: '8px 12px'
+                          }}
+                          itemStyle={{ color: '#4b5563', fontSize: '12px' }}
+                          labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                        />
+                        <Bar 
+                          dataKey="上学期" 
+                          stackId="a" 
+                          fill="#c7d2fe" 
+                          stroke="#4f46e5" 
+                          strokeWidth={0.5}
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar 
+                          dataKey="本学期" 
+                          stackId="a" 
+                          fill="#4f46e5" 
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </RechartsBarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* 保留原有的CSS样式 */}
+            <style jsx global>{`
+              .hexagon-lg {
+                position: relative;
+                width: 70px;
+                height: 80px;
+                overflow: hidden;
+              }
+              
+              .hexagon-background-lg,
+              .hexagon-fill-lg {
+                position: absolute;
+                width: 100%;
+                clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+              }
+              
+              .hexagon-background-lg {
+                height: 100%;
+              }
+              
+              .hexagon-fill-lg {
+                bottom: 0;
+                transition: height 0.3s ease-in-out;
+              }
+            `}</style>
+          </TabsContent>
+          
+          <TabsContent value="personal-info" className="focus-visible:outline-none focus-visible:ring-0">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">学生个人档案</CardTitle>
+                <CardDescription>详细的学生个人信息</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2 pb-1 border-b">基本信息</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">姓名</div>
+                        <div className="font-medium">{student.name}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">学号</div>
+                        <div className="font-medium">{student.studentId}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">年级班级</div>
+                        <div className="font-medium">{student.grade}{student.class}班</div>
+                      </div>
+                      {student.gender && (
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">性别</div>
+                          <div className="font-medium">{student.gender === 'male' ? '男' : '女'}</div>
+                        </div>
+                      )}
+                      {student.birthday && (
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">出生日期</div>
+                          <div className="font-medium">{student.birthday}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {student.contact && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">联系方式</h4>
+                      <div className="space-y-1">
+                        <div className="font-medium">{student.contact}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {student.address && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">家庭住址</h4>
+                      <div className="space-y-1">
+                        <div className="font-medium">{student.address}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {student.interests && student.interests.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">兴趣爱好</h4>
+                      <div className="flex flex-wrap gap-2">
                         {student.interests.map((interest, index) => (
-                          <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                          <Badge key={index} variant="secondary" className="bg-primary/5">
                             {interest}
                           </Badge>
                         ))}
@@ -323,292 +686,158 @@ function StudentDetail({
                     </div>
                   )}
                   
-                  {student.strengths && (
+                  {student.strengths && student.strengths.length > 0 && (
                     <div>
-                      <h4 className="text-gray-500 mb-2 text-xs font-medium">优势</h4>
-                      <div className="flex flex-wrap gap-1.5">
+                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">个人优势</h4>
+                      <div className="flex flex-wrap gap-2">
                         {student.strengths.map((strength, index) => (
-                          <Badge key={index} variant="secondary" className="bg-green-50 text-green-700 hover:bg-green-100">
+                          <Badge key={index} variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                             {strength}
                           </Badge>
                         ))}
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-              
-              {/* 核心指标卡片 */}
-              <Card className="md:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium text-gray-800">教师评估指标</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {student.indicators.map((indicator) => {
-                      // 根据指标类型选择不同的颜色
-                      let colorClass = "bg-blue-500";
-                      if (indicator.name === '学习态度') colorClass = "bg-emerald-500";
-                      if (indicator.name === '参与度') colorClass = "bg-amber-500";
-                      
-                      return (
-                        <Card key={indicator.id} className="overflow-hidden border-0 shadow-sm">
-                          <div className={`h-1 ${colorClass}`} />
-                          <CardContent className="p-4">
-                            <div className="mb-2">
-                              <div className="flex justify-between text-sm font-medium mb-0.5">
-                                <span className="text-gray-700">{indicator.name}</span>
-                                <span className="text-gray-800">{indicator.value}/{indicator.maxValue}</span>
-                              </div>
-                              <Progress 
-                                value={(indicator.value / indicator.maxValue) * 100} 
-                                className={`h-2 ${colorClass}`} 
-                              />
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">{indicator.description}</p>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* 最近学业记录 */}
-              <Card className="md:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium text-gray-800 flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-primary" />
-                    最近学业记录
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {student.academicRecords && student.academicRecords.length > 0 ? (
-                    <div className="space-y-4">
-                      {student.academicRecords.slice(0, 3).map((record, index) => (
-                        <div key={index} className="flex items-start border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                          <div className="w-16 mr-4">
-                            <div className={`
-                              px-2 py-1 text-center rounded-md text-xs font-medium
-                              ${record.score >= 90 ? 'bg-green-50 text-green-700' : 
-                                record.score >= 75 ? 'bg-blue-50 text-blue-700' : 
-                                record.score >= 60 ? 'bg-amber-50 text-amber-700' : 
-                                'bg-red-50 text-red-700'}
-                            `}>
-                              {record.score}分
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium text-sm text-gray-800">{record.subject}</h4>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {record.date} · {record.type}
-                            </p>
-                            {record.comment && (
-                              <p className="text-xs text-gray-600 mt-1 bg-gray-50 p-1.5 rounded">
-                                {record.comment}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                  
+                  {student.areasToImprove && student.areasToImprove.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 pb-1 border-b">需要改进的领域</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {student.areasToImprove.map((area, index) => (
+                          <Badge key={index} variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                            {area}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">暂无学业记录</p>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="personal" className="p-6 focus-visible:outline-none focus-visible:ring-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>完整个人信息</CardTitle>
-                <CardDescription>学生的详细个人背景信息</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">姓名</h4>
-                    <p className="text-gray-800">{student.name}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">学号</h4>
-                    <p className="text-gray-800">{student.studentId}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">班级</h4>
-                    <p className="text-gray-800">{student.grade}{student.class}班</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">性别</h4>
-                    <p className="text-gray-800">{student.gender === 'male' ? '男' : '女'}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">出生日期</h4>
-                    <p className="text-gray-800">{student.birthday || '未知'}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">联系方式</h4>
-                    <p className="text-gray-800">{student.contact || '未知'}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <h4 className="text-sm font-medium text-gray-500 mb-1">家庭住址</h4>
-                    <p className="text-gray-800">{student.address || '未知'}</p>
-                  </div>
                 </div>
-                
-                <div className="pt-3 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">兴趣爱好</h4>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {student.interests ? 
-                      student.interests.map((interest, index) => (
-                        <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700">
-                          {interest}
-                        </Badge>
-                      )) : 
-                      <p className="text-gray-500 text-sm">未记录</p>
-                    }
-                  </div>
-                </div>
-                
-                <div className="pt-3 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">优势</h4>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {student.strengths ? 
-                      student.strengths.map((strength, index) => (
-                        <Badge key={index} variant="secondary" className="bg-green-50 text-green-700">
-                          {strength}
-                        </Badge>
-                      )) : 
-                      <p className="text-gray-500 text-sm">未记录</p>
-                    }
-                  </div>
-                </div>
-                
-                {student.areasToImprove && (
-                  <div className="pt-3 border-t border-gray-100">
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">需要提升的方面</h4>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {student.areasToImprove.map((area, index) => (
-                        <Badge key={index} variant="secondary" className="bg-amber-50 text-amber-700">
-                          {area}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="academic" className="p-6 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="academic" className="focus-visible:outline-none focus-visible:ring-0">
             <Card>
               <CardHeader>
-                <CardTitle>学业记录</CardTitle>
-                <CardDescription>学生的考试和作业成绩记录</CardDescription>
+                <CardTitle className="text-base">学术记录</CardTitle>
+                <CardDescription>学生的学术表现和成绩记录</CardDescription>
               </CardHeader>
               <CardContent>
                 {student.academicRecords && student.academicRecords.length > 0 ? (
-                  <div className="space-y-6">
-                    {student.academicRecords.map((record, index) => (
-                      <div key={index} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center">
-                            <div className={`
-                              px-2.5 py-1 text-center rounded-md text-sm font-medium mr-3
-                              ${record.score >= 90 ? 'bg-green-50 text-green-700' : 
-                                record.score >= 75 ? 'bg-blue-50 text-blue-700' : 
-                                record.score >= 60 ? 'bg-amber-50 text-amber-700' : 
-                                'bg-red-50 text-red-700'}
-                            `}>
-                              {record.score}分
-                            </div>
-                            <h4 className="font-medium text-gray-800">{record.subject}</h4>
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {record.date}
-                          </div>
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600 mb-2">
-                          <Badge variant="outline" className="mr-2">
-                            {record.type}
-                          </Badge>
-                          {record.rank && (
-                            <span className="text-xs">班级排名: {record.rank}</span>
-                          )}
-                        </div>
-                        {record.comment && (
-                          <div className="text-sm bg-gray-50 p-3 rounded-md">
-                            <p className="text-gray-700">{record.comment}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>科目</TableHead>
+                        <TableHead>成绩</TableHead>
+                        <TableHead>类型</TableHead>
+                        <TableHead>日期</TableHead>
+                        <TableHead className="hidden md:table-cell">评价</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {student.academicRecords.map((record) => {
+                        // 根据成绩生成不同的颜色
+                        let scoreClass = "text-gray-800";
+                        if (record.score >= 90) scoreClass = "text-emerald-600 font-semibold";
+                        else if (record.score >= 80) scoreClass = "text-blue-600 font-semibold";
+                        else if (record.score >= 70) scoreClass = "text-amber-600 font-semibold";
+                        else if (record.score < 60) scoreClass = "text-red-600 font-semibold";
+                        
+                        return (
+                          <TableRow key={record.id}>
+                            <TableCell className="font-medium">{record.subject}</TableCell>
+                            <TableCell className={scoreClass}>{record.score}</TableCell>
+                            <TableCell>{record.type}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{record.date}</TableCell>
+                            <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[300px] truncate">
+                              {record.comment && (
+                                <Tooltip>
+                                  <TooltipTrigger className="cursor-help underline decoration-dotted">
+                                    查看评价
+                                  </TooltipTrigger>
+                                  <TooltipContent className="w-[300px]">
+                                    <p className="text-sm">{record.comment}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <p>暂无学业记录</p>
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground">暂无学术记录</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="notes" className="p-6 focus-visible:outline-none focus-visible:ring-0">
-            <Card className="border bg-card">
+          <TabsContent value="notes" className="focus-visible:outline-none focus-visible:ring-0">
+            <Card>
               <CardHeader>
-                <CardTitle>教师笔记</CardTitle>
-                <CardDescription>关于该学生的教学笔记和观察</CardDescription>
+                <CardTitle className="text-base">教师笔记</CardTitle>
+                <CardDescription>记录与学生相关的重要信息和观察</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <form onSubmit={handleNoteSubmit} className="space-y-4">
-                  <div>
-                    <Textarea
-                      placeholder="添加新笔记..."
+                  <div className="space-y-2">
+                    <Label htmlFor="note">添加新笔记</Label>
+                    <Textarea 
+                      id="note"
+                      placeholder="输入有关该学生的笔记..."
                       value={newNote}
                       onChange={(e) => setNewNote(e.target.value)}
-                      className="min-h-20 resize-none focus-visible:ring-primary"
+                      className="min-h-[100px] resize-y max-h-[300px]"
                     />
                   </div>
-                  <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      disabled={!newNote.trim() || noteSubmitted}
-                      className="flex items-center"
-                    >
-                      {noteSubmitted ? (
-                        <>
-                          <span>已提交</span>
-                          <CheckCircle className="ml-2 h-4 w-4" />
-                        </>
-                      ) : (
-                        "提交笔记"
-                      )}
-                    </Button>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground">
+                      笔记将以教师的名义保存
+                    </p>
+                    <Button type="submit" disabled={!newNote.trim()}>保存笔记</Button>
                   </div>
+                  {noteSubmitted && (
+                    <div className="bg-green-50 text-green-700 text-sm p-2 rounded-md border border-green-200 flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      笔记已成功保存
+                    </div>
+                  )}
                 </form>
                 
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-sm font-medium">历史笔记</h3>
+                <div className="space-y-3 pt-4">
+                  <h4 className="font-medium text-sm flex items-center border-b pb-2">
+                    <History className="h-4 w-4 mr-2 text-muted-foreground" />
+                    历史笔记
+                  </h4>
                   
                   {student.notes && student.notes.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                       {student.notes.map((note, index) => (
-                        <div key={index} className="bg-muted/10 border rounded-lg p-4 space-y-2 hover:bg-muted/20 transition-colors">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium text-sm text-gray-800">{note.author}</span>
-                            <span className="text-xs text-gray-500">{note.date}</span>
+                        <div 
+                          key={note.id || index} 
+                          className="bg-gray-50 p-3 rounded-md border border-gray-100 hover:bg-gray-100 transition-colors cursor-default"
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded-full border">
+                              {note.date}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {note.author}
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-700">{note.content}</p>
+                          <p className="text-sm whitespace-pre-line">{note.content}</p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 bg-muted/10 rounded-lg">
-                      <Calendar className="w-10 h-10 mx-auto mb-2 text-muted-foreground/50" />
-                      <p className="text-muted-foreground">暂无笔记记录</p>
-                      <p className="text-xs text-muted-foreground mt-1">添加第一条笔记来开始记录</p>
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Calendar className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                      <p>暂无笔记记录</p>
+                      <p className="text-xs">添加第一条笔记来记录学生情况</p>
                     </div>
                   )}
                 </div>
@@ -625,20 +854,22 @@ function StudentDetail({
 function TeacherViewSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="flex justify-between">
-        <Skeleton className="h-8 w-48 rounded-md" />
-        <Skeleton className="h-10 w-32 rounded-md" />
+      <div className="flex justify-end">
+        <Skeleton className="h-8 w-20 rounded-md" />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton key={i} className="h-[200px] rounded-lg" />
-        ))}
+      <div className="flex h-[calc(100vh-12rem)]">
+        <div className="w-1/5 pr-2">
+          <Skeleton className="h-full rounded-lg" />
+        </div>
+        <div className="w-4/5">
+          <Skeleton className="h-full rounded-lg" />
+        </div>
       </div>
     </div>
   );
 }
 
-// 主教师视图组件
+// 修改TeacherView组件，使用并排布局
 export default function TeacherView() {
   const [selectedStudent, setSelectedStudent] = useState<EnrichedStudent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -659,6 +890,10 @@ export default function TeacherView() {
         
         const data = await response.json();
         setStudents(data);
+        // 默认选中第一个学生
+        if (data.length > 0 && !selectedStudent) {
+          setSelectedStudent(data[0]);
+        }
       } catch (err) {
         console.error('Error fetching students:', err);
         setError('获取学生列表失败，请稍后重试');
@@ -673,20 +908,34 @@ export default function TeacherView() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-64 mb-4" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array(6).fill(0).map((_, i) => (
-            <Card key={i} className="overflow-hidden">
-              <CardContent className="p-0">
-                <Skeleton className="h-24 w-full" />
-                <div className="p-4 space-y-3">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
+        <h1 className="text-2xl font-bold text-gray-800">我的学生</h1>
+        <div className="flex h-[calc(100vh-12rem)] bg-gray-50/50 rounded-xl overflow-hidden">
+          <div className="w-1/4 bg-white/80">
+            <Skeleton className="h-10 w-full" />
+            <div className="space-y-2 p-3">
+              {Array(8).fill(0).map((_, i) => (
+                <div key={i} className="flex items-center">
+                  <Skeleton className="h-10 w-10 rounded-full mr-3" />
+                  <div>
+                    <Skeleton className="h-4 w-24 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              ))}
+            </div>
+          </div>
+          <div className="w-3/4">
+            <Skeleton className="h-10 w-full" />
+            <div className="p-5">
+              <Skeleton className="h-8 w-full mb-4" />
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-40 w-full" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -704,45 +953,29 @@ export default function TeacherView() {
     );
   }
 
-  if (selectedStudent) {
-    return (
-      <div>
-        <StudentDetail
-          student={selectedStudent}
-          onBack={() => setSelectedStudent(null)}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">我的学生</h1>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs h-8"
-          >
-            <FilterIcon className="h-3 w-3 mr-1" />
-            筛选
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs h-8"
-          >
-            <SearchIcon className="h-3 w-3 mr-1" />
-            搜索
-          </Button>
+      <div className="flex h-[calc(100vh-8rem)]">
+        <div className="w-1/5">
+          <StudentList 
+            students={students} 
+            onSelectStudent={setSelectedStudent}
+            selectedStudentId={selectedStudent?.id || null}
+          />
+        </div>
+        <div className="w-4/5">
+          {selectedStudent ? (
+            <StudentDetail student={selectedStudent} />
+          ) : (
+            <div className="bg-white rounded-r-xl shadow-sm border border-gray-100 h-full flex items-center justify-center">
+              <div className="text-center p-8">
+                <User className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
+                <p className="text-muted-foreground font-medium">请从左侧选择一名学生查看详情</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-      
-      <StudentList
-        students={students}
-        onSelectStudent={setSelectedStudent}
-      />
     </div>
   );
 } 
