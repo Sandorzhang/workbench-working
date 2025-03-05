@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Pencil } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -60,8 +61,8 @@ const pageTitleMap: Record<string, PageInfo> = {
     title: '课堂时光机',
     parent: { title: '工作台', path: '/workbench' }
   },
-  '/unit-teaching-design': {
-    title: '单元教学设计',
+  '/teaching-design': {
+    title: '单元教案',
     parent: { title: '工作台', path: '/workbench' }
   },
   '/mentor-hub': {

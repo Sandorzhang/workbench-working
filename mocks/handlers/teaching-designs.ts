@@ -1,13 +1,13 @@
 import { http, HttpResponse, delay } from 'msw';
 
-// 模拟单元教学设计的数据
+// 模拟单元教案的数据
 const mockDesigns = [
   {
     id: '1',
     title: '诗词鉴赏专题',
     subject: '初中语文',
     unit: '第一单元',
-    description: '包含《静夜思》、《望岳》等经典诗词的教学设计',
+    description: '包含《静夜思》、《望岳》等经典诗词的教案设计',
     status: 'published',
     lastModified: '2024-03-15',
     progress: 100,

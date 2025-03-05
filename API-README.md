@@ -37,15 +37,25 @@
 | 更新日历事件 | `/api/calendar-events/:id` | PUT | 更新特定日历事件 |
 | 删除日历事件 | `/api/calendar-events/:id` | DELETE | 删除特定日历事件 |
 
-### 5. 教案 API
+### 5. 单课教案 API
 
 | 接口 | 路径 | 方法 | 描述 |
 |------|------|------|------|
-| 获取教案列表 | `/api/teaching-plans` | GET | 获取教案列表(支持分页) |
-| 获取教案详情 | `/api/teaching-plans/:id` | GET | 获取特定教案的详情 |
-| 创建教案 | `/api/teaching-plans` | POST | 创建新的教案 |
-| 更新教案 | `/api/teaching-plans/:id` | PUT | 更新特定教案 |
-| 删除教案 | `/api/teaching-plans/:id` | DELETE | 删除特定教案 |
+| 获取教案列表 | `/api/teaching-plans` | GET | 获取单课教案列表(支持分页) |
+| 获取教案详情 | `/api/teaching-plans/:id` | GET | 获取特定单课教案的详情 |
+| 创建教案 | `/api/teaching-plans` | POST | 创建新的单课教案 |
+| 更新教案 | `/api/teaching-plans/:id` | PUT | 更新特定单课教案 |
+| 删除教案 | `/api/teaching-plans/:id` | DELETE | 删除特定单课教案 |
+
+### 6. 单元教案 API
+
+| 接口 | 路径 | 方法 | 描述 |
+|------|------|------|------|
+| 获取单元教案列表 | `/api/teaching-designs` | GET | 获取单元教案列表(支持分页) |
+| 获取单元教案详情 | `/api/teaching-designs/:id` | GET | 获取特定单元教案的详情 |
+| 创建单元教案 | `/api/teaching-designs` | POST | 创建新的单元教案 |
+| 更新单元教案 | `/api/teaching-designs/:id` | PUT | 更新特定单元教案 |
+| 删除单元教案 | `/api/teaching-designs/:id` | DELETE | 删除特定单元教案 |
 
 ## 认证机制
 

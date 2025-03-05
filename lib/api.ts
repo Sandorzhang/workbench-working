@@ -297,7 +297,7 @@ export const api = {
       })
   },
   
-  // 教案
+  // 单课教案
   teachingPlans: {
     getList: (page = 1, pageSize = 10) => 
       handleRequest(`${API_BASE_URL}/teaching-plans?page=${page}&pageSize=${pageSize}`),
@@ -321,5 +321,29 @@ export const api = {
       handleRequest(`${API_BASE_URL}/teaching-plans/${id}`, {
         method: 'DELETE'
       })
+  },
+  
+  // 单元教案
+  teachingDesigns: {
+    getList: (page = 1, pageSize = 10) => 
+      handleRequest(`${API_BASE_URL}/teaching-designs?page=${page}&pageSize=${pageSize}`),
+      
+    getDetails: (id: string) => 
+      handleRequest(`${API_BASE_URL}/teaching-designs/${id}`),
+      
+    create: (design: any) => 
+      handleRequest(`${API_BASE_URL}/teaching-designs`, {
+        method: 'POST',
+        body: JSON.stringify(design)
+      }),
+      
+    update: (id: string, design: any) => 
+      handleRequest(`${API_BASE_URL}/teaching-designs/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(design)
+      }),
+      
+    delete: (id: string) => 
+      handleRequest(`${API_BASE_URL}/teaching-designs/${id}`, {
   }
 }; 

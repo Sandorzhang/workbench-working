@@ -889,11 +889,11 @@ export function seedDb() {
   
   db.application.create({
     id: '8',
-    name: '单元教学设计',
-    description: '创建和管理教学单元设计',
-    icon: 'layout',
-    url: '/unit-teaching-design',
-    roles: ['teacher', 'admin', 'superadmin'],
+    name: '单元教案',
+    description: '创建和管理单元教案设计',
+    icon: 'pencil',
+    url: '/teaching-design',
+    roles: ['admin', 'teacher'],
   });
   
   db.application.create({
