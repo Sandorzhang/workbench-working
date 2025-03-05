@@ -117,11 +117,13 @@ interface EnrichedStudent {
 function StudentList({ 
   students, 
   onSelectStudent,
-  selectedStudentId
+  selectedStudentId,
+  onRefresh
 }: { 
   students: EnrichedStudent[], 
   onSelectStudent: (student: EnrichedStudent) => void,
-  selectedStudentId: string | null
+  selectedStudentId: string | null,
+  onRefresh: () => void
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -131,17 +133,39 @@ function StudentList({
     student.studentId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // 处理刷新
+  const handleRefresh = () => {
+    // 显示刷新提示
+    toast.success("正在刷新学生数据...");
+    // 调用父组件的刷新方法
+    onRefresh();
+  };
+
   if (students.length === 0) {
     return (
-      <div className="bg-white rounded-l-xl shadow-sm border border-gray-100 overflow-hidden h-full">
-        <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/80">
-          <h2 className="text-xs font-semibold text-gray-800 flex items-center">
-            <User className="mr-1.5 h-3.5 w-3.5 text-primary" />
-            学生列表
-          </h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full w-full flex flex-col">
+        <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/90">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <User className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-medium text-gray-800">学生列表</h2>
+            </div>
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              className="h-7 px-1.5 rounded-md"
+              title="刷新学生数据"
+              disabled={students.length === 0}
+            >
+              <RefreshCw className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
-        <div className="p-4 text-center py-10 bg-white">
-          <User className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-20" />
+        <div className="p-3 text-center py-10 bg-white flex-1 flex flex-col items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2">
+            <User className="w-5 h-5 text-muted-foreground opacity-50" />
+          </div>
           <p className="text-muted-foreground text-sm">暂无分配学生</p>
           <p className="text-muted-foreground text-xs mt-1">请联系管理员分配学生</p>
         </div>
@@ -150,26 +174,33 @@ function StudentList({
   }
 
   return (
-    <div className="bg-white rounded-l-xl shadow-sm border border-r-0 border-gray-100 overflow-hidden h-full flex flex-col">
-      <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/80 flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-gray-800 flex items-center">
-          <User className="mr-1.5 h-3.5 w-3.5 text-primary" />
-          学生列表 <span className="ml-1 text-[10px] text-muted-foreground">({filteredStudents.length}/{students.length})</span>
-        </h2>
-        <div className="flex items-center">
-          <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-gray-50 border-gray-200">
-            {students.length} 人
-          </Badge>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full w-full flex flex-col">
+      <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/90">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-medium text-gray-800 flex items-center">
+            <User className="mr-1.5 h-4 w-4 text-primary" />
+            学生列表
+            <Badge variant="outline" className="ml-1.5 text-xs h-5 px-1.5 bg-white border-gray-200">
+              {filteredStudents.length}/{students.length}
+            </Badge>
+          </h2>
+          <Button 
+            variant="ghost"
+            size="sm" 
+            onClick={handleRefresh}
+            className="h-7 w-7 p-0"
+            title="刷新学生数据"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
         </div>
-      </div>
-      
-      <div className="px-2 py-1.5 border-b border-gray-100">
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        
+        <div className="relative w-full">
+          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
           <Input 
             type="text"
-            placeholder="搜索学生姓名或学号..." 
-            className="h-7 text-xs pl-9 rounded-md border-gray-200"
+            placeholder="搜索姓名或学号..." 
+            className="h-8 text-xs pl-8 pr-7 rounded-md border-gray-200 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -187,141 +218,53 @@ function StudentList({
         </div>
       </div>
       
-      <div className="overflow-y-auto flex-1 py-1 student-list-scroll">
+      <div className="overflow-y-auto flex-1 student-list-scroll">
         {filteredStudents.length === 0 ? (
           <div className="px-3 py-6 text-center">
-            <SearchIcon className="h-5 w-5 text-muted-foreground opacity-20 mx-auto mb-2" />
+            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-2">
+              <SearchIcon className="h-4 w-4 text-muted-foreground opacity-40" />
+            </div>
             <p className="text-xs text-muted-foreground">未找到匹配的学生</p>
             <button 
-              className="mt-2 text-xs text-primary hover:underline"
+              className="mt-1.5 text-xs text-primary font-medium hover:underline"
               onClick={() => setSearchQuery("")}
             >
               清除搜索
             </button>
           </div>
         ) : (
-          filteredStudents.map((student, index) => (
-            <div 
-              key={student.id} 
-              className={`px-2 py-2 ${index !== filteredStudents.length - 1 ? 'border-b border-gray-100/70' : ''} flex items-center cursor-pointer transition-all duration-200 group ${
-                selectedStudentId === student.id 
-                  ? 'bg-primary/5 border-l-3 border-l-primary' 
-                  : 'hover:bg-slate-50 border-l-3 border-l-transparent hover:border-l-primary/30'
-              }`}
-              onClick={() => onSelectStudent(student)}
-            >
-              <Avatar className="h-9 w-9 mr-2.5 ring-1 ring-gray-100 transition-shadow group-hover:ring-2 group-hover:ring-primary/10">
-                <AvatarImage src={student.avatar} alt={student.name} />
-                <AvatarFallback className="text-xs bg-slate-100 text-slate-500">{student.name.slice(0, 2)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium text-sm text-slate-700 truncate group-hover:text-primary transition-colors">
+          <div className="p-1.5">
+            {filteredStudents.map((student, index) => (
+              <div 
+                key={student.id} 
+                className={`px-2.5 py-2 rounded-md mb-0.5 flex items-center cursor-pointer transition-all duration-200 group ${
+                  selectedStudentId === student.id 
+                    ? 'bg-primary/10 border-l-3 border-l-primary' 
+                    : 'hover:bg-slate-50 border-l-3 border-l-transparent hover:border-l-primary/50'
+                }`}
+                onClick={() => onSelectStudent(student)}
+              >
+                <Avatar className="h-8 w-8 mr-2 ring-1 ring-gray-100 transition-shadow group-hover:ring-2 group-hover:ring-primary/20">
+                  <AvatarImage src={student.avatar} alt={student.name} />
+                  <AvatarFallback className="text-xs bg-slate-100 text-slate-500">{student.name.slice(0, 2)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-xs text-slate-700 group-hover:text-primary transition-colors truncate">
                     {student.name}
-                    <span className="ml-1.5 font-normal text-xs text-muted-foreground">
-                      {student.studentId}
-                    </span>
                   </p>
-                  <p className="text-xs text-muted-foreground bg-gray-50 px-1.5 py-0.5 rounded">
-                    {student.grade}{student.class}班
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    学号: <span className="font-medium text-slate-600">{student.studentId}</span>
                   </p>
-                </div>
-                <div className="flex mt-2 space-x-2">
-                  {student.indicators.map((indicator, idx) => {
-                    // Define colors based on indicator name and value
-                    let bgColor = "bg-blue-500";
-                    let lightBgColor = "bg-blue-100";
-                    let borderColor = "border-blue-200";
-                    let textColor = "text-blue-700";
-                    
-                    if (indicator.name === '学习态度') {
-                      bgColor = "bg-emerald-500";
-                      lightBgColor = "bg-emerald-100";
-                      borderColor = "border-emerald-200";
-                      textColor = "text-emerald-700";
-                    } else if (indicator.name === '参与度') {
-                      bgColor = "bg-amber-500";
-                      lightBgColor = "bg-amber-100";
-                      borderColor = "border-amber-200";
-                      textColor = "text-amber-700";
-                    }
-                    
-                    // Calculate percentage for filling the hexagon
-                    const percentage = (indicator.value / indicator.maxValue) * 100;
-                    
-                    return (
-                      <Tooltip key={indicator.id}>
-                        <TooltipTrigger>
-                          <div className="relative flex items-center justify-center group-hover:scale-105 transition-transform">
-                            <div className={`hexagon w-6 h-6 flex items-center justify-center text-xs font-medium border ${borderColor}`}>
-                              <div className={`hexagon-background ${lightBgColor}`}></div>
-                              <div 
-                                className={`hexagon-fill ${bgColor}`} 
-                                style={{ height: `${percentage}%` }}
-                              ></div>
-                              <span className={`relative z-10 text-[10px] font-semibold ${textColor}`}>
-                                {indicator.value}
-                              </span>
-                            </div>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" align="center" className="p-2 max-w-xs">
-                          <p className="font-semibold text-xs flex items-center">
-                            {indicator.name} 
-                            <span className="ml-1 px-1 rounded bg-slate-100 text-[10px]">
-                              {indicator.value}/{indicator.maxValue}
-                            </span>
-                          </p>
-                          {indicator.description && (
-                            <p className="text-[10px] opacity-80 mt-1">{indicator.description}</p>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
       
       <style jsx global>{`
-        .hexagon {
-          position: relative;
-          overflow: hidden;
-          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-        }
-        
-        .hexagon-background,
-        .hexagon-fill {
-          position: absolute;
-          width: 100%;
-          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-          left: 0;
-          right: 0;
-        }
-        
-        .hexagon-background {
-          height: 100%;
-        }
-        
-        .hexagon-fill {
-          bottom: 0;
-          transition: height 0.3s ease-in-out;
-        }
-        
-        .border-l-3 {
-          border-left-width: 3px;
-        }
-        
-        .student-list-scroll {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(203, 213, 225, 0.4) transparent;
-        }
-        
         .student-list-scroll::-webkit-scrollbar {
-          width: 4px;
+          width: 3px;
         }
         
         .student-list-scroll::-webkit-scrollbar-track {
@@ -329,12 +272,16 @@ function StudentList({
         }
         
         .student-list-scroll::-webkit-scrollbar-thumb {
-          background-color: rgba(203, 213, 225, 0.4);
-          border-radius: 6px;
+          background-color: rgba(203, 213, 225, 0.5);
+          border-radius: 3px;
         }
         
         .student-list-scroll::-webkit-scrollbar-thumb:hover {
-          background-color: rgba(148, 163, 184, 0.6);
+          background-color: rgba(148, 163, 184, 0.5);
+        }
+
+        .border-l-3 {
+          border-left-width: 3px;
         }
       `}</style>
     </div>
@@ -813,36 +760,17 @@ export default function TeacherView() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="col-span-1 bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
-          <h2 className="text-lg font-semibold">学生列表</h2>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleRefresh}
-            className="h-8 w-8"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索学生..."
-              className="pl-9"
-            />
-          </div>
-        </div>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="col-span-1 lg:col-span-2 bg-white rounded-xl overflow-hidden">
         <StudentList 
           students={students} 
           onSelectStudent={handleSelectStudent}
           selectedStudentId={selectedStudent?.id || null}
+          onRefresh={handleRefresh}
         />
       </div>
       
-      <div className="col-span-1 lg:col-span-3">
+      <div className="col-span-1 lg:col-span-10">
         {selectedStudent ? (
           <StudentDetail student={selectedStudent} />
         ) : (
