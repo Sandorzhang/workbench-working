@@ -1,4 +1,9 @@
 ---
+description: 
+globs: 
+alwaysApply: false
+---
+---
 description: 整体遵循此文件
 globs: 
 alwaysApply: false
@@ -13,11 +18,8 @@ alwaysApply: false
 - API 路径策略需要统一
 - 数据结构需要一致
 - 为我提供可能需要终端运行的命令。例如更名、删除等操作
-- 项目没有 src目录
-- 为MSW的handler按照具体功能命名
-- shadcn相关的安装命令为 npm shadcn@latest 而不是npm shadcn-ui@latest
 - 所有的页面添加skeleton加载
-- toast 使用sonner
+
 - 如果任务完成的话，不需要给我文字总结
 - mocks/index.ts - The main entry point that initializes MSW
 mocks/browser.ts - Browser-specific MSW setup
