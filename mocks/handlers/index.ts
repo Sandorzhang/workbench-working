@@ -30,6 +30,7 @@ import { applicationHandlers } from './application';
 import { permissionHandlers } from './permission';
 import { teachingDesignsHandlers } from './teaching-designs';
 import { teachingPlanHandlers } from './teaching-plans';
+import { mentorHandlers } from './mentor';
 // 导入其他处理器...
 
 export const handlers = [
@@ -75,4 +76,5 @@ export const handlers = [
   ...permissionHandlers,
   ...teachingDesignsHandlers,
   ...teachingPlanHandlers,
+  ...mentorHandlers,
 ]; 

@@ -195,8 +195,8 @@ const students = [
   }
 ];
 
-// 导师数据处理程序
-export const handlers = [
+// 导出导师处理程序
+export const mentorHandlers = [
   // 获取所有导师
   http.get('/api/mentors', () => {
     const mentors = db.mentor.getAll();

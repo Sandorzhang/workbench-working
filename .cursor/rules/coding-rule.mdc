@@ -14,3 +14,5 @@ alwaysApply: true
 - shadcn相关的安装命令为 npm shadcn@latest 而不是npm shadcn-ui@latest
 - 项目没有 src目录
 - 为MSW的handler按照具体功能命名
+- 所有需要定义的实体结构和业务模型接口都需要在types中定义明确，后续在import进db.ts支持msw模拟实现
+- 每次有可能新增实体时，需要在types文件夹中遍历，防止重复添加实体。

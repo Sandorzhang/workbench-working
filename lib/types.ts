@@ -1,49 +1,23 @@
-// 学生类型定义
-export interface Student {
-  id: string;
-  name: string;
-  studentId: string;
-  grade: string;
-  major: string;
-  class: string;
-  mentorId: string;
-  avatar?: string;
-}
+// 从models目录导入类型
+import {
+  Student as StudentModel,
+} from '@/types/models/education';
 
-// 导师类型定义
-export interface Mentor {
-  id: string;
-  name: string;
-  title: string;
-  department: string;
-  phone: string;
-  email: string;
-  bio?: string;
-  avatar?: string;
-  specialties: string[];
-  isAssigned: boolean;
-  students?: Student[];
-}
+import {
+  Mentor as MentorType,
+  IndicatorRecord as IndicatorRecordType,
+  MentorStudent as MentorStudentType,
+  EnrichedStudent as EnrichedStudentType,
+} from '@/types/models/mentor';
 
-export interface Indicator {
-  id: string;
-  name: string;
-  description: string;
-  type: 'number' | 'text' | 'select';
-  options?: string[];  // 用于select类型的选项
-  unit?: string;      // 用于number类型的单位
-}
+import {
+  Indicator as IndicatorModel,
+} from '@/types/models/competency';
 
-export interface IndicatorRecord {
-  id: string;
-  studentId: string;
-  indicatorId: string;
-  value: string | number;
-  timestamp: string;
-  mentorId: string;
-  comment?: string;
-}
-
-export interface MentorStudent extends Student {
-  indicators: IndicatorRecord[];
-} 
+// 重新导出类型
+export type Student = StudentModel;
+export type Mentor = MentorType;
+export type Indicator = IndicatorModel;
+export type IndicatorRecord = IndicatorRecordType;
+export type MentorStudent = MentorStudentType;
+export type EnrichedStudent = EnrichedStudentType; 

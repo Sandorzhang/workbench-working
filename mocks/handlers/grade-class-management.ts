@@ -1,6 +1,8 @@
 import { http, HttpResponse, delay } from 'msw';
-import { db, Grade, Class } from '../db';
+import { db } from '../db';
 import { faker } from '@faker-js/faker/locale/zh_CN';
+// 导入新的类型定义
+import { Grade, Class } from '@/types/db';
 
 // 辅助函数 - 处理分页请求
 const getPaginatedData = <T>(data: T[], page = 1, pageSize = 10) => {

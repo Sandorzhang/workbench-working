@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
-import { Mentor, MentorStudent } from "@/types/student";
+import { Mentor, MentorStudent } from "@/lib/types";
 import { StudentDetail } from "./student-detail";
 
 interface MentorDetailProps {
@@ -108,7 +108,7 @@ export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
                       <div>
                         <h4 className="font-medium">{student.name}</h4>
                         <p className="text-sm text-gray-500 mt-1">
-                          {student.studentId} | {student.major} {student.grade}级 {student.class}班
+                          {student.studentNumber} | {student.major} {student.gradeId ? `${student.gradeId}级` : ''} {student.classId ? `${student.classId}班` : ''}
                         </p>
                       </div>
                       <Button variant="ghost" size="sm">

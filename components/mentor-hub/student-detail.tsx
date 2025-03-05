@@ -7,8 +7,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { MentorStudent, IndicatorRecord } from "@/types/student";
-import { Indicator } from "@/types/indicator";
+import { MentorStudent, IndicatorRecord, Indicator } from "@/lib/types";
 import { format } from "date-fns";
 
 interface StudentDetailProps {
@@ -134,19 +133,19 @@ export function StudentDetail({ student, onBack }: StudentDetailProps) {
             </div>
             <div>
               <label className="text-sm font-medium">学号</label>
-              <p className="mt-1">{student.studentId}</p>
+              <p className="mt-1">{student.studentNumber}</p>
             </div>
             <div>
               <label className="text-sm font-medium">年级</label>
-              <p className="mt-1">{student.grade}</p>
+              <p className="mt-1">{student.gradeId || '未分配'}</p>
             </div>
             <div>
               <label className="text-sm font-medium">专业</label>
-              <p className="mt-1">{student.major}</p>
+              <p className="mt-1">{student.major || '未分配'}</p>
             </div>
             <div>
               <label className="text-sm font-medium">班级</label>
-              <p className="mt-1">{student.class}</p>
+              <p className="mt-1">{student.classId || '未分配'}</p>
             </div>
           </div>
         </CardContent>

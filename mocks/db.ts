@@ -1,4 +1,25 @@
 import { factory, primaryKey } from '@mswjs/data';
+// 导入数据库特定的类型
+import { 
+  Teacher, 
+  Student,
+  Grade,
+  Class,
+  School,
+  Region,
+  Exam,
+  Question,
+  LearningObjective,
+  LearningStandard,
+  StudentProgress,
+  CompetencyDimension,
+  Indicator,
+  StudentRecord,
+  Mentor,
+  IndicatorRecord,
+  Note,
+  AcademicRecord
+} from '@/types/db';
 
 // 创建模拟数据库模型
 const dbFactory = factory({
@@ -222,53 +243,6 @@ const dbFactory = factory({
   // 可以添加更多模型
 });
 
-// 扩展数据库，添加自定义数组以支持直接操作
-export type Teacher = {
-  id: string;
-  name: string;
-  gender: 'male' | 'female';
-  birthDate: string;
-  subject: string;
-  externalAppIds: Array<{
-    appId: string;
-    appName: string;
-    externalId: string;
-  }>;
-  avatar?: string;
-};
-
-export type Student = {
-  id: string;
-  name: string;
-  gender: 'male' | 'female';
-  enrollmentYear: number;
-  birthDate: string;
-  studentNumber: string;
-  classId: string;
-  gradeId: string;
-  externalAppIds: Array<{
-    appId: string;
-    appName: string;
-    externalId: string;
-  }>;
-  avatar?: string;
-};
-
-export type Grade = {
-  id: string;
-  gradeLevel: string;       // 年级文本描述（一年级、二年级等）
-  gradeNumber: number;      // 年级数字编码（1、2、3等）
-  academicYear: string;     // 学年（例如：2023-2024）
-  description?: string;     // 年级描述（可选）
-};
-
-export type Class = {
-  id: string;
-  name: string;
-  academicYear: string;
-  gradeId: string;
-};
-
 // 将数据库扩展为包含直接数组
 export const db = {
   ...dbFactory,
@@ -276,6 +250,20 @@ export const db = {
   students: [] as Student[],
   grades: [] as Grade[],
   classes: [] as Class[],
+  schools: [] as School[],
+  regions: [] as Region[],
+  exams: [] as Exam[],
+  questions: [] as Question[],
+  learningObjectives: [] as LearningObjective[],
+  learningStandards: [] as LearningStandard[],
+  studentProgress: [] as StudentProgress[],
+  competencyDimensions: [] as CompetencyDimension[],
+  indicators: [] as Indicator[],
+  studentRecords: [] as StudentRecord[],
+  mentors: [] as Mentor[],
+  indicatorRecords: [] as IndicatorRecord[],
+  notes: [] as Note[],
+  academicRecords: [] as AcademicRecord[]
 };
 
 // 保存数据库状态到localStorage
@@ -307,6 +295,20 @@ export function saveDb() {
       students: db.students,
       grades: db.grades,
       classes: db.classes,
+      schools: db.schools,
+      regions: db.regions,
+      exams: db.exams,
+      questions: db.questions,
+      learningObjectives: db.learningObjectives,
+      learningStandards: db.learningStandards,
+      studentProgress: db.studentProgress,
+      competencyDimensions: db.competencyDimensions,
+      indicators: db.indicators,
+      studentRecords: db.studentRecords,
+      mentors: db.mentors,
+      indicatorRecords: db.indicatorRecords,
+      notes: db.notes,
+      academicRecords: db.academicRecords,
       // 确保保存权限数据
       permission: db.permission.getAll(),
       rolePermission: db.rolePermission.getAll()
@@ -413,6 +415,20 @@ export function loadDb(): boolean {
     if (data.students) db.students = data.students;
     if (data.grades) db.grades = data.grades;
     if (data.classes) db.classes = data.classes;
+    if (data.schools) db.schools = data.schools;
+    if (data.regions) db.regions = data.regions;
+    if (data.exams) db.exams = data.exams;
+    if (data.questions) db.questions = data.questions;
+    if (data.learningObjectives) db.learningObjectives = data.learningObjectives;
+    if (data.learningStandards) db.learningStandards = data.learningStandards;
+    if (data.studentProgress) db.studentProgress = data.studentProgress;
+    if (data.competencyDimensions) db.competencyDimensions = data.competencyDimensions;
+    if (data.indicators) db.indicators = data.indicators;
+    if (data.studentRecords) db.studentRecords = data.studentRecords;
+    if (data.mentors) db.mentors = data.mentors;
+    if (data.indicatorRecords) db.indicatorRecords = data.indicatorRecords;
+    if (data.notes) db.notes = data.notes;
+    if (data.academicRecords) db.academicRecords = data.academicRecords;
     
     console.log('数据库状态已从localStorage恢复');
     return true;

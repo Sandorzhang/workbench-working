@@ -1,17 +1,12 @@
 import { http, HttpResponse, delay } from 'msw';
 import { db, saveDb } from '../db';
 import { School, SchoolType } from '../../lib/api-types';
+import { faker } from '@faker-js/faker/locale/zh_CN';
+// 导入类型定义
+import { SchoolData as SchoolDataModel } from '@/types/models/school';
 
-// 定义学校数据类型
-interface SchoolData {
-  id?: string;
-  name: string;
-  code: string; // 3位数字代码
-  regionId: string;
-  type: string; // 学校类型/教育级别
-  grades: string[]; // 年级数组
-  status: boolean;
-}
+// 使用模型中定义的类型
+interface SchoolData extends SchoolDataModel {}
 
 export const schoolHandlers = [
   // 获取学校列表

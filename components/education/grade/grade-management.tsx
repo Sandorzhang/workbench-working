@@ -35,7 +35,7 @@ import {
   BookOpen,
   Loader2
 } from "lucide-react";
-import { Grade } from "@/types/education";
+import { Grade } from "@/types/models/education";
 
 // 表单验证模式
 const gradeFormSchema = z.object({
