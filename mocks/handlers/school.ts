@@ -180,6 +180,44 @@ export const schoolHandlers = [
       createdAt: new Date().toISOString()
     });
     
+    // 自动创建对应的年级记录
+    if (data.grades && data.grades.length > 0) {
+      const currentYear = new Date().getFullYear();
+      const academicYear = `${currentYear}-${currentYear + 1}`;
+      
+      // 定义年级名称到数字编码的映射
+      const gradeNameToNumber: Record<string, number> = {
+        '一年级': 1, '二年级': 2, '三年级': 3, '四年级': 4, '五年级': 5, '六年级': 6,
+        '初一': 7, '初二': 8, '初三': 9,
+        '高一': 10, '高二': 11, '高三': 12
+      };
+      
+      data.grades.forEach(gradeName => {
+        // 检查该年级是否已存在
+        const existingGrade = db.gradeManagement.findFirst({
+          where: {
+            gradeLevel: {
+              equals: gradeName
+            },
+            academicYear: {
+              equals: academicYear
+            }
+          }
+        });
+        
+        // 如果不存在，则创建新的年级记录
+        if (!existingGrade) {
+          db.gradeManagement.create({
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            gradeLevel: gradeName,
+            gradeNumber: gradeNameToNumber[gradeName] || 0, // 使用映射关系获取数字编码
+            academicYear: academicYear,
+            description: `${newSchool.name}${gradeName}`
+          });
+        }
+      });
+    }
+    
     // 保存数据库状态
     saveDb();
     

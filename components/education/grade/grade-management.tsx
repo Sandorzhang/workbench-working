@@ -12,10 +12,10 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
 } from "@/components/ui/dialog";
 import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription
 } from "@/components/ui/form";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CardContainer } from "@/components/ui/card-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationLink } from "@/components/ui/pagination";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { 
   Search, 
@@ -32,17 +32,22 @@ import {
   Plus, 
   MoreHorizontal,
   RefreshCw,
-  BookOpen
+  BookOpen,
+  Loader2
 } from "lucide-react";
 import { Grade } from "@/types/education";
 
 // 表单验证模式
 const gradeFormSchema = z.object({
-  name: z
+  gradeLevel: z
     .string()
     .min(1, { message: "年级名称不能为空" })
     .max(50, { message: "年级名称最长为50个字符" }),
-  year: z
+  gradeNumber: z
+    .number()
+    .min(1, { message: "年级编号必须大于0" })
+    .max(20, { message: "年级编号不能超过20" }),
+  academicYear: z
     .string()
     .min(4, { message: "学年格式应为YYYY-YYYY" })
     .regex(/^\d{4}-\d{4}$/, { message: "学年格式应为YYYY-YYYY" }),
@@ -61,6 +66,7 @@ export default function GradeManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const pageSize = 10;
 
   // 对话框状态
@@ -68,6 +74,7 @@ export default function GradeManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
 
@@ -75,8 +82,9 @@ export default function GradeManagement() {
   const form = useForm<GradeFormValues>({
     resolver: zodResolver(gradeFormSchema),
     defaultValues: {
-      name: "",
-      year: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
+      gradeLevel: "",
+      gradeNumber: 1,
+      academicYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       description: "",
     },
   });
@@ -85,8 +93,9 @@ export default function GradeManagement() {
   const editForm = useForm<GradeFormValues>({
     resolver: zodResolver(gradeFormSchema),
     defaultValues: {
-      name: "",
-      year: "",
+      gradeLevel: "",
+      gradeNumber: 1,
+      academicYear: "",
       description: "",
     },
   });
@@ -97,42 +106,37 @@ export default function GradeManagement() {
     try {
       const response = await fetch(`/api/grades?page=${currentPage}&limit=${pageSize}&search=${searchQuery}`);
       if (!response.ok) {
-        throw new Error("获取年级数据失败");
+        throw new Error("获取年级列表失败");
       }
       const data = await response.json();
       setGrades(data.data);
-      setTotalPages(Math.ceil(data.total / pageSize));
+      setTotalPages(data.totalPages);
+      setTotalItems(data.total);
     } catch (error) {
-      console.error("获取年级数据出错:", error);
-      toast.error("获取年级数据失败");
+      console.error("加载年级数据出错:", error);
+      toast.error("加载年级数据失败");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 当页码、搜索条件变化时重新加载数据
+  // 监听页码变化，重新加载数据
   useEffect(() => {
     loadGrades();
   }, [currentPage, searchQuery]);
 
-  // 处理搜索
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 处理搜索输入
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1); // 重置到第一页
-  };
-
-  // 处理页码变化
-  const handlePageChange = (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
   };
 
   // 打开添加对话框
   const openAddDialog = () => {
     form.reset({
-      name: "",
-      year: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
+      gradeLevel: "",
+      gradeNumber: 1,
+      academicYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       description: "",
     });
     setIsAddDialogOpen(true);
@@ -142,8 +146,9 @@ export default function GradeManagement() {
   const openEditDialog = (grade: Grade) => {
     setSelectedGrade(grade);
     editForm.reset({
-      name: grade.name,
-      year: grade.year,
+      gradeLevel: grade.gradeLevel || "",
+      gradeNumber: grade.gradeNumber || 1,
+      academicYear: grade.academicYear || "",
       description: grade.description || "",
     });
     setIsEditDialogOpen(true);
@@ -157,6 +162,7 @@ export default function GradeManagement() {
 
   // 添加年级
   const onAddSubmit = async (data: GradeFormValues) => {
+    setIsSubmitting(true);
     try {
       const response = await fetch("/api/grades", {
         method: "POST",
@@ -166,23 +172,26 @@ export default function GradeManagement() {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error("添加年级失败");
+      if (response.ok) {
+        toast.success("年级添加成功");
+        setIsAddDialogOpen(false);
+        loadGrades();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "添加失败，请重试");
       }
-
-      toast.success("年级添加成功");
-      setIsAddDialogOpen(false);
-      loadGrades();
     } catch (error) {
-      console.error("添加年级出错:", error);
-      toast.error("添加年级失败");
+      toast.error("添加失败，请重试");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // 编辑年级
   const onEditSubmit = async (data: GradeFormValues) => {
     if (!selectedGrade) return;
-
+    
+    setIsSubmitting(true);
     try {
       const response = await fetch(`/api/grades/${selectedGrade.id}`, {
         method: "PUT",
@@ -192,38 +201,43 @@ export default function GradeManagement() {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error("编辑年级失败");
+      if (response.ok) {
+        toast.success("年级更新成功");
+        setIsEditDialogOpen(false);
+        loadGrades();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "更新失败，请重试");
       }
-
-      toast.success("年级更新成功");
-      setIsEditDialogOpen(false);
-      loadGrades();
     } catch (error) {
-      console.error("编辑年级出错:", error);
-      toast.error("编辑年级失败");
+      toast.error("更新失败，请重试");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // 删除年级
-  const confirmDelete = async () => {
+  const handleDelete = async () => {
     if (!selectedGrade) return;
-
+    
+    setIsSubmitting(true);
     try {
       const response = await fetch(`/api/grades/${selectedGrade.id}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) {
-        throw new Error("删除年级失败");
+      if (response.ok) {
+        toast.success("年级删除成功");
+        setIsDeleteDialogOpen(false);
+        loadGrades();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "删除失败，请重试");
       }
-
-      toast.success("年级删除成功");
-      setIsDeleteDialogOpen(false);
-      loadGrades();
     } catch (error) {
-      console.error("删除年级出错:", error);
-      toast.error("删除年级失败");
+      toast.error("删除失败，请重试");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -243,7 +257,7 @@ export default function GradeManagement() {
             placeholder="搜索年级名称..."
             className="pl-10 pr-4"
             value={searchQuery}
-            onChange={handleSearch}
+            onChange={handleSearchChange}
           />
         </div>
         <div className="flex gap-2">
@@ -270,10 +284,11 @@ export default function GradeManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[200px]">年级名称</TableHead>
-                    <TableHead className="w-[150px]">学年</TableHead>
+                    <TableHead>年级名称</TableHead>
+                    <TableHead>年级编号</TableHead>
+                    <TableHead>学年</TableHead>
                     <TableHead>描述</TableHead>
-                    <TableHead className="w-[150px] text-right">操作</TableHead>
+                    <TableHead className="w-[150px]">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -291,37 +306,36 @@ export default function GradeManagement() {
                   ) : (
                     grades.map((grade) => (
                       <TableRow key={grade.id}>
-                        <TableCell className="font-medium">{grade.name}</TableCell>
-                        <TableCell>{grade.year}</TableCell>
+                        <TableCell className="font-medium">{grade.gradeLevel}</TableCell>
+                        <TableCell>{grade.gradeNumber}</TableCell>
+                        <TableCell>{grade.academicYear}</TableCell>
                         <TableCell className="max-w-xs truncate">
                           {grade.description || "-"}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-2">
-                            <Button 
-                              variant="outline" 
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
                               size="sm"
                               onClick={() => viewClasses(grade.id)}
                             >
-                              <BookOpen className="h-4 w-4 mr-1" />
-                              班级
+                              查看班级
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Button variant="ghost" size="icon">
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => openEditDialog(grade)}>
-                                  <Edit className="h-4 w-4 mr-2" />
                                   编辑
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  className="text-red-600 focus:text-red-600"
                                   onClick={() => openDeleteDialog(grade)}
+                                  className="text-destructive"
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />
                                   删除
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -340,24 +354,40 @@ export default function GradeManagement() {
 
       {/* 分页 */}
       {!isLoading && grades.length > 0 && (
-        <div className="flex justify-center mt-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            共 {totalItems} 条记录
+          </div>
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                    }
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
-              <PaginationItem className="flex items-center">
-                <span>
-                  {currentPage} / {totalPages}
-                </span>
-              </PaginationItem>
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(i + 1)}
+                    isActive={currentPage === i + 1}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      setCurrentPage(currentPage + 1);
+                    }
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -378,12 +408,12 @@ export default function GradeManagement() {
             <form onSubmit={form.handleSubmit(onAddSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="gradeLevel"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>年级名称</FormLabel>
                     <FormControl>
-                      <Input placeholder="例如：一年级" {...field} />
+                      <Input placeholder="请输入年级名称" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -391,7 +421,29 @@ export default function GradeManagement() {
               />
               <FormField
                 control={form.control}
-                name="year"
+                name="gradeNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>年级编号</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="例如：1"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      用于排序和区分年级的数字编码
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="academicYear"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>学年</FormLabel>
@@ -407,16 +459,25 @@ export default function GradeManagement() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>描述</FormLabel>
+                    <FormLabel>描述（可选）</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="年级描述信息" {...field} />
+                      <Textarea placeholder="请输入年级描述" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <DialogFooter>
-                <Button type="submit">提交</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      提交中...
+                    </>
+                  ) : (
+                    "添加"
+                  )}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -436,12 +497,12 @@ export default function GradeManagement() {
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
               <FormField
                 control={editForm.control}
-                name="name"
+                name="gradeLevel"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>年级名称</FormLabel>
                     <FormControl>
-                      <Input placeholder="例如：一年级" {...field} />
+                      <Input placeholder="请输入年级名称" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -449,7 +510,29 @@ export default function GradeManagement() {
               />
               <FormField
                 control={editForm.control}
-                name="year"
+                name="gradeNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>年级编号</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="例如：1" 
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      用于排序和区分年级的数字编码
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="academicYear"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>学年</FormLabel>
@@ -465,16 +548,25 @@ export default function GradeManagement() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>描述</FormLabel>
+                    <FormLabel>描述（可选）</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="年级描述信息" {...field} />
+                      <Textarea placeholder="请输入年级描述" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <DialogFooter>
-                <Button type="submit">保存</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      提交中...
+                    </>
+                  ) : (
+                    "保存"
+                  )}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -491,7 +583,7 @@ export default function GradeManagement() {
             <p>
               确定要删除年级
               <span className="font-medium mx-1">
-                {selectedGrade?.name}
+                {selectedGrade?.gradeLevel}
               </span>
               吗？此操作不可撤销，并且会同时删除该年级下的所有班级和学生关联关系。
             </p>
@@ -507,9 +599,17 @@ export default function GradeManagement() {
             <Button 
               type="button" 
               variant="destructive" 
-              onClick={confirmDelete}
+              onClick={handleDelete}
+              disabled={isSubmitting}
             >
-              确认删除
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  删除中...
+                </>
+              ) : (
+                "确认删除"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

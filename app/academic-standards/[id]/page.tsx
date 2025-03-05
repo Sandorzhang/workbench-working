@@ -65,10 +65,12 @@ interface GradeGroup {
   items: StandardNavItem[];
 }
 
-export default function StandardDetailPage() {
+export default function AcademicStandardDetail({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const params = useParams();
+  const routeParams = useParams();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  const standardId = params?.id || routeParams?.id as string;
   
   const [standard, setStandard] = useState<StandardDetail | null>(null);
   const [navigationData, setNavigationData] = useState<GradeGroup[]>([]);
@@ -89,12 +91,12 @@ export default function StandardDetailPage() {
   // 获取学业标准详情
   useEffect(() => {
     const fetchStandardDetail = async () => {
-      if (!params.id) return;
-      
       setIsLoading(true);
       
       try {
-        const response = await fetch(`/api/academic-standards/${params.id}`);
+        if (!standardId) return;
+        
+        const response = await fetch(`/api/academic-standards/${standardId}`);
         if (!response.ok) {
           throw new Error('获取标准详情失败');
         }
@@ -115,7 +117,7 @@ export default function StandardDetailPage() {
     };
     
     fetchStandardDetail();
-  }, [params.id]);
+  }, [standardId]);
   
   // 获取导航数据
   const fetchNavigationData = async (subject: string) => {
@@ -190,7 +192,7 @@ export default function StandardDetailPage() {
               <StandardNavigation 
                 data={navigationData}
                 isLoading={isLoading}
-                selectedId={params.id as string}
+                selectedId={standardId as string}
                 onSelectStandard={handleStandardSelect}
                 subject={selectedSubject}
               />

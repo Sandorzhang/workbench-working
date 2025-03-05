@@ -50,8 +50,9 @@ export interface Student {
 // 年级信息
 export interface Grade {
   id: string;
-  name: string;
-  year: string;
+  gradeLevel: string;
+  gradeNumber: number;
+  academicYear: string;
   description?: string;
   classCount?: number;
   studentCount?: number;

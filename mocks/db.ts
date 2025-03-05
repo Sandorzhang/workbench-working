@@ -133,7 +133,9 @@ const dbFactory = factory({
   gradeManagement: {
     id: primaryKey(String),
     gradeLevel: String,          // 年级枚举（一年级、二年级...）
+    gradeNumber: Number,         // 年级数字编码 (1, 2, 3...)
     academicYear: String,        // 所属学年
+    description: String,         // 年级描述（可选）
   },
 
   // 班级管理模型
@@ -254,8 +256,10 @@ export type Student = {
 
 export type Grade = {
   id: string;
-  gradeLevel: string;
-  academicYear: string;
+  gradeLevel: string;       // 年级文本描述（一年级、二年级等）
+  gradeNumber: number;      // 年级数字编码（1、2、3等）
+  academicYear: string;     // 学年（例如：2023-2024）
+  description?: string;     // 年级描述（可选）
 };
 
 export type Class = {

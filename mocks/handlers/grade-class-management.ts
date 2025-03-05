@@ -54,14 +54,16 @@ function generateMockGrades() {
   
   const academicYears = ['2022-2023', '2023-2024', '2024-2025'];
   const gradeLevels = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'];
+  const gradeNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; // 对应的年级编号
   
   const mockGrades: Grade[] = [];
   
   academicYears.forEach(year => {
-    gradeLevels.forEach(level => {
+    gradeLevels.forEach((level, index) => {
       mockGrades.push({
         id: faker.string.uuid(),
         gradeLevel: level,
+        gradeNumber: gradeNumbers[index], // 添加年级编号
         academicYear: year
       });
     });
@@ -147,7 +149,7 @@ export const createGradeHandler = http.post('/api/grades', async ({ request }) =
   const gradeData = await request.json() as Partial<Grade>;
   
   // 输入验证
-  if (!gradeData.gradeLevel || !gradeData.academicYear) {
+  if (!gradeData.gradeLevel || !gradeData.academicYear || gradeData.gradeNumber === undefined) {
     return new HttpResponse(
       JSON.stringify({ error: '请提供所有必填字段' }), 
       { status: 400 }
@@ -157,7 +159,9 @@ export const createGradeHandler = http.post('/api/grades', async ({ request }) =
   const newGrade: Grade = {
     id: faker.string.uuid(),
     gradeLevel: gradeData.gradeLevel,
-    academicYear: gradeData.academicYear
+    gradeNumber: gradeData.gradeNumber,
+    academicYear: gradeData.academicYear,
+    description: gradeData.description
   };
   
   db.grades.push(newGrade);

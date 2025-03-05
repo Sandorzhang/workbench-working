@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { toast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,8 @@ interface DetailPageProps {
 
 export default function ExamDetailPage({ params }: DetailPageProps) {
   const router = useRouter()
+  const routeParams = useParams()
+  const examId = params?.id || routeParams?.id as string
   const [isLoading, setIsLoading] = useState(true)
   const [exam, setExam] = useState<Exam | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -30,9 +32,11 @@ export default function ExamDetailPage({ params }: DetailPageProps) {
   // 获取考试详情和题目
   useEffect(() => {
     const fetchExamDetails = async () => {
+      if (!examId) return
+      
       setIsLoading(true)
       try {
-        const response = await fetch(`/api/exams/${params.id}/details`)
+        const response = await fetch(`/api/exams/${examId}/details`)
         if (!response.ok) {
           throw new Error('获取考试详情失败')
         }
@@ -54,7 +58,7 @@ export default function ExamDetailPage({ params }: DetailPageProps) {
     }
 
     fetchExamDetails()
-  }, [params.id])
+  }, [examId])
 
   // 处理题目更新
   const handleQuestionsUpdate = (updatedQuestions: Question[]) => {
@@ -149,7 +153,7 @@ export default function ExamDetailPage({ params }: DetailPageProps) {
         </TabsList>
         <TabsContent value="questions" className="mt-4">
           <QuestionManagement
-            examId={params.id}
+            examId={examId}
             questions={questions}
             examSubject={exam.subject}
             onQuestionsUpdate={handleQuestionsUpdate}

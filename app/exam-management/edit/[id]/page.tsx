@@ -1,6 +1,8 @@
 'use client'
 
+import React from 'react'
 import { ExamForm } from '@/components/exam-management/exam-form'
+import { useParams } from 'next/navigation'
 import { PageContainer } from '@/components/ui/page-container'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -12,6 +14,9 @@ interface EditExamPageProps {
 }
 
 export default function EditExamPage({ params }: EditExamPageProps) {
+  const routeParams = useParams()
+  const examId = params?.id || routeParams?.id as string
+  
   return (
     <PageContainer>
       <div className="space-y-6">
@@ -26,7 +31,7 @@ export default function EditExamPage({ params }: EditExamPageProps) {
         </div>
         <h1 className="text-3xl font-bold tracking-tight">编辑考试</h1>
         <p className="text-muted-foreground">修改考试信息并保存更改</p>
-        <ExamForm examId={params.id} />
+        <ExamForm examId={examId} />
       </div>
     </PageContainer>
   )
