@@ -93,9 +93,9 @@ export default function SchoolsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   
   // 筛选状态
-  const [filterRegion, setFilterRegion] = useState<string>('');
-  const [filterType, setFilterType] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [filterRegion, setFilterRegion] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   
   // 对话框状态
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -130,9 +130,9 @@ export default function SchoolsPage() {
       
       // 构建查询参数
       const params = new URLSearchParams();
-      if (filterRegion) params.append('regionId', filterRegion);
-      if (filterType) params.append('type', filterType);
-      if (filterStatus) params.append('status', filterStatus);
+      if (filterRegion && filterRegion !== 'all') params.append('regionId', filterRegion);
+      if (filterType && filterType !== 'all') params.append('type', filterType);
+      if (filterStatus && filterStatus !== 'all') params.append('status', filterStatus);
       
       const queryString = params.toString() ? `?${params.toString()}` : '';
       const response = await fetch(`/api/schools${queryString}`);
@@ -329,9 +329,9 @@ export default function SchoolsPage() {
 
   // 清除筛选条件
   const clearFilters = () => {
-    setFilterRegion('');
-    setFilterType('');
-    setFilterStatus('');
+    setFilterRegion('all');
+    setFilterType('all');
+    setFilterStatus('all');
     
     // 延迟一下再重新获取数据，确保状态已更新
     setTimeout(() => {
@@ -381,13 +381,13 @@ export default function SchoolsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <FormLabel>区域</FormLabel>
+              <span className="text-sm font-medium">区域</span>
               <Select value={filterRegion} onValueChange={setFilterRegion}>
                 <SelectTrigger>
                   <SelectValue placeholder="选择区域" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部区域</SelectItem>
+                  <SelectItem value="all">全部区域</SelectItem>
                   {regions.map(region => (
                     <SelectItem key={region.id} value={region.id}>
                       {region.name}
@@ -398,13 +398,13 @@ export default function SchoolsPage() {
             </div>
             
             <div>
-              <FormLabel>学校类型</FormLabel>
+              <span className="text-sm font-medium">学校类型</span>
               <Select value={filterType} onValueChange={setFilterType}>
                 <SelectTrigger>
                   <SelectValue placeholder="选择类型" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部类型</SelectItem>
+                  <SelectItem value="all">全部类型</SelectItem>
                   {schoolTypes.map(type => (
                     <SelectItem key={type} value={type}>
                       {type}
@@ -415,13 +415,13 @@ export default function SchoolsPage() {
             </div>
             
             <div>
-              <FormLabel>状态</FormLabel>
+              <span className="text-sm font-medium">状态</span>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="选择状态" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部状态</SelectItem>
+                  <SelectItem value="all">全部状态</SelectItem>
                   <SelectItem value="true">启用</SelectItem>
                   <SelectItem value="false">禁用</SelectItem>
                 </SelectContent>
