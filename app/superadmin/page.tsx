@@ -10,12 +10,24 @@ import { toast } from "sonner";
 import { 
   ShieldAlert, Settings, Database, Users, Server,
   Lock, FileText, Sparkles, Activity, Globe,
-  AlertTriangle, BarChart3, Loader2, Shield
+  AlertTriangle, BarChart3, Loader2, Shield,
+  School, MapPin, CheckCircle, XCircle,
+  ArrowRight, ArrowUpRight
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
 import { CardContainer } from '@/components/ui/card-container';
 import { ResponsiveGrid } from '@/components/ui/responsive-grid';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
 
 // 管理系统应用类型定义
 interface AdminApplication {
@@ -24,6 +36,39 @@ interface AdminApplication {
   description: string;
   icon: string;
   url: string;
+}
+
+interface StatsCardProps {
+  title: string;
+  value: string;
+  description: string;
+  icon: React.ReactNode;
+  change?: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+function StatsCard({ title, value, description, icon, change, trend }: StatsCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className="h-8 w-8 rounded-full bg-primary/10 p-1.5 text-primary">{icon}</div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+        {change && (
+          <div className="mt-2 flex items-center text-xs">
+            {trend === 'up' && <ArrowUpRight className="mr-1 h-3 w-3 text-green-500" />}
+            {trend === 'down' && <ArrowUpRight className="mr-1 h-3 w-3 text-red-500 rotate-180" />}
+            <span className={trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}>
+              {change}
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function SuperAdminPage() {
@@ -36,10 +81,9 @@ export default function SuperAdminPage() {
   
   // 系统摘要数据 - 模拟数据
   const [stats] = useState({
-    activeUsers: 152,
-    totalTenants: 8,
-    systemAlerts: 3,
-    systemHealth: 98
+    users: { total: 0, admin: 0, teacher: 0, student: 0 },
+    regions: { total: 0, active: 0, inactive: 0 },
+    schools: { total: 0, active: 0, inactive: 0 },
   });
   
   // 检查认证状态
@@ -255,7 +299,7 @@ export default function SuperAdminPage() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500">活跃用户</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.activeUsers}</h3>
+                <h3 className="text-2xl font-bold mt-1">{stats.users.total}</h3>
               </div>
               <div className="p-3 bg-blue-50 rounded-full">
                 <Users className="h-6 w-6 text-blue-500" />
@@ -266,11 +310,11 @@ export default function SuperAdminPage() {
           <CardContainer elevated className="p-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-gray-500">租户总数</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.totalTenants}</h3>
+                <p className="text-sm font-medium text-gray-500">区域总数</p>
+                <h3 className="text-2xl font-bold mt-1">{stats.regions.total}</h3>
               </div>
               <div className="p-3 bg-indigo-50 rounded-full">
-                <Server className="h-6 w-6 text-indigo-500" />
+                <MapPin className="h-6 w-6 text-indigo-500" />
               </div>
             </div>
           </CardContainer>
@@ -278,23 +322,23 @@ export default function SuperAdminPage() {
           <CardContainer elevated className="p-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-gray-500">系统告警</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.systemAlerts}</h3>
-              </div>
-              <div className="p-3 bg-amber-50 rounded-full">
-                <AlertTriangle className="h-6 w-6 text-amber-500" />
-              </div>
-            </div>
-          </CardContainer>
-          
-          <CardContainer elevated className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500">系统健康度</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.systemHealth}%</h3>
+                <p className="text-sm font-medium text-gray-500">学校总数</p>
+                <h3 className="text-2xl font-bold mt-1">{stats.schools.total}</h3>
               </div>
               <div className="p-3 bg-emerald-50 rounded-full">
-                <BarChart3 className="h-6 w-6 text-emerald-500" />
+                <School className="h-6 w-6 text-emerald-500" />
+              </div>
+            </div>
+          </CardContainer>
+          
+          <CardContainer elevated className="p-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm font-medium text-gray-500">活跃学校</p>
+                <h3 className="text-2xl font-bold mt-1">{stats.schools.active}</h3>
+              </div>
+              <div className="p-3 bg-green-50 rounded-full">
+                <CheckCircle className="h-6 w-6 text-green-500" />
               </div>
             </div>
           </CardContainer>
@@ -305,43 +349,288 @@ export default function SuperAdminPage() {
       <SectionContainer className="mt-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">系统管理</h2>
         
-        <ResponsiveGrid columns={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
-          {adminApplications.map((app) => {
-            const IconComponent = iconComponents[app.icon];
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">概览</TabsTrigger>
+            <TabsTrigger value="users">用户</TabsTrigger>
+            <TabsTrigger value="regions">区域</TabsTrigger>
+            <TabsTrigger value="schools">学校</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <StatsCard
+                title="总用户数"
+                value={stats.users.total.toString()}
+                description="系统中的所有用户账户"
+                icon={<Users className="h-5 w-5" />}
+              />
+              <StatsCard
+                title="总区域数"
+                value={stats.regions.total.toString()}
+                description="所有管理区域"
+                icon={<MapPin className="h-5 w-5" />}
+              />
+              <StatsCard
+                title="总学校数"
+                value={stats.schools.total.toString()}
+                description="系统中的所有学校"
+                icon={<School className="h-5 w-5" />}
+              />
+              <StatsCard
+                title="活跃学校"
+                value={stats.schools.active.toString()}
+                description={`占比 ${stats.schools.total > 0 ? Math.round((stats.schools.active / stats.schools.total) * 100) : 0}%`}
+                icon={<CheckCircle className="h-5 w-5" />}
+              />
+            </div>
             
-            // 为不同类型的应用分配不同的渐变色背景
-            let gradientColor = 'from-slate-500 to-slate-600';
-            
-            if (app.icon === 'users') gradientColor = 'from-blue-500 to-blue-600';
-            if (app.icon === 'building') gradientColor = 'from-indigo-500 to-indigo-600';
-            if (app.icon === 'settings') gradientColor = 'from-gray-500 to-gray-600';
-            if (app.icon === 'fileText') gradientColor = 'from-purple-500 to-purple-600';
-            if (app.icon === 'activity') gradientColor = 'from-green-500 to-green-600';
-            if (app.icon === 'database') gradientColor = 'from-amber-500 to-amber-600';
-            if (app.icon === 'layers') gradientColor = 'from-cyan-500 to-cyan-600';
-            if (app.icon === 'shield') gradientColor = 'from-red-500 to-red-600';
-            
-            return (
-              <CardContainer
-                key={app.id}
-                elevated
-                clickable
-                onClick={() => handleAppClick(app.url)}
-                className="h-full transform transition-all duration-200 hover:scale-[1.02]"
-              >
-                <div className="flex items-start p-4">
-                  <div className={`p-3 rounded-lg bg-gradient-to-br ${gradientColor} mr-4 shadow-md`}>
-                    {IconComponent && <IconComponent className="h-6 w-6 text-white" />}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+              <Card className="col-span-4">
+                <CardHeader>
+                  <CardTitle>用户分布</CardTitle>
+                  <CardDescription>系统各类型用户数量分布</CardDescription>
+                </CardHeader>
+                <CardContent className="pl-2">
+                  <div className="flex flex-col space-y-8">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-full flex items-center">
+                        <div className="mr-2 text-sm min-w-[60px]">超级管理员</div>
+                        <div className="h-2 w-full rounded-full overflow-hidden bg-primary/10">
+                          <div className="h-full bg-primary" style={{ width: '5%' }} />
+                        </div>
+                        <span className="ml-2 text-sm">1</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-full flex items-center">
+                        <div className="mr-2 text-sm min-w-[60px]">管理员</div>
+                        <div className="h-2 w-full rounded-full overflow-hidden bg-primary/10">
+                          <div 
+                            className="h-full bg-primary" 
+                            style={{ width: stats.users.total > 0 ? `${(stats.users.admin / stats.users.total) * 100}%` : '0%' }} 
+                          />
+                        </div>
+                        <span className="ml-2 text-sm">{stats.users.admin}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-full flex items-center">
+                        <div className="mr-2 text-sm min-w-[60px]">教师</div>
+                        <div className="h-2 w-full rounded-full overflow-hidden bg-primary/10">
+                          <div 
+                            className="h-full bg-primary" 
+                            style={{ width: stats.users.total > 0 ? `${(stats.users.teacher / stats.users.total) * 100}%` : '0%' }} 
+                          />
+                        </div>
+                        <span className="ml-2 text-sm">{stats.users.teacher}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-full flex items-center">
+                        <div className="mr-2 text-sm min-w-[60px]">学生</div>
+                        <div className="h-2 w-full rounded-full overflow-hidden bg-primary/10">
+                          <div 
+                            className="h-full bg-primary" 
+                            style={{ width: stats.users.total > 0 ? `${(stats.users.student / stats.users.total) * 100}%` : '0%' }} 
+                          />
+                        </div>
+                        <span className="ml-2 text-sm">{stats.users.student}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{app.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{app.description}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="col-span-3">
+                <CardHeader>
+                  <CardTitle>区域和学校状态</CardTitle>
+                  <CardDescription>系统中区域和学校的启用状态</CardDescription>
+                </CardHeader>
+                <CardContent className="pl-2">
+                  <div className="flex flex-col space-y-8">
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">区域状态</div>
+                      <div className="flex items-center">
+                        <div className="w-full flex items-center">
+                          <div className="mr-2 text-sm flex items-center">
+                            <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                            启用
+                          </div>
+                          <div className="h-2 w-full rounded-full overflow-hidden bg-green-100">
+                            <div 
+                              className="h-full bg-green-500" 
+                              style={{ width: stats.regions.total > 0 ? `${(stats.regions.active / stats.regions.total) * 100}%` : '0%' }} 
+                            />
+                          </div>
+                          <span className="ml-2 text-sm">{stats.regions.active}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-full flex items-center">
+                          <div className="mr-2 text-sm flex items-center">
+                            <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                            禁用
+                          </div>
+                          <div className="h-2 w-full rounded-full overflow-hidden bg-red-100">
+                            <div 
+                              className="h-full bg-red-500" 
+                              style={{ width: stats.regions.total > 0 ? `${(stats.regions.inactive / stats.regions.total) * 100}%` : '0%' }} 
+                            />
+                          </div>
+                          <span className="ml-2 text-sm">{stats.regions.inactive}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">学校状态</div>
+                      <div className="flex items-center">
+                        <div className="w-full flex items-center">
+                          <div className="mr-2 text-sm flex items-center">
+                            <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                            启用
+                          </div>
+                          <div className="h-2 w-full rounded-full overflow-hidden bg-green-100">
+                            <div 
+                              className="h-full bg-green-500" 
+                              style={{ width: stats.schools.total > 0 ? `${(stats.schools.active / stats.schools.total) * 100}%` : '0%' }} 
+                            />
+                          </div>
+                          <span className="ml-2 text-sm">{stats.schools.active}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-full flex items-center">
+                          <div className="mr-2 text-sm flex items-center">
+                            <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                            禁用
+                          </div>
+                          <div className="h-2 w-full rounded-full overflow-hidden bg-red-100">
+                            <div 
+                              className="h-full bg-red-500" 
+                              style={{ width: stats.schools.total > 0 ? `${(stats.schools.inactive / stats.schools.total) * 100}%` : '0%' }} 
+                            />
+                          </div>
+                          <span className="ml-2 text-sm">{stats.schools.inactive}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardContainer>
-            );
-          })}
-        </ResponsiveGrid>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">快捷入口</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Link href="/superadmin/users">
+                      <Button variant="outline" className="w-full justify-start">
+                        <Users className="mr-2 h-4 w-4 text-primary" />
+                        用户管理
+                        <ArrowRight className="ml-auto h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link href="/superadmin/regions">
+                      <Button variant="outline" className="w-full justify-start">
+                        <MapPin className="mr-2 h-4 w-4 text-primary" />
+                        区域管理
+                        <ArrowRight className="ml-auto h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link href="/superadmin/schools">
+                      <Button variant="outline" className="w-full justify-start">
+                        <School className="mr-2 h-4 w-4 text-primary" />
+                        学校管理
+                        <ArrowRight className="ml-auto h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="users" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>用户管理</CardTitle>
+                <CardDescription>管理系统用户</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p>用户统计信息：</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>总用户数：{stats.users.total}</li>
+                  <li>管理员：{stats.users.admin}</li>
+                  <li>教师：{stats.users.teacher}</li>
+                  <li>学生：{stats.users.student}</li>
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Link href="/superadmin/users">
+                  <Button>
+                    <Users className="mr-2 h-4 w-4" />
+                    查看所有用户
+                  </Button>
+                </Link>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="regions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>区域管理</CardTitle>
+                <CardDescription>管理系统区域</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p>区域统计信息：</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>总区域数：{stats.regions.total}</li>
+                  <li>启用区域：{stats.regions.active}</li>
+                  <li>禁用区域：{stats.regions.inactive}</li>
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Link href="/superadmin/regions">
+                  <Button>
+                    <MapPin className="mr-2 h-4 w-4" />
+                    管理区域
+                  </Button>
+                </Link>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="schools" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>学校管理</CardTitle>
+                <CardDescription>管理系统学校</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p>学校统计信息：</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>总学校数：{stats.schools.total}</li>
+                  <li>启用学校：{stats.schools.active}</li>
+                  <li>禁用学校：{stats.schools.inactive}</li>
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Link href="/superadmin/schools">
+                  <Button>
+                    <School className="mr-2 h-4 w-4" />
+                    管理学校
+                  </Button>
+                </Link>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </SectionContainer>
     </PageContainer>
   );

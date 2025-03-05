@@ -22,6 +22,9 @@ import { educationManagementHandlers } from './education-management';
 import { teacherManagementHandlers } from './teacher-management';
 import { studentManagementHandlers } from './student-management';
 import { gradeManagementHandlers, classManagementHandlers } from './grade-class-management';
+import { regionHandlers } from './region';
+import { schoolHandlers } from './school';
+import { userHandlers } from './user';
 // 导入其他处理器...
 
 export const handlers = [
@@ -59,4 +62,7 @@ export const handlers = [
   ...studentManagementHandlers,
   ...gradeManagementHandlers,
   ...classManagementHandlers,
+  ...regionHandlers,
+  ...schoolHandlers,
+  ...userHandlers,
 ]; 

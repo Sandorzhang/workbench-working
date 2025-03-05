@@ -164,6 +164,24 @@ const dbFactory = factory({
     createdAt: String,
     updatedAt: String,
   },
+  // 区域模型
+  region: {
+    id: primaryKey(String),    // 六位数字编码ID
+    name: String,              // 区域名称
+    status: Boolean,           // 启用/停用状态
+  },
+  
+  // 学校(租户)模型
+  school: {
+    id: primaryKey(String),    // 系统生成的唯一ID
+    name: String,              // 学校名称
+    code: String,              // 学校编号（3位数字编码）
+    regionId: String,          // 所属区域ID
+    type: String,              // 阶段学制
+    grades: Array,             // 学校年级
+    status: Boolean,           // 启用/停用状态
+    createdAt: String,         // 创建时间
+  },
   // 可以添加更多模型
 });
 
@@ -929,6 +947,59 @@ export function seedDb() {
     relationType: 6, // 关系类型6
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+  });
+  
+  // 添加区域示例数据
+  db.region.create({
+    id: '100001',
+    name: '海淀区',
+    status: true,
+  });
+  
+  db.region.create({
+    id: '100002',
+    name: '朝阳区',
+    status: true,
+  });
+  
+  db.region.create({
+    id: '100003',
+    name: '东城区',
+    status: false,
+  });
+  
+  // 添加学校示例数据
+  db.school.create({
+    id: '1',
+    name: '北京第一中学',
+    code: '001',
+    regionId: '100001',
+    type: '九年一贯制',
+    grades: ['初一', '初二', '初三', '高一', '高二', '高三'],
+    status: true,
+    createdAt: new Date().toISOString(),
+  });
+  
+  db.school.create({
+    id: '2',
+    name: '北京第二中学',
+    code: '002',
+    regionId: '100001',
+    type: '完全中学（六年制）',
+    grades: ['初一', '初二', '初三', '高一', '高二', '高三'],
+    status: true,
+    createdAt: new Date().toISOString(),
+  });
+  
+  db.school.create({
+    id: '3',
+    name: '朝阳区实验小学',
+    code: '101',
+    regionId: '100002',
+    type: '小学（六年制）',
+    grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
+    status: true,
+    createdAt: new Date().toISOString(),
   });
   
   // 添加更多初始数据...
