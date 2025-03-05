@@ -26,11 +26,25 @@ export function getLabelPosList(
     cy: number, 
     segmentCount: number, 
     radius: number, 
-    offset: number = 6, // 增加基础偏移量
+    offset: number = 10, // 增加默认基础偏移量
     segmentLayers?: number[], // 每个段落的层数
     segmentRadii?: number[] // 每个段落的实际外层弧线半径
 ) {
     const positions: Point[] = [];
+    
+    // 调试 - 显示输入参数
+    console.log("getLabelPosList输入参数:", {
+        segmentCount,
+        radius,
+        offset,
+        segmentLayers: segmentLayers || "未提供",
+        segmentRadii: segmentRadii || "未提供"
+    });
+    
+    // 预估标签宽度 - 用于计算避免重叠
+    const estimatedLabelWidth = 80; // 估计每个标签的平均宽度为80px
+    const minAngleBetweenLabels = 30; // 标签之间的最小角度差
+    
     for (let i = 0; i < segmentCount; i++) {
         const angle = (360 / segmentCount) * i + (360 / segmentCount) / 2;
         const radians = angle * (Math.PI / 180);
@@ -38,22 +52,51 @@ export function getLabelPosList(
         // 确定使用哪个半径 - 如果提供了segmentRadii则使用它，否则使用基础radius
         const effectiveRadius = segmentRadii && segmentRadii[i] ? segmentRadii[i] : radius;
         
-        // 为特定角度增加额外偏移，避免标签重叠或被遮挡
+        // 初始化偏移量
         let extraOffset = 0;
         
-        // 根据不同角度区域，细化调整偏移量
-        if (angle > 180 && angle < 270) {
+        // 考虑段落层数对偏移的影响 - 大幅增强层数的影响
+        const layerFactor = 8; // 增加每层偏移因子
+        if (segmentLayers && segmentLayers[i]) {
+            extraOffset += Math.min(segmentLayers[i] * layerFactor, 50);
+            
+            // 如果层数超过3层，额外增加偏移
+            if (segmentLayers[i] > 3) {
+                extraOffset += (segmentLayers[i] - 3) * 5;
+            }
+        }
+        
+        // 根据不同角度区域，使用更激进的差异化处理
+        if (angle > 150 && angle < 210) {
+            // 下方区域 - 需要更大的向下偏移
+            extraOffset += 25;
+        } else if (angle >= 210 && angle < 270) {
             // 左下角区域
-            extraOffset = 3;
-        } else if (angle >= 270 && angle < 360) {
+            extraOffset += 20;
+        } else if (angle >= 270 && angle < 330) {
             // 左上角区域
-            extraOffset = 2;
-        } else if (angle >= 0 && angle < 90) {
+            extraOffset += 15;
+        } else if (angle >= 330 || angle < 30) {
+            // 上方区域
+            extraOffset += 25;
+        } else if (angle >= 30 && angle < 90) {
             // 右上角区域
-            extraOffset = 2;
-        } else if (angle >= 90 && angle <= 180) {
+            extraOffset += 15;
+        } else if (angle >= 90 && angle <= 150) {
             // 右下角区域
-            extraOffset = 3;
+            extraOffset += 20;
+        }
+        
+        // 为相邻的标签添加交错偏移，避免重叠
+        if (i % 2 === 0) {
+            extraOffset += 10; // 偶数索引的标签额外偏移
+        }
+        
+        // 特定位置的标签需要特殊处理（基于观察到的重叠情况）
+        if (segmentCount === 5) { // 假设有5个维度
+            // 为特定位置的标签添加自定义偏移
+            if (i === 1) extraOffset += 15; // 例如第二个标签
+            if (i === 3) extraOffset += 10; // 例如第四个标签
         }
         
         // 使用更大的基础偏移，确保标签不会被弧线遮挡
@@ -65,15 +108,16 @@ export function getLabelPosList(
             y: cy + (effectiveRadius + finalOffset) * Math.sin(radians)
         });
         
-        // 添加调试信息
-        if (i === 0 || i === Math.floor(segmentCount / 2)) {
-            console.log(`标签${i}位置计算:`, {
-                角度: angle,
-                有效半径: effectiveRadius,
-                最终偏移: finalOffset,
-                最终位置: positions[i]
-            });
-        }
+        // 添加详细调试信息，显示每个标签的计算过程
+        console.log(`标签${i}位置计算:`, {
+            角度: angle,
+            层数: segmentLayers?.[i] || "未提供",
+            有效半径: effectiveRadius,
+            层数贡献偏移: segmentLayers?.[i] ? Math.min(segmentLayers[i] * layerFactor, 50) : 0,
+            角度贡献偏移: extraOffset - (segmentLayers?.[i] ? Math.min(segmentLayers[i] * layerFactor, 50) : 0),
+            最终偏移: finalOffset,
+            最终位置: positions[i]
+        });
     }
     return positions;
 }
