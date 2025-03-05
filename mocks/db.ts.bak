@@ -787,37 +787,82 @@ export function seedDb() {
   // 添加应用示例数据
   db.application.create({
     id: '1',
-    name: '用户管理',
-    description: '管理系统用户',
+    name: '师生信息管理',
+    description: '管理教师和学生的基本信息',
     icon: 'users',
-    url: '/dashboard/users',
+    url: '/admin/users',
     roles: ['admin', 'superadmin'],
   });
   
   db.application.create({
     id: '2',
-    name: '课程管理',
-    description: '管理教学课程',
-    icon: 'book',
-    url: '/dashboard/courses',
+    name: '课堂时光机',
+    description: '记录和回放课堂教学过程，辅助教学分析',
+    icon: 'school',
+    url: '/classroom-timemachine',
     roles: ['teacher', 'admin', 'superadmin'],
   });
   
   db.application.create({
     id: '3',
-    name: '成绩录入',
-    description: '录入学生成绩',
-    icon: 'fileText',
-    url: '/dashboard/grades',
-    roles: ['teacher', 'superadmin'],
+    name: '单元教学设计',
+    description: '创建和管理单元教学设计方案',
+    icon: 'pencil',
+    url: '/unit-teaching-design',
+    roles: ['teacher', 'admin', 'superadmin'],
   });
   
   db.application.create({
     id: '4',
+    name: '全员导师制',
+    description: '浏览、管理和分配导师资源，促进师生共同成长',
+    icon: 'userCheck',
+    url: '/mentor-hub',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '5',
+    name: '数据资产管理',
+    description: '管理和浏览教学相关的各类数据资源',
+    icon: 'database',
+    url: '/data-assets',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '6',
+    name: '考试管理',
+    description: '创建、编辑和管理各类考试及试卷',
+    icon: 'fileText',
+    url: '/exam-management',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '7',
     name: '学业标准',
     description: '浏览和查询各学科学业标准',
     icon: 'book',
     url: '/academic-standards',
+    roles: ['teacher', 'admin', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '8',
+    name: '大概念地图',
+    description: '查看不同学科的概念节点和关系，了解知识体系结构',
+    icon: 'network',
+    url: '/concept-map',
+    roles: ['teacher', 'admin', 'student', 'superadmin'],
+  });
+  
+  db.application.create({
+    id: '9',
+    name: '学业旅程',
+    description: '跟踪学生的学业标准达成进度，了解班级整体情况',
+    icon: 'graduationCap',
+    url: '/academic-journey',
     roles: ['teacher', 'admin', 'superadmin'],
   });
   
@@ -900,7 +945,7 @@ export function seedDb() {
     id: 'rp-1',
     role: 'superadmin',
     resourceType: 'application',
-    resourceId: '1', // 用户管理
+    resourceId: '1', // 师生信息管理
     allowed: true,
   });
   
@@ -908,71 +953,15 @@ export function seedDb() {
     id: 'rp-2',
     role: 'admin',
     resourceType: 'application',
-    resourceId: '1', // 用户管理
+    resourceId: '2', // 课堂时光机
     allowed: true,
   });
   
   db.rolePermission.create({
     id: 'rp-3',
-    role: 'superadmin',
-    resourceType: 'application',
-    resourceId: '2', // 课程管理
-    allowed: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-4',
-    role: 'admin',
-    resourceType: 'application',
-    resourceId: '2', // 课程管理
-    allowed: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-5',
     role: 'teacher',
     resourceType: 'application',
-    resourceId: '2', // 课程管理
-    allowed: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-6',
-    role: 'superadmin',
-    resourceType: 'application',
-    resourceId: '3', // 成绩录入
-    allowed: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-7',
-    role: 'teacher',
-    resourceType: 'application',
-    resourceId: '3', // 成绩录入
-    allowed: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-8',
-    role: 'superadmin',
-    resourceType: 'application',
-    resourceId: '4', // 学业标准
-    allowed: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-9',
-    role: 'admin',
-    resourceType: 'application',
-    resourceId: '4', // 学业标准
-    allowed: true,
-  });
-  
-  db.rolePermission.create({
-    id: 'rp-10',
-    role: 'teacher',
-    resourceType: 'application',
-    resourceId: '4', // 学业标准
+    resourceId: '3', // 单元教学设计
     allowed: true,
   });
   
@@ -981,16 +970,172 @@ export function seedDb() {
     id: 'up-1',
     userId: '2', // 李四（教师）
     resourceType: 'application',
-    resourceId: '3', // 成绩录入
-    allowed: true, // 覆盖角色默认权限
+    resourceId: '2', // 课程管理应用
+    allowed: false, // 覆盖角色默认权限，禁止访问
   });
   
   db.userPermission.create({
     id: 'up-2',
     userId: '1', // 张三（管理员）
-    resourceType: 'application',
-    resourceId: '4', // 学业标准
+    resourceType: 'route',
+    resourceId: 'route-7', // 学业标准路由
     allowed: true, // 允许访问
+  });
+  
+  // 为超级管理员添加其他应用的权限
+  db.rolePermission.create({
+    id: 'rp-4',
+    role: 'superadmin',
+    resourceType: 'application',
+    resourceId: '4', // 全员导师
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-5',
+    role: 'superadmin',
+    resourceType: 'application',
+    resourceId: '5', // 数据资产管理
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-6',
+    role: 'superadmin',
+    resourceType: 'application',
+    resourceId: '6', // 考试管理
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-7',
+    role: 'superadmin',
+    resourceType: 'application',
+    resourceId: '7', // 学业标准
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-8',
+    role: 'superadmin',
+    resourceType: 'application',
+    resourceId: '8', // 大概念地图
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-9',
+    role: 'superadmin',
+    resourceType: 'application',
+    resourceId: '9', // 学业旅程
+    allowed: true,
+  });
+  
+  // 为管理员添加更多应用权限
+  db.rolePermission.create({
+    id: 'rp-11',
+    role: 'admin',
+    resourceType: 'application',
+    resourceId: '4', // 全员导师
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-12',
+    role: 'admin',
+    resourceType: 'application',
+    resourceId: '5', // 数据资产管理
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-13',
+    role: 'admin',
+    resourceType: 'application',
+    resourceId: '6', // 考试管理
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-14',
+    role: 'admin',
+    resourceType: 'application',
+    resourceId: '7', // 学业标准
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-15',
+    role: 'admin',
+    resourceType: 'application',
+    resourceId: '8', // 大概念地图
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-16',
+    role: 'admin',
+    resourceType: 'application',
+    resourceId: '9', // 学业旅程
+    allowed: true,
+  });
+  
+  // 为教师添加更多应用权限
+  db.rolePermission.create({
+    id: 'rp-17',
+    role: 'teacher',
+    resourceType: 'application',
+    resourceId: '4', // 全员导师
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-18',
+    role: 'teacher',
+    resourceType: 'application',
+    resourceId: '5', // 数据资产管理
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-19',
+    role: 'teacher',
+    resourceType: 'application',
+    resourceId: '6', // 考试管理
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-20',
+    role: 'teacher',
+    resourceType: 'application',
+    resourceId: '7', // 学业标准
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-21',
+    role: 'teacher',
+    resourceType: 'application',
+    resourceId: '8', // 大概念地图
+    allowed: true,
+  });
+  
+  db.rolePermission.create({
+    id: 'rp-22',
+    role: 'teacher',
+    resourceType: 'application',
+    resourceId: '9', // 学业旅程
+    allowed: true,
+  });
+  
+  // 为学生添加概念地图应用权限
+  db.rolePermission.create({
+    id: 'rp-23',
+    role: 'student',
+    resourceType: 'application',
+    resourceId: '8', // 大概念地图
+    allowed: true,
   });
   
   // 创建一个默认的有效会话（用于开发测试）
