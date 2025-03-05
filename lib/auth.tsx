@@ -12,8 +12,8 @@ interface User {
   email: string;
   avatar: string;
   role: string;
-  tenant?: string; // 用户所属学校
-  tenantType?: string; // 学校类型
+  school?: string; // 用户所属学校
+  schoolType?: string; // 学校类型
 }
 
 // 认证上下文状态

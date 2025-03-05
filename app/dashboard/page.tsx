@@ -261,10 +261,10 @@ export default function DashboardPage() {
               {user?.name || '同学'}
             </h2>
             <p className="text-gray-500 mt-1">{formatDate()} · 欢迎回到工作台</p>
-            {user?.tenant && (
+            {user?.school && (
               <p className="text-sm text-primary mt-1">
                 <School className="inline-block h-3.5 w-3.5 mr-1" />
-                {user.tenant} · {user.tenantType || '学校'}
+                {user.school} · {user.schoolType || '学校'}
               </p>
             )}
           </div>

@@ -13,8 +13,8 @@ const dbFactory = factory({
     password: String,
     phone: String,
     role: String, // 'admin' or 'teacher'
-    tenant: String, // 用户所属学校
-    tenantType: String, // 学校类型
+    school: String, // 用户所属学校
+    schoolType: String, // 学校类型
   },
   // 用户会话模型
   session: {
@@ -425,8 +425,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13800138000',
     role: 'admin',
-    tenant: '北京第一中学',
-    tenantType: '九年一贯制'
+    school: '北京第一中学',
+    schoolType: '九年一贯制'
   });
   
   // 添加另一个校端管理员用户
@@ -440,8 +440,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13600136000',
     role: 'admin',
-    tenant: '上海市第二中学',
-    tenantType: '完全中学（六年制）'
+    school: '上海市第二中学',
+    schoolType: '完全中学（六年制）'
   });
   
   db.user.create({
@@ -454,8 +454,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13900139000',
     role: 'teacher',
-    tenant: '通用平台',
-    tenantType: '完全中学'
+    school: '通用平台',
+    schoolType: '完全中学'
   });
   
   // 添加超级管理员用户
@@ -469,8 +469,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13700137000',
     role: 'superadmin',
-    tenant: '五石炼成',
-    tenantType: '超级管理'
+    school: '五石炼成',
+    schoolType: '超级管理'
   });
   
   // 添加导师和学生示例数据

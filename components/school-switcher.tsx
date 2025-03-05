@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 
 // 默认学校数据
-const defaultSchoolTenant = {
+const defaultSchool = {
   id: "default",
   name: "通用平台",
   logo: Building,
@@ -44,19 +44,19 @@ export function SchoolSwitcher() {
   };
   
   // 根据用户信息创建学校对象
-  const userTenant = user?.tenant 
+  const userSchool = user?.school 
     ? {
-        id: "user-tenant",
-        name: user.tenant,
-        logo: getSchoolLogo(user.tenantType),
-        type: user.tenantType || "完全中学",
+        id: "user-school",
+        name: user.school,
+        logo: getSchoolLogo(user.schoolType),
+        type: user.schoolType || "完全中学",
         region: "全国"
       }
-    : defaultSchoolTenant
+    : defaultSchool
   
   // 只显示用户自己的学校
-  const schoolTenants = [userTenant];
-  const [activeSchool, setActiveSchool] = React.useState(userTenant)
+  const schools = [userSchool];
+  const [activeSchool, setActiveSchool] = React.useState(userSchool)
 
   return (
     <SidebarMenu>
@@ -79,12 +79,12 @@ export function SchoolSwitcher() {
                 <span className="truncate text-xs">{activeSchool.type}</span>
               </div>
               {/* 隐藏下拉箭头，因为只有一个选项 */}
-              {schoolTenants.length > 1 && (
+              {schools.length > 1 && (
                 <ChevronsUpDown className="ml-auto size-4" />
               )}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          {schoolTenants.length > 1 && (
+          {schools.length > 1 && (
             <DropdownMenuContent
               className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
               align="start"
@@ -94,7 +94,7 @@ export function SchoolSwitcher() {
               <DropdownMenuLabel className="text-muted-foreground text-xs">
                 学校
               </DropdownMenuLabel>
-              {schoolTenants.map((school, index) => (
+              {schools.map((school, index) => (
                 <DropdownMenuItem
                   key={school.id}
                   onClick={() => setActiveSchool(school)}

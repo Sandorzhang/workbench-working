@@ -56,14 +56,14 @@ export const superadminHandlers = [
     // 增强用户数据
     const enhancedUsers: EnhancedUser[] = users.map(user => {
       // 查找学校名称（如果存在）
-      let schoolName = user.tenant || '';
+      let schoolName = user.school || '';
       
       // 如果用户有schoolId，通过schoolId查找学校名称
-      if (user.tenant) {
+      if (user.school) {
         const school = db.school.findFirst({
           where: {
             name: {
-              equals: user.tenant
+              equals: user.school
             }
           }
         });
@@ -81,7 +81,7 @@ export const superadminHandlers = [
         phone: user.phone,
         role: user.role,
         status: 'active' as const, // 默认为active
-        schoolId: user.tenant ? getSchoolIdFromName(user.tenant) : undefined,
+        schoolId: user.school ? getSchoolIdFromName(user.school) : undefined,
         schoolName: schoolName,
         lastLogin: new Date(Date.now() - Math.random() * 10000000000).toISOString(), // 随机上次登录时间
         createdAt: user.createdAt
@@ -130,8 +130,8 @@ export const superadminHandlers = [
         password: data.password || 'password123', // 默认密码
         phone: data.phone || '',
         role: data.role,
-        tenant: data.schoolId ? getSchoolNameFromId(data.schoolId) : '',
-        tenantType: data.schoolType || '',
+        school: data.schoolId ? getSchoolNameFromId(data.schoolId) : '',
+        schoolType: data.schoolType || '',
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
         createdAt: new Date().toISOString()
       });
@@ -203,7 +203,7 @@ export const superadminHandlers = [
           username: data.username !== undefined ? data.username : user.username,
           phone: data.phone !== undefined ? data.phone : user.phone,
           role: data.role !== undefined ? data.role : user.role,
-          tenant: data.schoolId !== undefined ? getSchoolNameFromId(data.schoolId) : user.tenant,
+          school: data.schoolId !== undefined ? getSchoolNameFromId(data.schoolId) : user.school,
           avatar: data.avatar !== undefined ? data.avatar : user.avatar,
           password: data.password !== undefined ? data.password : user.password,
         }

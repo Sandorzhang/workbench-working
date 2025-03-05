@@ -10,7 +10,7 @@ export const userHandlers = [
       // 解析URL参数
       const url = new URL(request.url);
       const role = url.searchParams.get('role') || '';
-      const tenant = url.searchParams.get('tenant') || '';
+      const school = url.searchParams.get('school') || '';
       
       // 获取所有用户
       let users = db.user.getAll();
@@ -27,8 +27,8 @@ export const userHandlers = [
       }
       
       // 按学校过滤
-      if (tenant) {
-        users = users.filter(user => user.tenant === tenant);
+      if (school) {
+        users = users.filter(user => user.school === school);
       }
       
       return HttpResponse.json(users);
@@ -117,8 +117,8 @@ export const userHandlers = [
         email: userData.email || `${userData.username}@example.com`,
         avatar: userData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
         role: userData.role,
-        tenant: userData.tenant || null,
-        tenantType: userData.tenantType || null,
+        school: userData.school || null,
+        schoolType: userData.schoolType || null,
         createdAt: new Date().toISOString(),
       });
       
