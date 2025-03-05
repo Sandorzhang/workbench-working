@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { AppSidebar } from "@/components/app-sidebar";
+import SuperAdminSidebar from "@/components/superadmin/sidebar";
+import SuperAdminHeader from "@/components/superadmin/header";
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/lib/auth';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,6 +15,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
+  Sidebar,
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
@@ -37,15 +41,19 @@ const pageTitleMap: Record<string, PageInfo> = {
   '/dashboard': { title: '工作台' },
   '/superadmin': { title: '超级管理员控制台' },
   '/superadmin/users': { 
-    title: '用户和权限管理',
+    title: '用户管理',
     parent: { title: '超级管理员控制台', path: '/superadmin' }
   },
-  '/superadmin/tenants': { 
-    title: '租户管理',
+  '/superadmin/schools': { 
+    title: '租户管理（学校）',
+    parent: { title: '超级管理员控制台', path: '/superadmin' }
+  },
+  '/superadmin/regions': { 
+    title: '区域管理',
     parent: { title: '超级管理员控制台', path: '/superadmin' }
   },
   '/superadmin/settings': { 
-    title: '系统配置',
+    title: '系统设置',
     parent: { title: '超级管理员控制台', path: '/superadmin' }
   },
   '/classroom-timemachine': { 
@@ -122,9 +130,13 @@ function getSidebarStateFromCookie() {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
+  const { user, isAuthenticated } = useAuth();
   const [sidebarState, setSidebarState] = useState<boolean | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
   const [dynamicPageTitle, setDynamicPageTitle] = useState<string | null>(null);
+  
+  // 检查用户是否是超级管理员
+  const isSuperAdmin = user?.role === 'superadmin';
   
   // 在客户端加载时读取cookie
   useEffect(() => {
@@ -279,6 +291,51 @@ export function AppLayout({ children }: AppLayoutProps) {
     pageInfo = pageTitleMap[pathname] || { title: '页面' };
   }
 
+  // 超级管理员使用专用布局
+  if (isSuperAdmin && pathname.startsWith('/superadmin')) {
+    return (
+      <SidebarProvider defaultOpen={sidebarState === undefined ? true : sidebarState}>
+        <div className="flex h-screen w-full overflow-hidden">
+          <Sidebar className="border-r bg-background">
+            <SuperAdminSidebar />
+          </Sidebar>
+          <div className="flex-1 flex flex-col h-screen w-full overflow-hidden">
+            {/* 超级管理员顶部导航栏 */}
+            <SuperAdminHeader />
+            
+            {/* 内容区域 */}
+            <main 
+              className={cn(
+                "flex-1 w-full overflow-auto", 
+                !mounted && "opacity-0", // 在客户端挂载前隐藏内容，避免闪烁
+                mounted && "animate-fadeIn"
+              )}
+              style={{ 
+                height: 'calc(100vh - 64px)',
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(0,0,0,0.1) transparent'
+              }}
+            >
+              <div className="min-h-full w-full bg-gradient-to-b from-[#f8f9fc] to-[#f3f5fa]">
+                {/* 自适应容器 */}
+                <div 
+                  className={cn(
+                    "mx-auto w-full transition-all duration-300 ease-in-out px-4 sm:px-6 md:px-8 py-6",
+                    // 在不同断点下调整max-width
+                    "max-w-full lg:max-w-[1280px] xl:max-w-[1536px] 2xl:max-w-[1840px]",
+                  )}
+                >
+                  {children}
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  // 普通用户使用常规布局
   return (
     <SidebarProvider defaultOpen={sidebarState === undefined ? true : sidebarState}>
       <div className="flex h-screen w-full overflow-hidden">
