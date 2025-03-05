@@ -1,9 +1,22 @@
 import { http, HttpResponse, delay } from 'msw';
 import { db } from '../db';
 
+// 定义用户请求类型
+interface UserCreateRequest {
+  name: string;
+  username: string;
+  password: string;
+  email?: string;
+  avatar?: string;
+  role: string;
+  school?: string;
+  schoolType?: string;
+  phone?: string;
+}
+
 export const userHandlers = [
   // 获取用户列表
-  http.get('/api/users', async ({ request }) => {
+  http.get('*/api/users', async ({ request }) => {
     await delay(300);
     
     try {
@@ -13,25 +26,26 @@ export const userHandlers = [
       const school = url.searchParams.get('school') || '';
       
       // 获取所有用户
-      let users = db.user.getAll();
+      let allUsers = db.user.getAll();
       
-      // 移除密码字段
-      users = users.map(user => {
+      // 创建一个新数组，移除密码字段
+      const users = allUsers.map(user => {
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
       });
       
       // 按角色过滤
+      let filteredUsers = users;
       if (role) {
-        users = users.filter(user => user.role === role);
+        filteredUsers = filteredUsers.filter(user => user.role === role);
       }
       
       // 按学校过滤
       if (school) {
-        users = users.filter(user => user.school === school);
+        filteredUsers = filteredUsers.filter(user => user.school === school);
       }
       
-      return HttpResponse.json(users);
+      return HttpResponse.json(filteredUsers);
     } catch (error) {
       console.error('获取用户列表失败:', error);
       return new HttpResponse(
@@ -42,7 +56,7 @@ export const userHandlers = [
   }),
   
   // 获取单个用户
-  http.get('/api/users/:id', async ({ params }) => {
+  http.get('*/api/users/:id', async ({ params }) => {
     await delay(300);
     
     try {
@@ -78,11 +92,11 @@ export const userHandlers = [
   }),
   
   // 创建用户
-  http.post('/api/users', async ({ request }) => {
+  http.post('*/api/users', async ({ request }) => {
     await delay(500);
     
     try {
-      const userData = await request.json();
+      const userData = await request.json() as UserCreateRequest;
       
       // 检查必要字段
       if (!userData.name || !userData.username || !userData.password || !userData.role) {
@@ -136,7 +150,7 @@ export const userHandlers = [
   }),
   
   // 更新用户
-  http.put('/api/users/:id', async ({ params, request }) => {
+  http.put('*/api/users/:id', async ({ params, request }) => {
     await delay(500);
     
     try {
@@ -201,7 +215,7 @@ export const userHandlers = [
   }),
   
   // 删除用户
-  http.delete('/api/users/:id', async ({ params }) => {
+  http.delete('*/api/users/:id', async ({ params }) => {
     await delay(400);
     
     try {

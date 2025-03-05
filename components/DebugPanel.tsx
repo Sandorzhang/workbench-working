@@ -48,7 +48,11 @@ export function DebugPanel() {
           
           // 尝试解析响应，看是否能正确解析为JSON
           try {
-            await clone.json();
+            // 只有当状态码不是204并且Content-Type是JSON时才尝试解析
+            const contentType = clone.headers.get('content-type');
+            if (clone.status !== 204 && contentType && contentType.includes('application/json')) {
+              await clone.json();
+            }
           } catch (parseError) {
             request.error = '响应不是有效的JSON';
             console.error(`[DebugPanel] ${method} ${url} 返回的不是有效JSON`, parseError);

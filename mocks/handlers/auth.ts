@@ -30,7 +30,7 @@ interface CodeLoginRequest {
 
 export const authHandlers = [
   // 账号密码登录
-  http.post('/api/auth/login', async ({ request }) => {
+  http.post('*/api/auth/login', async ({ request }) => {
     await delay(500);
     const { username, password } = await request.json() as LoginRequest;
     
@@ -99,7 +99,7 @@ export const authHandlers = [
   }),
   
   // 获取当前登录用户信息
-  http.get('/api/auth/me', async ({ request }) => {
+  http.get('*/api/auth/me', async ({ request }) => {
     try {
       await delay(300);
       
@@ -270,7 +270,7 @@ export const authHandlers = [
   }),
   
   // 发送验证码
-  http.post('/api/auth/send-code', async ({ request }) => {
+  http.post('*/api/auth/send-code', async ({ request }) => {
     await delay(500);
     
     try {
@@ -321,7 +321,7 @@ export const authHandlers = [
   }),
   
   // 验证码登录
-  http.post('/api/auth/login-with-code', async ({ request }) => {
+  http.post('*/api/auth/login-with-code', async ({ request }) => {
     await delay(500);
     
     try {
@@ -474,7 +474,7 @@ export const authHandlers = [
   }),
   
   // 退出登录
-  http.post('/api/auth/logout', async ({ request }) => {
+  http.post('*/api/auth/logout', async ({ request }) => {
     await delay(300);
     
     // 从请求头获取令牌
