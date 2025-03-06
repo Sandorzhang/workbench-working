@@ -101,18 +101,39 @@ export default function SchoolsPage() {
       if (filterType && filterType !== 'all') params.append('type', filterType);
       if (filterStatus && filterStatus !== 'all') params.append('status', filterStatus);
       
+      // 添加时间戳，避免缓存问题
+      params.append('_t', Date.now().toString());
+      
       const queryString = params.toString() ? `?${params.toString()}` : '';
-      const response = await fetch(`/api/schools${queryString}`);
+      console.log('请求学校数据:', `/api/superadmin/schools${queryString}`);
+      
+      const response = await fetch(`/api/superadmin/schools${queryString}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin', // 确保发送cookies
+        cache: 'no-store' // 确保不使用缓存
+      });
+      
+      if (response.status === 307) {
+        console.error('请求被重定向:', response.headers.get('Location'));
+        throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
+      }
       
       if (!response.ok) {
-        throw new Error('获取学校数据失败');
+        throw new Error(`获取学校数据失败: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
-      setSchools(data.schools);
+      console.log('获取学校数据成功:', data);
+      setSchools(data);
     } catch (error) {
       console.error('Error fetching schools:', error);
-      toast.error('获取学校数据失败');
+      toast.error('获取学校数据失败，请稍后再试');
     } finally {
       setIsLoading(false);
     }
@@ -121,34 +142,66 @@ export default function SchoolsPage() {
   // 获取区域数据
   const fetchRegions = async () => {
     try {
-      const response = await fetch('/api/regions');
+      console.log('获取区域数据...');
+      const response = await fetch('/api/regions', {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        cache: 'no-store'
+      });
+      
+      if (response.status === 307) {
+        console.error('区域请求被重定向:', response.headers.get('Location'));
+        throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
+      }
       
       if (!response.ok) {
-        throw new Error('获取区域数据失败');
+        throw new Error(`获取区域数据失败: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
+      console.log('获取区域数据成功:', data);
       setRegions(data.regions.filter((region: Region) => region.status));
     } catch (error) {
       console.error('Error fetching regions:', error);
-      toast.error('获取区域数据失败');
+      toast.error('获取区域数据失败，请稍后再试');
     }
   };
   
   // 获取学校类型
   const fetchSchoolTypes = async () => {
     try {
-      const response = await fetch('/api/school-types');
+      console.log('获取学校类型...');
+      const response = await fetch('/api/school-types', {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        cache: 'no-store'
+      });
+      
+      if (response.status === 307) {
+        console.error('学校类型请求被重定向:', response.headers.get('Location'));
+        throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
+      }
       
       if (!response.ok) {
-        throw new Error('获取学校类型失败');
+        throw new Error(`获取学校类型失败: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
+      console.log('获取学校类型成功:', data);
       setSchoolTypes(data);
     } catch (error) {
       console.error('Error fetching school types:', error);
-      toast.error('获取学校类型失败');
+      toast.error('获取学校类型失败，请稍后再试');
     }
   };
 
@@ -184,29 +237,55 @@ export default function SchoolsPage() {
     try {
       if (isEditMode && currentSchool) {
         // 更新学校
-        const response = await fetch(`/api/schools/${currentSchool.id}`, {
+        console.log('更新学校:', currentSchool.id, values);
+        const response = await fetch(`/api/superadmin/schools/${currentSchool.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
           body: JSON.stringify(values),
+          credentials: 'same-origin',
+          cache: 'no-store'
         });
+        
+        if (response.status === 307) {
+          console.error('更新请求被重定向:', response.headers.get('Location'));
+          throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
+        }
         
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || '更新学校失败');
+          throw new Error(errorData.message || `更新学校失败: ${response.status} ${response.statusText}`);
         }
         
         toast.success('学校更新成功');
       } else {
         // 创建学校
-        const response = await fetch('/api/schools', {
+        console.log('创建学校:', values);
+        const response = await fetch('/api/superadmin/schools', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
           body: JSON.stringify(values),
+          credentials: 'same-origin',
+          cache: 'no-store'
         });
+        
+        if (response.status === 307) {
+          console.error('创建请求被重定向:', response.headers.get('Location'));
+          throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
+        }
         
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || '创建学校失败');
+          throw new Error(errorData.message || `创建学校失败: ${response.status} ${response.statusText}`);
         }
         
         toast.success('学校创建成功');
@@ -216,12 +295,12 @@ export default function SchoolsPage() {
       return Promise.resolve();
     } catch (error: any) {
       console.error('Error submitting school:', error);
-      toast.error(error.message || '操作失败');
+      toast.error(error.message || '操作失败，请稍后再试');
       return Promise.reject(error);
     }
   };
 
-  // 打开删除确认对话框
+  // 打开删除对话框
   const openDeleteDialog = (school: School) => {
     setSchoolToDelete(school);
     setIsDeleteDialogOpen(true);
@@ -233,13 +312,27 @@ export default function SchoolsPage() {
     
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/schools/${schoolToDelete.id}`, {
+      console.log('删除学校:', schoolToDelete.id);
+      const response = await fetch(`/api/superadmin/schools/${schoolToDelete.id}`, {
         method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        cache: 'no-store'
       });
+      
+      if (response.status === 307) {
+        console.error('删除请求被重定向:', response.headers.get('Location'));
+        throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
+      }
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || '删除学校失败');
+        throw new Error(errorData.message || `删除学校失败: ${response.status} ${response.statusText}`);
       }
       
       toast.success('学校删除成功');
@@ -247,7 +340,7 @@ export default function SchoolsPage() {
       fetchSchools(); // 重新获取数据
     } catch (error: any) {
       console.error('Error deleting school:', error);
-      toast.error(error.message || '删除学校失败');
+      toast.error(error.message || '删除学校失败，请稍后再试');
     } finally {
       setIsDeleting(false);
     }

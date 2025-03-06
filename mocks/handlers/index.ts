@@ -26,6 +26,7 @@ import { regionHandlers } from './region';
 import { schoolHandlers } from './school';
 import { userHandlers } from './user';
 import { superadminHandlers } from './superadmin';
+import { superadminSchoolHandlers } from './superadmin-school';
 import { applicationHandlers } from './application';
 import { permissionHandlers } from './permission';
 import { teachingDesignsHandlers } from './teaching-designs';
@@ -35,6 +36,31 @@ import { mentorHandlers } from './mentor';
 
 // 定义原始处理程序集合
 const originalHandlers = [
+  // 通用处理程序 - 处理对Next.js页面路由的直接访问
+  http.get('*/superadmin/*', ({ request }) => {
+    // 如果URL包含_next或特定资源，直接放行
+    if (
+      request.url.includes('/_next/') || 
+      request.url.includes('.svg') || 
+      request.url.includes('.png') || 
+      request.url.includes('.jpg') || 
+      request.url.includes('.ico') ||
+      request.url.includes('favicon') ||
+      request.url.includes('_rsc=')
+    ) {
+      return undefined;
+    }
+    
+    // 如果是API请求，不处理（让后续的具体handler处理）
+    if (request.url.includes('/api/')) {
+      return undefined;
+    }
+    
+    // 对页面路由请求，直接放行
+    console.log('页面路由请求被放行:', request.url);
+    return undefined;
+  }),
+  
   ...authHandlers,
   ...aiLibraryHandlers,
   ...conceptMapHandlers,
@@ -73,6 +99,7 @@ const originalHandlers = [
   ...schoolHandlers,
   ...userHandlers,
   ...superadminHandlers,
+  ...superadminSchoolHandlers,
   ...applicationHandlers,
   ...permissionHandlers,
   ...teachingDesignsHandlers,

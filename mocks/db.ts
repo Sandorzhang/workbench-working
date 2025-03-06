@@ -18,8 +18,11 @@ import {
   Mentor,
   IndicatorRecord,
   Note,
-  AcademicRecord
+  AcademicRecord,
+  Course,
+  CourseEnrollment
 } from '@/types/db';
+import { SchoolType } from '@/lib/api-types';
 
 // 创建模拟数据库模型
 const dbFactory = factory({
@@ -241,6 +244,33 @@ const dbFactory = factory({
     createdAt: String,
   },
   // 可以添加更多模型
+  course: {
+    id: primaryKey(String),
+    name: String,
+    code: String,
+    description: String,
+    schoolId: String,
+    gradeLevel: String,
+    subject: String,
+    teacherId: String,
+    status: String,
+    startDate: String,
+    endDate: String,
+    enrollmentLimit: Number,
+    enrollmentCount: Number,
+    schedule: String,
+    location: String,
+    textbooks: Array,
+    syllabus: String,
+  },
+  courseEnrollment: {
+    id: primaryKey(String),
+    courseId: String,
+    studentId: String,
+    enrollmentDate: String,
+    status: String,
+    finalGrade: String,
+  },
 });
 
 // 将数据库扩展为包含直接数组
@@ -263,7 +293,9 @@ export const db = {
   mentors: [] as Mentor[],
   indicatorRecords: [] as IndicatorRecord[],
   notes: [] as Note[],
-  academicRecords: [] as AcademicRecord[]
+  academicRecords: [] as AcademicRecord[],
+  courses: [] as Course[],
+  courseEnrollments: [] as CourseEnrollment[]
 };
 
 // 保存数据库状态到localStorage
@@ -309,6 +341,8 @@ export function saveDb() {
       indicatorRecords: db.indicatorRecords,
       notes: db.notes,
       academicRecords: db.academicRecords,
+      courses: db.courses,
+      courseEnrollments: db.courseEnrollments,
       // 确保保存权限数据
       permission: db.permission.getAll(),
       rolePermission: db.rolePermission.getAll()
@@ -429,6 +463,7 @@ export function loadDb(): boolean {
     if (data.indicatorRecords) db.indicatorRecords = data.indicatorRecords;
     if (data.notes) db.notes = data.notes;
     if (data.academicRecords) db.academicRecords = data.academicRecords;
+    if (data.courses) db.courses = data.courses;
     
     console.log('数据库状态已从localStorage恢复');
     return true;
@@ -438,11 +473,231 @@ export function loadDb(): boolean {
   }
 }
 
-// 初始化一些模拟数据
+// 添加区域和学校数据的函数
+export function seedRegionAndSchoolData() {
+  console.log('检查是否需要初始化区域和学校数据...');
+  
+  // 检查区域数据是否已存在
+  const existingRegions = db.region.getAll();
+  if (existingRegions.length > 0) {
+    console.log(`已存在 ${existingRegions.length} 个区域数据，跳过区域初始化`);
+  } else {
+    console.log('初始化区域数据...');
+    
+    // 添加区域数据
+    db.region.create({
+      id: '110101',
+      name: '北京市东城区',
+      status: true
+    });
+    
+    db.region.create({
+      id: '110102',
+      name: '北京市西城区',
+      status: true
+    });
+    
+    db.region.create({
+      id: '110105',
+      name: '北京市朝阳区',
+      status: true
+    });
+    
+    db.region.create({
+      id: '110106',
+      name: '北京市丰台区',
+      status: true
+    });
+    
+    db.region.create({
+      id: '110108',
+      name: '北京市海淀区',
+      status: true
+    });
+    
+    db.region.create({
+      id: '110109',
+      name: '北京市门头沟区',
+      status: false
+    });
+    
+    db.region.create({
+      id: '310101',
+      name: '上海市黄浦区',
+      status: true
+    });
+    
+    db.region.create({
+      id: '310104',
+      name: '上海市徐汇区',
+      status: true
+    });
+    
+    db.region.create({
+      id: '310105',
+      name: '上海市长宁区',
+      status: true
+    });
+    
+    console.log('区域数据初始化完成');
+  }
+  
+  // 检查学校数据是否已存在
+  const existingSchools = db.school.getAll();
+  if (existingSchools.length > 0) {
+    console.log(`已存在 ${existingSchools.length} 所学校数据，跳过学校初始化`);
+  } else {
+    console.log('初始化学校数据...');
+    
+    // 添加学校数据
+    db.school.create({
+      id: '1',
+      name: '北京市东城区第一实验小学',
+      code: '101',
+      regionId: '110101',
+      type: SchoolType.PRIMARY_SIX,
+      grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '2',
+      name: '北京市西城区实验中学',
+      code: '201',
+      regionId: '110102',
+      type: SchoolType.MIDDLE_THREE,
+      grades: ['初一', '初二', '初三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '3',
+      name: '北京市朝阳区实验学校',
+      code: '301',
+      regionId: '110105',
+      type: SchoolType.NINE_YEAR,
+      grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '4',
+      name: '北京市海淀区中关村中学',
+      code: '401',
+      regionId: '110108',
+      type: SchoolType.HIGH_THREE,
+      grades: ['高一', '高二', '高三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '5',
+      name: '上海市黄浦区实验小学',
+      code: '501',
+      regionId: '310101',
+      type: SchoolType.PRIMARY_FIVE,
+      grades: ['一年级', '二年级', '三年级', '四年级', '五年级'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '6',
+      name: '上海市徐汇区光启中学',
+      code: '601',
+      regionId: '310104',
+      type: SchoolType.TWELVE_YEAR,
+      grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '7',
+      name: '上海市长宁区实验中学',
+      code: '701',
+      regionId: '310105',
+      type: SchoolType.MIDDLE_FOUR,
+      grades: ['六年级', '初一', '初二', '初三'],
+      status: false,
+      createdAt: new Date().toISOString()
+    });
+    
+    // 添加更多学校
+    db.school.create({
+      id: '8',
+      name: '北京市丰台区第二中学',
+      code: '801',
+      regionId: '110106',
+      type: SchoolType.COMPLETE_SIX,
+      grades: ['初一', '初二', '初三', '高一', '高二', '高三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '9',
+      name: '北京市海淀区清华附中',
+      code: '901',
+      regionId: '110108',
+      type: SchoolType.COMPLETE_SEVEN,
+      grades: ['初一', '初二', '初三', '初四', '高一', '高二', '高三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '10',
+      name: '上海市徐汇区第三实验小学',
+      code: '102',
+      regionId: '310104',
+      type: SchoolType.PRIMARY_SIX,
+      grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '11',
+      name: '北京市朝阳区实验高中',
+      code: '103',
+      regionId: '110105',
+      type: SchoolType.HIGH_THREE,
+      grades: ['高一', '高二', '高三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    db.school.create({
+      id: '12',
+      name: '上海市黄浦区育才中学',
+      code: '104',
+      regionId: '310101',
+      type: SchoolType.NINE_YEAR,
+      grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三'],
+      status: true,
+      createdAt: new Date().toISOString()
+    });
+    
+    console.log('学校数据初始化完成');
+  }
+  
+  // 保存数据库状态
+  saveDb();
+  console.log('区域和学校数据已保存');
+}
+
+// 修改原始seedDb函数，让它调用seedRegionAndSchoolData
 export function seedDb() {
   // 尝试从localStorage加载数据库状态
   if (loadDb()) {
     console.log('从localStorage恢复了数据库状态，跳过初始化');
+    // 即使从本地存储恢复了数据，也检查并初始化区域和学校数据
+    seedRegionAndSchoolData();
     return;
   }
   
@@ -459,8 +714,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13800138000',
     role: 'admin',
-    school: '北京第一中学',
-    schoolType: '九年一贯制'
+    school: '北京市朝阳区实验学校',
+    schoolType: SchoolType.NINE_YEAR
   });
   
   // 添加另一个校端管理员用户
@@ -474,8 +729,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13600136000',
     role: 'admin',
-    school: '上海市第二中学',
-    schoolType: '完全中学（六年制）'
+    school: '上海市徐汇区光启中学',
+    schoolType: SchoolType.TWELVE_YEAR
   });
   
   db.user.create({
@@ -488,8 +743,8 @@ export function seedDb() {
     password: 'password123',
     phone: '13900139000',
     role: 'teacher',
-    school: '通用平台',
-    schoolType: '完全中学'
+    school: '北京市海淀区中关村中学',
+    schoolType: SchoolType.HIGH_THREE
   });
   
   // 添加超级管理员用户
@@ -507,6 +762,92 @@ export function seedDb() {
     schoolType: '超级管理'
   });
   
+  // 添加更多教师用户
+  db.user.create({
+    id: '5',
+    name: '赵老师',
+    email: 'zhao@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhao',
+    createdAt: new Date().toISOString(),
+    username: 'zhaoteacher',
+    password: 'password123',
+    phone: '13500135000',
+    role: 'teacher',
+    school: '北京市东城区第一实验小学',
+    schoolType: SchoolType.PRIMARY_SIX
+  });
+  
+  db.user.create({
+    id: '6',
+    name: '钱老师',
+    email: 'qian@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qian',
+    createdAt: new Date().toISOString(),
+    username: 'qianteacher',
+    password: 'password123',
+    phone: '13400134000',
+    role: 'teacher',
+    school: '北京市西城区实验中学',
+    schoolType: SchoolType.MIDDLE_THREE
+  });
+  
+  db.user.create({
+    id: '7',
+    name: '孙老师',
+    email: 'sun@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sun',
+    createdAt: new Date().toISOString(),
+    username: 'sunteacher',
+    password: 'password123',
+    phone: '13300133000',
+    role: 'teacher',
+    school: '上海市黄浦区实验小学',
+    schoolType: SchoolType.PRIMARY_FIVE
+  });
+  
+  // 添加更多学生用户
+  db.user.create({
+    id: '8',
+    name: '小明',
+    email: 'xiaoming@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaoming2',
+    createdAt: new Date().toISOString(),
+    username: 'student1',
+    password: 'password123',
+    phone: '13200132000',
+    role: 'student',
+    school: '北京市朝阳区实验学校',
+    schoolType: SchoolType.NINE_YEAR
+  });
+  
+  db.user.create({
+    id: '9',
+    name: '小红',
+    email: 'xiaohong@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaohong',
+    createdAt: new Date().toISOString(),
+    username: 'student2',
+    password: 'password123',
+    phone: '13100131000',
+    role: 'student',
+    school: '北京市海淀区中关村中学',
+    schoolType: SchoolType.HIGH_THREE
+  });
+  
+  db.user.create({
+    id: '10',
+    name: '小华',
+    email: 'xiaohua@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaohua',
+    createdAt: new Date().toISOString(),
+    username: 'student3',
+    password: 'password123',
+    phone: '13000130000',
+    role: 'student',
+    school: '上海市徐汇区光启中学',
+    schoolType: SchoolType.TWELVE_YEAR
+  });
+  
   // 添加导师和学生示例数据
   // 添加导师数据
   const mentor1 = db.mentor.create({
@@ -514,23 +855,49 @@ export function seedDb() {
     name: '李四',
     email: 'lisi@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisi',
-    title: '副教授',
+    title: '高级教师',
     phone: '13900139000',
-    bio: '计算机科学教授，专注于人工智能和机器学习领域',
-    specialties: ['人工智能', '机器学习', '数据结构'],
+    bio: '高中物理教师，拥有十年教学经验，致力于培养学生的科学思维',
+    specialties: ['物理', '天文学', '科学教育'],
     isAssigned: true,
     students: [],
   });
   
-  db.mentor.create({
-    id: '3',
-    name: '王五',
-    email: 'wangwu@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangwu',
-    title: '讲师',
-    phone: '13700137000',
-    bio: '数学系讲师，主要研究方向为高等代数和数学分析',
-    specialties: ['高等代数', '数学分析', '概率论'],
+  const mentor2 = db.mentor.create({
+    id: '5', // 对应赵老师的用户ID
+    name: '赵老师',
+    email: 'zhao@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhao',
+    title: '小学教师',
+    phone: '13500135000',
+    bio: '小学语文教师，专注于儿童阅读能力培养',
+    specialties: ['语文', '阅读教育', '写作指导'],
+    isAssigned: true,
+    students: [],
+  });
+  
+  const mentor3 = db.mentor.create({
+    id: '6', // 对应钱老师的用户ID
+    name: '钱老师',
+    email: 'qian@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qian',
+    title: '中学数学教师',
+    phone: '13400134000',
+    bio: '初中数学教师，善于用生活实例讲解数学知识',
+    specialties: ['数学', '几何', '代数'],
+    isAssigned: true,
+    students: [],
+  });
+  
+  const mentor4 = db.mentor.create({
+    id: '7', // 对应孙老师的用户ID
+    name: '孙老师',
+    email: 'sun@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sun',
+    title: '小学英语教师',
+    phone: '13300133000',
+    bio: '小学英语教师，注重培养学生的英语兴趣和实用能力',
+    specialties: ['英语', '儿童教育', '外语教学'],
     isAssigned: false,
     students: [],
   });
@@ -538,45 +905,104 @@ export function seedDb() {
   // 添加学生数据
   const student1 = db.student.create({
     id: 's1',
-    name: '张晓明',
+    name: '张晓明', // 对应用户数据中的"小明"
     email: 'xiaoming@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaoming',
     grade: '初三',
-    major: '', // 移除专业信息
+    major: '', 
     class: '1',
     studentId: '20210101',
-    mentorId: '2',
+    mentorId: '2', // 李四老师
   });
   
   const student2 = db.student.create({
     id: 's2',
-    name: '李华',
+    name: '李华', // 对应用户数据中的"小红"
     email: 'lihua@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lihua',
-    grade: '初二',
-    major: '', // 移除专业信息
+    grade: '高一',
+    major: '',
     class: '2',
     studentId: '20210202',
-    mentorId: '2',
+    mentorId: '2', // 李四老师
   });
   
   const student3 = db.student.create({
     id: 's3',
-    name: '王芳',
+    name: '王芳', // 对应用户数据中的"小华"
     email: 'wangfang@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangfang',
-    grade: '高一',
-    major: '', // 移除专业信息
+    grade: '六年级',
+    major: '',
     class: '1',
     studentId: '20220101',
-    mentorId: '2',
+    mentorId: '5', // 赵老师
+  });
+  
+  // 添加更多学生
+  const student4 = db.student.create({
+    id: 's4',
+    name: '小明',
+    email: 'xiaoming2@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaoming2',
+    grade: '四年级',
+    major: '',
+    class: '3',
+    studentId: '20220102',
+    mentorId: '5', // 赵老师
+  });
+  
+  const student5 = db.student.create({
+    id: 's5',
+    name: '小红',
+    email: 'xiaohong@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaohong',
+    grade: '初二',
+    major: '',
+    class: '4',
+    studentId: '20220103',
+    mentorId: '6', // 钱老师
+  });
+  
+  const student6 = db.student.create({
+    id: 's6',
+    name: '小华',
+    email: 'xiaohua@example.com',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaohua',
+    grade: '一年级',
+    major: '',
+    class: '2',
+    studentId: '20220104',
+    mentorId: '7', // 孙老师
   });
   
   // 更新导师的学生列表
   db.mentor.update({
     where: { id: { equals: '2' } },
     data: {
-      students: [student1, student2, student3],
+      students: [student1, student2],
+    },
+  });
+  
+  db.mentor.update({
+    where: { id: { equals: '5' } },
+    data: {
+      students: [student3, student4],
+    },
+  });
+  
+  db.mentor.update({
+    where: { id: { equals: '6' } },
+    data: {
+      students: [student5],
+    },
+  });
+  
+  db.mentor.update({
+    where: { id: { equals: '7' } },
+    data: {
+      students: [student6],
+      isAssigned: true, // 更新分配状态
     },
   });
   
@@ -1011,4 +1437,196 @@ export function seedDb() {
   // 保存数据库状态
   saveDb();
   console.log('数据库状态已保存');
+  
+  // 初始化区域和学校数据
+  seedRegionAndSchoolData();
+
+  // 添加课程数据
+  // 小学课程
+  const course1 = db.course.create({
+    id: 'c1',
+    name: '小学语文（三年级上）',
+    code: 'PRI-CHN-3A',
+    description: '培养学生的语文素养，提高阅读理解和写作能力',
+    schoolId: '1', // 北京市东城区第一实验小学
+    gradeLevel: '三年级',
+    subject: '语文',
+    teacherId: '5', // 赵老师
+    status: 'active',
+    startDate: new Date('2023-09-01').toISOString(),
+    endDate: new Date('2024-01-15').toISOString(),
+    enrollmentLimit: 40,
+    enrollmentCount: 38,
+    schedule: '周一、周三 上午8:00-9:30',
+    location: '教学楼A区 301教室',
+    textbooks: [
+      {
+        id: 'tb1',
+        title: '人教版小学语文三年级上册',
+        author: '人民教育出版社',
+        publisher: '人民教育出版社',
+        year: 2023,
+        isbn: '9787107339875',
+      }
+    ],
+    syllabus: '语文基础知识、阅读理解、作文写作、口语表达',
+  });
+
+  const course2 = db.course.create({
+    id: 'c2',
+    name: '小学数学（四年级上）',
+    code: 'PRI-MATH-4A',
+    description: '培养学生的数学思维和解决问题的能力',
+    schoolId: '1', // 北京市东城区第一实验小学
+    gradeLevel: '四年级',
+    subject: '数学',
+    teacherId: '5', // 赵老师（兼职数学）
+    status: 'active',
+    startDate: new Date('2023-09-01').toISOString(),
+    endDate: new Date('2024-01-15').toISOString(),
+    enrollmentLimit: 40,
+    enrollmentCount: 36,
+    schedule: '周二、周四 上午10:00-11:30',
+    location: '教学楼A区 302教室',
+    textbooks: [
+      {
+        id: 'tb2',
+        title: '人教版小学数学四年级上册',
+        author: '人民教育出版社',
+        publisher: '人民教育出版社',
+        year: 2023,
+        isbn: '9787107339882',
+      }
+    ],
+    syllabus: '数与代数、图形与几何、统计与概率、应用题',
+  });
+
+  // 初中课程
+  const course3 = db.course.create({
+    id: 'c3',
+    name: '初中数学（初二上）',
+    code: 'MID-MATH-2A',
+    description: '培养学生的数学思维和解题能力，为高中数学打下基础',
+    schoolId: '2', // 北京市西城区实验中学
+    gradeLevel: '初二',
+    subject: '数学',
+    teacherId: '6', // 钱老师
+    status: 'active',
+    startDate: new Date('2023-09-01').toISOString(),
+    endDate: new Date('2024-01-15').toISOString(),
+    enrollmentLimit: 45,
+    enrollmentCount: 42,
+    schedule: '周一、周三、周五 上午8:00-9:30',
+    location: '教学楼B区 201教室',
+    textbooks: [
+      {
+        id: 'tb3',
+        title: '人教版初中数学八年级上册',
+        author: '人民教育出版社',
+        publisher: '人民教育出版社',
+        year: 2023,
+        isbn: '9787107339899',
+      }
+    ],
+    syllabus: '代数基础、几何证明、函数初步、统计与概率',
+  });
+
+  // 小学英语课程
+  const course4 = db.course.create({
+    id: 'c4',
+    name: '小学英语（一年级上）',
+    code: 'PRI-ENG-1A',
+    description: '培养学生对英语的兴趣，建立语音基础和简单词汇',
+    schoolId: '10', // 上海市徐汇区第三实验小学
+    gradeLevel: '一年级',
+    subject: '英语',
+    teacherId: '7', // 孙老师
+    status: 'active',
+    startDate: new Date('2023-09-01').toISOString(),
+    endDate: new Date('2024-01-15').toISOString(),
+    enrollmentLimit: 35,
+    enrollmentCount: 33,
+    schedule: '周二、周四 上午9:00-10:00',
+    location: '教学楼C区 101教室',
+    textbooks: [
+      {
+        id: 'tb4',
+        title: 'PEP小学英语一年级上册',
+        author: '人民教育出版社',
+        publisher: '人民教育出版社',
+        year: 2023,
+        isbn: '9787107339905',
+      }
+    ],
+    syllabus: '英语字母、简单词汇、基础对话、儿童歌谣',
+  });
+
+  // 高中课程
+  const course5 = db.course.create({
+    id: 'c5',
+    name: '高中物理（高一上）',
+    code: 'HIGH-PHY-1A',
+    description: '培养学生的物理思维和实验能力，为高考做准备',
+    schoolId: '9', // 北京市海淀区清华附属中学
+    gradeLevel: '高一',
+    subject: '物理',
+    teacherId: '2', // 李四（高级教师）
+    status: 'active',
+    startDate: new Date('2023-09-01').toISOString(),
+    endDate: new Date('2024-01-15').toISOString(),
+    enrollmentLimit: 50,
+    enrollmentCount: 48,
+    schedule: '周一、周三、周五 下午2:00-3:30',
+    location: '理科楼 301实验室',
+    textbooks: [
+      {
+        id: 'tb5',
+        title: '人教版高中物理必修1',
+        author: '人民教育出版社',
+        publisher: '人民教育出版社',
+        year: 2023,
+        isbn: '9787107339912',
+      }
+    ],
+    syllabus: '运动学、力学、能量与动量、实验方法',
+  });
+  
+  // 添加课程班级和学生关联数据
+  db.courseEnrollment.create({
+    id: 'e1',
+    courseId: 'c1',
+    studentId: 's4', // 小明（四年级）
+    enrollmentDate: new Date('2023-08-25').toISOString(),
+    status: 'enrolled',
+    finalGrade: undefined,
+  });
+  
+  db.courseEnrollment.create({
+    id: 'e2',
+    courseId: 'c3',
+    studentId: 's5', // 小红（初二）
+    enrollmentDate: new Date('2023-08-23').toISOString(),
+    status: 'enrolled',
+    finalGrade: undefined,
+  });
+  
+  db.courseEnrollment.create({
+    id: 'e3',
+    courseId: 'c4',
+    studentId: 's6', // 小华（一年级）
+    enrollmentDate: new Date('2023-08-20').toISOString(),
+    status: 'enrolled',
+    finalGrade: undefined,
+  });
+  
+  db.courseEnrollment.create({
+    id: 'e4',
+    courseId: 'c5',
+    studentId: 's2', // 李华（高一）
+    enrollmentDate: new Date('2023-08-22').toISOString(),
+    status: 'enrolled',
+    finalGrade: undefined,
+  });
+  
+  console.log('课程数据初始化完成');
 } 

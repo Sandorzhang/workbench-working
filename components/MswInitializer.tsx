@@ -81,6 +81,24 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
                 return;
               }
               
+              // 忽略页面路由请求
+              try {
+                const urlPath = new URL(request.url).pathname;
+                // 如果是页面路由（非API路径），且不是静态资源，则仅显示警告但不阻断
+                if (!urlPath.includes('/api/') && !urlPath.includes('/_next/')) {
+                  console.warn(`[MSW] 页面路由请求未被处理: ${request.method} ${urlPath}`);
+                  return; // 不显示警告，直接返回
+                }
+                
+                // 特别检查常见的API路径
+                if (urlPath.includes('/api/superadmin/')) {
+                  console.warn(`[MSW] 超级管理员API请求未被拦截: ${request.method} ${urlPath}`);
+                  console.warn(`[MSW] 检查MSW是否配置了对应的处理程序，路径前缀应该包含通配符(*)`);
+                }
+              } catch (err) {
+                console.error('[MSW] 无法解析请求URL', err);
+              }
+              
               // 详细记录未处理的请求
               console.warn(`[MSW] 未处理的请求: ${request.method} ${request.url}`);
               

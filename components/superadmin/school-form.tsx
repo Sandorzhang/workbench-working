@@ -3,6 +3,7 @@ import { School, Region } from '@/lib/api-types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { toast } from 'sonner';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -134,19 +135,36 @@ export function SchoolForm({
   const loadGradesForType = async (type: string) => {
     try {
       setIsLoadingGrades(true);
-      const response = await fetch(`/api/school-grades?type=${encodeURIComponent(type)}`);
+      console.log('获取年级列表，学校类型:', type);
+      const response = await fetch(`/api/school-grades?type=${encodeURIComponent(type)}`, {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        cache: 'no-store'
+      });
+      
+      if (response.status === 307) {
+        console.error('年级请求被重定向:', response.headers.get('Location'));
+        throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
+      }
       
       if (!response.ok) {
-        throw new Error('获取年级列表失败');
+        throw new Error(`获取年级列表失败: ${response.status} ${response.statusText}`);
       }
       
       const grades = await response.json();
+      console.log('获取年级列表成功:', grades);
       setAllGrades(grades);
       
       // 自动选择所有年级，不需要用户手动选择
       form.setValue('grades', grades);
     } catch (error) {
       console.error('Error loading grades:', error);
+      toast.error('获取年级列表失败，请稍后再试');
       setAllGrades([]);
     } finally {
       setIsLoadingGrades(false);

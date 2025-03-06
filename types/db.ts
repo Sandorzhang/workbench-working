@@ -11,6 +11,8 @@ import {
   Exam as ExamModel,
   Question as QuestionModel,
   LearningObjective as LearningObjectiveModel,
+  Course as CourseModel,
+  CourseEnrollment as CourseEnrollmentModel,
 } from './models/education';
 
 import {
@@ -162,4 +164,14 @@ export type Note = NoteModel;
 /**
  * 数据库中的学业记录类型
  */
-export type AcademicRecord = AcademicRecordModel; 
+export type AcademicRecord = AcademicRecordModel;
+
+/**
+ * 数据库中的课程类型
+ */
+export type Course = CourseModel;
+
+/**
+ * 数据库中的课程注册类型
+ */
+export type CourseEnrollment = CourseEnrollmentModel; 

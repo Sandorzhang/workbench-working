@@ -139,4 +139,44 @@ export interface ExamDetail {
   exam: Exam;
   questions: Question[];
   totalScore: number; // 总分，由所有题目分数累加得到
+}
+
+/**
+ * 课程信息接口
+ */
+export interface Course extends BaseEntity {
+  name: string;             // 课程名称
+  code: string;             // 课程代码
+  description: string;      // 课程描述
+  schoolId: string;         // 所属学校ID
+  gradeLevel: string;       // 年级
+  subject: string;          // 学科
+  teacherId: string;        // 教师ID
+  status: 'active' | 'inactive' | 'archived'; // 课程状态
+  startDate: string;        // 开始日期
+  endDate: string;          // 结束日期
+  enrollmentLimit: number;  // 最大学生数
+  enrollmentCount: number;  // 当前学生数
+  schedule: string;         // 课程安排
+  location: string;         // 上课地点
+  textbooks: Array<{        // 教材信息
+    id: string;
+    title: string;
+    author: string;
+    publisher: string;
+    year: number;
+    isbn: string;
+  }>;
+  syllabus: string;         // 教学大纲
+}
+
+/**
+ * 课程注册信息接口
+ */
+export interface CourseEnrollment extends BaseEntity {
+  courseId: string;         // 课程ID
+  studentId: string;        // 学生ID
+  enrollmentDate: string;   // 注册日期
+  status: 'enrolled' | 'dropped' | 'completed'; // 注册状态
+  finalGrade: string | null; // 最终成绩
 } 
