@@ -83,11 +83,6 @@ export default function SuperAdminSidebar() {
           icon: <Key className="h-5 w-5" />,
           badge: "新",
           variant: "destructive",
-        },
-        {
-          title: "返回工作台",
-          href: "/workbench",
-          icon: <LayoutDashboard className="h-5 w-5" />,
         }
       ]
     }
@@ -101,13 +96,15 @@ export default function SuperAdminSidebar() {
       // 调用登出函数
       await logout();
       
-      // 导航到登录页
-      console.log('退出成功，重定向到登录页');
-      router.push('/login');
+      // 不再在这里导航到登录页，由NavUserAuth组件统一处理
+      console.log('退出成功，让NavUserAuth处理导航');
+      
+      // 返回一个resolved的Promise，这样NavUserAuth可以继续它的流程
+      return Promise.resolve();
     } catch (error) {
       console.error('登出处理失败:', error);
-      // 即使失败也尝试跳转到登录页
-      router.push('/login');
+      // 将错误向上抛出，让NavUserAuth处理错误情况
+      return Promise.reject(error);
     }
   };
 
