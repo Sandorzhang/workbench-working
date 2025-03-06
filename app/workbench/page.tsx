@@ -79,12 +79,12 @@ const colorMap: Record<string, string> = {
 
 export default function WorkbenchPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate] = useState(new Date());
-  const [authChecked, setAuthChecked] = useState(false);
   
   // 统计数据 - 模拟数据
   const [stats] = useState({
@@ -94,44 +94,38 @@ export default function WorkbenchPage() {
     activeStudents: 87
   });
   
-  // 检查认证状态
+  // 检查认证状态，防止无限重定向
   useEffect(() => {
-    if (!authLoading) {
-      // 认证检查完成
-      console.log("认证检查完成，状态:", { 
-        isAuthenticated, 
-        userId: user?.id, 
-        userName: user?.name, 
-        userRole: user?.role 
-      });
-      
-      setAuthChecked(true);
-      
-      if (!isAuthenticated) {
-        console.log('未登录状态，重定向到登录页');
-        toast.error('请先登录');
-        router.push('/login');
-      } else {
-        console.log('用户已登录:', user?.name, user?.id);
-        
-        // 检查localStorage中是否有token
-        const token = localStorage.getItem("token");
-        console.log("Token检查:", token ? "存在" : "不存在");
-        
-        if (!token) {
-          console.warn("Token不存在，重定向到登录页面");
-          toast.warning("会话已过期，请重新登录");
-          router.push("/login");
-        }
-      }
+    // 检查localStorage中是否有token，即使它可能无效
+    const accessToken = localStorage.getItem('accessToken');
+    const userData = localStorage.getItem('user');
+    
+    console.log('工作台页面 - 检查认证状态:', { 
+      isAuthenticated, 
+      isLoading, 
+      hasLocalToken: !!accessToken,
+      hasLocalUser: !!userData
+    });
+    
+    // 如果localStorage中有token或用户数据，我们认为用户至少尝试过登录
+    const hasLocalAuthentication = accessToken || userData;
+    
+    // 只有当加载完成且没有任何本地认证信息时才重定向到登录页
+    if (!isLoading && !isAuthenticated && !hasLocalAuthentication) {
+      console.log('未认证且无本地认证数据，重定向到登录页');
+      toast.error('请先登录');
+      router.push('/login');
+    } else {
+      // 已完成认证检查
+      setIsCheckingAuth(false);
     }
-  }, [authLoading, isAuthenticated, user, router]);
+  }, [isAuthenticated, isLoading, router]);
   
   // 应用获取逻辑
   useEffect(() => {
     // 只有在用户认证后才加载应用
-    if (!authChecked || !isAuthenticated || !user) {
-      console.log("不满足加载应用条件:", { authChecked, isAuthenticated, userExists: !!user });
+    if (!isAuthenticated || !user) {
+      console.log("不满足加载应用条件:", { isAuthenticated, userExists: !!user });
       return;
     }
     
@@ -149,7 +143,7 @@ export default function WorkbenchPage() {
         // 发送请求获取应用列表
         const response = await fetch(apiUrl, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
           }
         });
         
@@ -181,7 +175,7 @@ export default function WorkbenchPage() {
     };
     
     fetchApplications();
-  }, [authChecked, isAuthenticated, user]);
+  }, [isAuthenticated, user]);
   
   // 应用点击处理函数
   const handleAppClick = (url: string) => {
@@ -221,13 +215,13 @@ export default function WorkbenchPage() {
     return '晚上好';
   };
   
-  // 如果认证状态仍在加载，显示加载状态
-  if (authLoading) {
+  // 如果正在检查认证，显示加载状态
+  if (isLoading || isCheckingAuth) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-gray-500">加载中...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">正在加载工作台...</p>
         </div>
       </div>
     );
@@ -264,7 +258,7 @@ export default function WorkbenchPage() {
             {user?.school && (
               <p className="text-sm text-primary mt-1">
                 <School className="inline-block h-3.5 w-3.5 mr-1" />
-                {user.school} · {user.schoolType || '学校'}
+                {user.schoolName || user.school || '学校'}
               </p>
             )}
           </div>

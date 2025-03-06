@@ -38,33 +38,30 @@ const getAuthHeaders = (): HeadersInit => {
   // 从localStorage获取令牌，确保它是字符串
   let accessToken = localStorage.getItem('accessToken') || '';
   
-  // 如果localStorage中没有token，尝试从内存获取
+  // 如果localStorage中没有token，尝试从内存中获取
   if (!accessToken && window.__AUTH_TOKEN__) {
-    accessToken = window.__AUTH_TOKEN__;
-    console.log('使用内存中的token:', accessToken.substring(0, 10) + '...');
+    console.log('从内存中获取token:', window.__AUTH_TOKEN__?.substring(0, 10) + '...');
+    accessToken = window.__AUTH_TOKEN__ || '';
   }
   
-  if (accessToken) {
-    const tokenPreview = accessToken.length > 10 ? 
-      `${accessToken.substring(0, 10)}...` : 
-      '(令牌格式可能不正确)';
-    
-    console.log(`添加认证头，token: ${tokenPreview}`);
-    
-    // 检查令牌是否是Bearer格式
-    if (!accessToken.trim()) {
-      console.warn('警告: 令牌为空字符串');
-    }
-    
-    // 返回带认证头的headers
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
-    };
-  } else {
-    console.log('没有token，使用无认证头');
+  // 检查token是否有效
+  const isTokenValid = accessToken && accessToken !== 'null' && accessToken !== 'undefined';
+  
+  // 日志token状态（不包含完整token内容）
+  console.log(`认证头Token状态: ${isTokenValid ? '有效' : '无效'} - 长度: ${accessToken?.length || 0}`);
+
+  // 确保不返回"Bearer null"或"Bearer undefined"
+  if (!isTokenValid) {
+    console.warn('请求中没有提供有效的访问令牌');
+    // 没有token时只返回基本头信息，不包含Authorization头
     return { 'Content-Type': 'application/json' };
   }
+  
+  // 返回带有授权头的配置
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${accessToken}`
+  };
 };
 
 // 通用请求处理

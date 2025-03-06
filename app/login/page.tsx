@@ -26,9 +26,10 @@ export default function LoginPage() {
   const [verificationCode, setVerificationCode] = useState<string>('');
   const [codeSent, setCodeSent] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
   const router = useRouter();
-  const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading, error, user } = useAuth();
+  const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading: authContextLoading, error, user } = useAuth();
 
   // 处理认证后的重定向
   useEffect(() => {
@@ -65,22 +66,70 @@ export default function LoginPage() {
     }
   }, [countdown, codeSent]);
 
-  const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 表单验证
-    if (!username) {
-      toast.error('请输入用户名');
+    // 密码验证
+    if (!username || !password) {
+      toast.error('请输入账号和密码');
       return;
     }
     
-    if (!password) {
-      toast.error('请输入密码');
-      return;
-    }
+    setIsLoading(true);
     
-    // 调用登录
-    await login(username, password);
+    try {
+      console.log('开始登录请求, 用户名:', username);
+      
+      // 清除可能存在的旧token
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      
+      // 执行登录
+      await login(username, password);
+      
+      // 立即从localStorage获取新token，验证设置成功
+      const accessToken = localStorage.getItem('accessToken');
+      const userInfo = localStorage.getItem('user');
+      
+      // 确保全局内存中也有token备份
+      if (typeof window !== 'undefined' && accessToken) {
+        window.__AUTH_TOKEN__ = accessToken;
+      }
+      
+      // 验证登录成功
+      if (!accessToken) {
+        throw new Error('登录后未能获取到有效的访问令牌');
+      }
+      
+      console.log('登录成功，准备跳转...', {
+        hasToken: !!accessToken,
+        tokenLength: accessToken ? accessToken.length : 0,
+        hasUserInfo: !!userInfo
+      });
+      
+      // 显示成功消息
+      toast.success('登录成功，正在跳转...');
+      
+      // 重要：给localStorage一点时间来存储token
+      setTimeout(() => {
+        // 重定向到工作台
+        router.push('/workbench');
+      }, 800); // 短暂延迟确保token已保存
+      
+    } catch (error) {
+      console.error('登录失败:', error);
+      
+      // 设置错误信息
+      let errorMessage = '登录失败，请检查账号和密码';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+      setIsLoading(false);
+    }
   };
 
   const handleSendCode = async () => {
@@ -194,7 +243,7 @@ export default function LoginPage() {
                 </TabsList>
                 
                 <TabsContent value="password">
-                  <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                  <form onSubmit={handleLogin} className="space-y-5">
                     <div className="space-y-2">
                       <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
                         <User className="h-4 w-4 text-gray-500" />
