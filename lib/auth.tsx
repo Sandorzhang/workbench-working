@@ -9,20 +9,25 @@ import { LoginResponse, User as ApiUser } from './api-types';
 interface User {
   id: string;
   name: string;
-  email: string;
-  avatar: string;
-  role: string;
+  email?: string | null;
+  avatar?: string | null;
+  role?: string;
+  roleName?: string;
   school?: string; // 用户所属学校
-  schoolType?: string; // 学校类型
+  schoolId?: string;
+  schoolName?: string;
+  permissions?: string[];
 }
 
 // 认证上下文状态
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
   error: string | null;
+  permissions: string[];
 }
 
 // 认证上下文方法
@@ -46,41 +51,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
-    token: null,
+    accessToken: null,
+    refreshToken: null,
     isLoading: true,
     error: null,
+    permissions: [],
   });
 
   // 初始化检查用户已登录状态
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
+      const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
       
-      if (!token) {
+      if (!accessToken) {
         setState(prev => ({ ...prev, isLoading: false }));
         return;
       }
       
       try {
-        console.log('正在验证用户会话，token:', token.substring(0, 5) + '...');
+        console.log('正在验证用户会话，token:', accessToken.substring(0, 5) + '...');
         
         // 使用API工具获取用户信息
-        const userData = await api.auth.getCurrentUser() as User;
+        const userData = await api.auth.getCurrentUser() as any;
         
-        setState({
-          isAuthenticated: true,
-          user: userData,
-          token: token,
-          isLoading: false,
-          error: null,
-        });
+        if (userData && userData.data && userData.data.user) {
+          const user: User = {
+            id: userData.data.user.id,
+            name: userData.data.user.name,
+            email: userData.data.user.email,
+            avatar: userData.data.user.avatar,
+            role: userData.data.user.role?.id,
+            roleName: userData.data.user.role?.name,
+            schoolId: userData.data.user.schoolId,
+            schoolName: userData.data.user.schoolName,
+          };
+          
+          setState({
+            isAuthenticated: true,
+            user: user,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            isLoading: false,
+            error: null,
+            permissions: userData.data.permissions || [],
+          });
+        } else {
+          throw new Error('用户信息获取失败');
+        }
         
-        console.log('用户会话验证成功:', userData.name);
+        console.log('用户会话验证成功:', userData.data?.user?.name);
       } catch (error: any) {
         console.error('会话验证失败:', error);
         
         // 清除无效token
-        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         
         // 更健壮的错误消息提取
         let errorMessage = '会话验证失败';
@@ -103,9 +129,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setState({
           isAuthenticated: false,
           user: null,
-          token: null,
+          accessToken: null,
+          refreshToken: null,
           isLoading: false,
           error: errorMessage,
+          permissions: [],
         });
         
         // 显示错误提示
@@ -124,20 +152,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('开始账号密码登录请求...');
       
       // 使用API工具进行登录
-      const data = await api.auth.login(username, password) as LoginResponse;
+      const response = await api.auth.login(username, password) as LoginResponse;
+      
+      if (response.code !== 0) {
+        throw new Error(response.msg || '登录失败');
+      }
+      
+      const data = response.data;
       
       console.log('登录成功，获取到token和用户数据');
       
-      // 先保存token
-      localStorage.setItem('token', data.token);
+      // 保存token
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
       
-      // 立即更新状态，不使用setTimeout
+      // 构建用户信息
+      const user: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        avatar: data.user.avatar,
+        role: data.user.role?.id,
+        roleName: data.user.role?.name,
+        schoolId: data.user.schoolId,
+        schoolName: data.user.schoolName,
+        permissions: data.permissions,
+      };
+      
+      // 立即更新状态
       setState({
         isAuthenticated: true,
-        user: data.user,
-        token: data.token,
+        user: user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
         isLoading: false,
         error: null,
+        permissions: data.permissions || [],
       });
       
       toast.success('登录成功');
@@ -161,20 +211,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('开始验证码登录请求...');
       
       // 使用API工具进行验证码登录
-      const data = await api.auth.loginWithCode(phone, code) as LoginResponse;
+      const response = await api.auth.loginWithCode(phone, code) as LoginResponse;
+      
+      if (response.code !== 0) {
+        throw new Error(response.msg || '验证码登录失败');
+      }
+      
+      const data = response.data;
       
       console.log('验证码登录成功，获取到token和用户数据');
       
-      // 先保存token
-      localStorage.setItem('token', data.token);
+      // 保存token
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
       
-      // 立即更新状态，不使用setTimeout
+      // 构建用户信息
+      const user: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        avatar: data.user.avatar,
+        role: data.user.role?.id,
+        roleName: data.user.role?.name,
+        schoolId: data.user.schoolId,
+        schoolName: data.user.schoolName,
+        permissions: data.permissions,
+      };
+      
+      // 立即更新状态
       setState({
         isAuthenticated: true,
-        user: data.user,
-        token: data.token,
+        user: user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
         isLoading: false,
         error: null,
+        permissions: data.permissions || [],
       });
       
       toast.success('登录成功');
@@ -198,7 +270,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('发送验证码到手机:', phone);
       
       // 使用API工具发送验证码
-      await api.auth.sendVerificationCode(phone);
+      const response = await api.auth.sendVerificationCode(phone) as any;
+      
+      if (response && response.code !== 0) {
+        throw new Error(response.msg || '验证码发送失败');
+      }
       
       setState(prev => ({ ...prev, isLoading: false }));
       console.log('验证码发送成功');
@@ -223,10 +299,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('开始注销操作...');
       
       // 先记录当前token用于API调用
-      const currentToken = localStorage.getItem('token');
+      const currentToken = localStorage.getItem('accessToken');
       
       // 清除本地token
-      localStorage.removeItem('token');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       console.log('已清除本地token');
       
       try {
@@ -247,28 +324,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState({
         isAuthenticated: false,
         user: null,
-        token: null,
+        accessToken: null,
+        refreshToken: null,
         isLoading: false,
         error: null,
+        permissions: [],
       });
       
-      // 添加成功提示
-      toast.success('已成功退出登录');
-      console.log('登出流程完成，状态已重置');
+      toast.success('已安全退出登录');
     } catch (error: any) {
       console.error('注销过程中发生错误:', error);
-      
-      // 即使出错也清除本地token和状态
-      localStorage.removeItem('token');
-      setState({
-        isAuthenticated: false,
-        user: null,
-        token: null,
+      setState(prev => ({ 
+        ...prev, 
         isLoading: false,
-        error: error.message || '注销过程中发生错误',
-      });
-      
-      toast.error(error.message || '退出登录时发生错误');
+        error: error.message || '注销失败' 
+      }));
+      toast.error('注销过程中发生错误，请刷新页面重试');
     }
   };
 

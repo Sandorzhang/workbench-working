@@ -1,28 +1,80 @@
 // API类型定义
 
 // 角色类型
-export type Role = 'superadmin' | 'admin' | 'teacher' | 'student';
+export type Role = 'superadmin' | 'admin' | 'teacher' | 'student' | string;
 
 // 用户相关类型
 export interface User {
   id: string;
   name: string;
-  email: string;
-  avatar: string;
-  role: Role;
-  username: string;
-  phone?: string;
+  email?: string | null;
+  avatar?: string | null;
+  role?: {
+    id: string;
+    name: string;
+  };
+  username?: string;
+  phoneNumber?: string | null;
+  gender?: string | null;
+  school?: string | null;
+  password?: string;
+  isSelected?: string | null;
+  account?: string;
+  type?: string | null;
+  no?: string | null;
+  schoolList?: any | null;
+  isCharge?: string | null;
+  schoolId?: string;
+  schoolName?: string;
+  className?: string | null;
+  gradeName?: string | null;
+  description?: string | null;
+  declaration?: string | null;
 }
 
 // 身份验证相关类型
 export interface LoginRequest {
-  username: string;
-  password: string;
+  identity: string;
+  verify: string;
+  type: string;
 }
 
 export interface LoginResponse {
-  token: string;
-  user: User;
+  code: number;
+  msg: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    user: User;
+    school: {
+      id: string;
+      name: string;
+      logo: string;
+      period: string;
+    };
+    terminal: string;
+    terminalList: string[];
+    permissions: string[];
+    role: {
+      id: string;
+      name: string;
+      weight: any;
+      description: any;
+      userId: any;
+      isBuiltIn: boolean;
+      terminal: string;
+    };
+    roleList: Array<{
+      id: string;
+      name: string;
+      weight: any;
+      description: any;
+      userId: any;
+      isBuiltIn: boolean;
+      terminal: string;
+    }>;
+    schoolList: any;
+  };
 }
 
 // 工作台相关类型

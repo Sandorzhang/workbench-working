@@ -33,16 +33,9 @@ export default function LoginPage() {
   // 处理认证后的重定向
   useEffect(() => {
     if (isAuthenticated && user) {
-      // 根据用户角色决定重定向到不同页面
-      let redirectPath = '/workbench';
-      
-      // 超级管理员重定向到超级管理员控制台
-      if (user.role === 'superadmin') {
-        redirectPath = '/superadmin';
-        toast.success('登录成功，即将跳转到超级管理员控制台...');
-      } else {
-        toast.success('登录成功，即将跳转到工作台...');
-      }
+      // 重定向到工作台页面
+      const redirectPath = '/workbench';
+      toast.success(`登录成功，欢迎 ${user.name || ''}，即将跳转到工作台...`);
       
       // 短暂延迟以显示成功消息
       const timer = setTimeout(() => {
@@ -343,15 +336,6 @@ export default function LoginPage() {
               </div>
             </CardContent>
           </Card>
-          
-          <div className="mt-8 text-center">
-            <CardFooter className="flex justify-center text-sm text-gray-500 px-0">
-              <div className="p-3 bg-white/70 backdrop-blur-sm rounded-lg shadow-md">
-                <p>提示：管理员账号 admin / password123，教师账号 teacher / password123</p>
-                <p className="mt-1">手机验证码：可使用手机 13800138000（管理员）或 13900139000（教师）</p>
-              </div>
-            </CardFooter>
-          </div>
         </div>
       </div>
     </div>

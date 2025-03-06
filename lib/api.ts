@@ -30,17 +30,17 @@ const waitForMsw = async (): Promise<boolean> => {
 
 // 为请求添加认证头
 const getAuthHeaders = (): HeadersInit => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   
-  if (token) {
-    console.log(`添加认证头，token: ${token.substring(0, 5)}...`);
+  if (accessToken) {
+    console.log(`添加认证头，token: ${accessToken.substring(0, 5)}...`);
   } else {
     console.log('没有token，使用无认证头');
   }
   
   return {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
   };
 };
 
@@ -199,9 +199,9 @@ export const api = {
       console.log(`尝试登录，用户名: ${username}`);
       
       try {
-        return await handleRequest(`${API_BASE_URL}/auth/login`, {
+        return await handleRequest(`/auth/backend/login`, {
           method: 'POST',
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ identity: username, verify: password, type: 'ACCOUNT' })
         });
       } catch (error) {
         console.error('登录失败:', error);
@@ -211,22 +211,22 @@ export const api = {
     },
     
     loginWithCode: (phone: string, code: string) => 
-      handleRequest(`${API_BASE_URL}/auth/login-with-code`, {
+      handleRequest(`/auth/login-with-code`, {
         method: 'POST',
         body: JSON.stringify({ phone, code })
       }),
     
     sendVerificationCode: (phone: string) => 
-      handleRequest(`${API_BASE_URL}/auth/send-code`, {
+      handleRequest(`/auth/send-code`, {
         method: 'POST',
         body: JSON.stringify({ phone })
       }),
     
     getCurrentUser: () => 
-      handleRequest(`${API_BASE_URL}/auth/me`),
+      handleRequest(`/auth/me`),
     
     logout: () => 
-      handleRequest(`${API_BASE_URL}/auth/logout`, {
+      handleRequest(`/auth/logout`, {
         method: 'POST'
       })
   },
