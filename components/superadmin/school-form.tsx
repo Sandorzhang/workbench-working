@@ -52,6 +52,10 @@ export type SchoolFormValues = z.infer<typeof schoolFormSchema>;
 
 // 默认表单值
 const defaultValues: Partial<SchoolFormValues> = {
+  name: '',
+  code: '',
+  regionId: '',
+  type: '',
   status: true,
   grades: [],
 };
@@ -83,13 +87,14 @@ export function SchoolForm({
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolFormSchema),
     defaultValues: isEditMode && currentSchool ? {
-      name: currentSchool.name,
-      code: currentSchool.code,
-      regionId: currentSchool.regionId,
-      type: currentSchool.type,
-      grades: currentSchool.grades,
-      status: currentSchool.status,
+      name: currentSchool.name || '',
+      code: currentSchool.code || '',
+      regionId: currentSchool.regionId || '',
+      type: currentSchool.type || '',
+      grades: currentSchool.grades || [],
+      status: currentSchool.status ?? true,
     } : defaultValues,
+    mode: 'onChange',
   });
 
   // 监听学校类型变化，加载对应的年级选项
@@ -102,24 +107,26 @@ export function SchoolForm({
 
   // 重置表单
   useEffect(() => {
-    if (open) {
-      if (isEditMode && currentSchool) {
-        form.reset({
-          name: currentSchool.name,
-          code: currentSchool.code,
-          regionId: currentSchool.regionId,
-          type: currentSchool.type,
-          grades: currentSchool.grades,
-          status: currentSchool.status,
-        });
-        
-        if (currentSchool.type) {
-          loadGradesForType(currentSchool.type);
-        }
-      } else {
-        form.reset(defaultValues);
-        setAllGrades([]);
+    if (!open) return; // 如果对话框未打开，不重置表单
+    
+    if (isEditMode && currentSchool) {
+      // 确保所有字段都有有效的默认值
+      const formValues = {
+        name: currentSchool.name || '',
+        code: currentSchool.code || '',
+        regionId: currentSchool.regionId || '',
+        type: currentSchool.type || '',
+        grades: currentSchool.grades || [],
+        status: currentSchool.status ?? true,
+      };
+      form.reset(formValues);
+      
+      if (currentSchool.type) {
+        loadGradesForType(currentSchool.type);
       }
+    } else {
+      form.reset(defaultValues);
+      setAllGrades([]);
     }
   }, [open, isEditMode, currentSchool, form]);
 
@@ -239,7 +246,6 @@ export function SchoolForm({
                         <FormLabel>所属区域</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={field.value}
                           value={field.value}
                         >
                           <FormControl>
@@ -268,7 +274,6 @@ export function SchoolForm({
                         <FormLabel>学校类型</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={field.value}
                           value={field.value}
                         >
                           <FormControl>
