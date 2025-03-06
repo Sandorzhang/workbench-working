@@ -56,7 +56,7 @@ export function NavUserAuth({
     setIsMounted(true);
     
     // 检查用户状态并记录日志
-    if (user) {
+    if (user && user.name) {
       console.log('侧边栏用户信息已加载:', user.name);
     } else {
       console.log('用户未登录或信息未加载');
@@ -156,12 +156,12 @@ export function NavUserAuth({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
+                <AvatarImage src={user?.avatar} alt={user?.name || '用户'} />
+                <AvatarFallback className="rounded-lg">{user?.name ? user.name.slice(0, 2) : '--'}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{user?.name || '未知用户'}</span>
+                <span className="truncate text-xs">{user?.email || ''}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -175,14 +175,14 @@ export function NavUserAuth({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
+                  <AvatarImage src={user?.avatar} alt={user?.name || '用户'} />
+                  <AvatarFallback className="rounded-lg">{user?.name ? user.name.slice(0, 2) : '--'}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{user?.name || '未知用户'}</span>
+                  <span className="truncate text-xs">{user?.email || ''}</span>
                   <Badge variant="outline" className="mt-1 text-[10px] py-0 w-fit">
-                    {getRoleDisplay(user.role)}
+                    {getRoleDisplay(user?.role || '')}
                   </Badge>
                 </div>
               </div>
