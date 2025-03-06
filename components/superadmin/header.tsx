@@ -86,12 +86,6 @@ export default function SuperAdminHeader() {
         <Separator orientation="vertical" className="mx-4 h-5" />
         <Breadcrumb>
           <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="/workbench" className="text-gray-500 hover:text-gray-900 font-medium">
-                工作台
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className="hidden md:block text-gray-400" />
             {breadcrumbItems && breadcrumbItems.map((item, index) => (
               <React.Fragment key={index}>
                 {index > 0 && <BreadcrumbSeparator className="text-gray-400" />}

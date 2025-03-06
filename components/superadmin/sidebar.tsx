@@ -110,10 +110,10 @@ export default function SuperAdminSidebar() {
 
   return (
     <>
-      <SidebarHeader className="border-b px-4 py-3">
-        <div className="flex items-center gap-2">
+      <SidebarHeader className="border-b px-4 h-16">
+        <div className="flex items-center h-full">
           <Shield className="h-6 w-6 text-red-500" />
-          <span className="text-lg font-bold text-red-600">超级管理员</span>
+          <span className="text-lg font-bold text-red-600 ml-2">超级管理员</span>
         </div>
       </SidebarHeader>
       

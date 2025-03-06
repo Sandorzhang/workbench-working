@@ -53,8 +53,8 @@ const pageTitleMap: Record<string, PageInfo> = {
     title: '区域管理',
     parent: { title: '超级管理员控制台', path: '/superadmin' }
   },
-  '/superadmin/settings': { 
-    title: '系统设置',
+  '/superadmin/permissions': { 
+    title: '权限管理',
     parent: { title: '超级管理员控制台', path: '/superadmin' }
   },
   '/classroom-timemachine': { 
@@ -286,6 +286,17 @@ export function AppLayout({ children }: AppLayoutProps) {
       parent: { title: '学生学业进度', path: '/academic-journey/students' }
     };
     dynamicParent = { title: '学业旅程', path: '/academic-journey' };
+  }
+  // 对于超级管理员子路由
+  else if (pathname.startsWith('/superadmin/') && pathname !== '/superadmin') {
+    const pathParts = pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    pageInfo = pageTitleMap[pathname] || { 
+      title: lastPart.charAt(0).toUpperCase() + lastPart.slice(1),
+      parent: { title: '超级管理员控制台', path: '/superadmin' }
+    };
+    // 超级管理员路由是独立的顶级路由，不设置dynamicParent
+    dynamicParent = null;
   }
   else {
     // 普通静态路由
