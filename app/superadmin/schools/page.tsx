@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
   Loader2, Search, Plus, Edit, Trash2, 
-  School as SchoolIcon, CalendarDays
+  School as SchoolIcon, CalendarDays, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -211,11 +211,17 @@ export default function SchoolsPage() {
   };
 
   // 过滤学校
-  const filteredSchools = schools.filter(school => 
-    (school.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-     school.code.includes(searchQuery) ||
-     (school.regionName && school.regionName.toLowerCase().includes(searchQuery.toLowerCase())))
-  );
+  const filteredSchools = schools.filter(school => {
+    // 搜索关键字
+    const matchesSearch = searchQuery === '' || (
+      (school.name && school.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (school.code && school.code.includes(searchQuery)) ||
+      (school.regionName && school.regionName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (school.type && school.type.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+    
+    return matchesSearch;
+  });
 
   // 打开添加学校对话框
   const openAddDialog = () => {
@@ -332,6 +338,7 @@ export default function SchoolsPage() {
     setFilterRegion('all');
     setFilterType('all');
     setFilterStatus('all');
+    setSearchQuery('');
     
     // 延迟一下再重新获取数据，确保状态已更新
     setTimeout(() => {
@@ -364,26 +371,74 @@ export default function SchoolsPage() {
   }
 
   return (
-    <div className="space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">学校管理</h2>
-        <Button onClick={openAddDialog}>
+    <div className="space-y-6 p-6 pt-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold tracking-tight">学校管理</h2>
+          <p className="text-muted-foreground text-sm">管理系统中的所有学校数据与配置</p>
+        </div>
+        <Button onClick={openAddDialog} className="shadow-md transition-all hover:shadow-lg">
           <Plus className="mr-2 h-4 w-4" />
           添加学校
         </Button>
       </div>
       
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <Card className="shadow-sm hover:shadow transition-all">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">总学校数</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{schools.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow transition-all">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">启用学校</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{schools.filter(s => s.status).length}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow transition-all">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">禁用学校</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{schools.filter(s => !s.status).length}</div>
+          </CardContent>
+        </Card>
+      </div>
+      
       {/* 筛选工具栏 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">筛选条件</CardTitle>
+      <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/20 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">筛选条件</CardTitle>
+            <CardDescription className="text-xs mt-0.5">筛选学校数据</CardDescription>
+          </div>
+          
+          {/* 搜索框 */}
+          <div className="relative w-full sm:w-[280px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="搜索学校、代码或区域..."
+              className="pl-9 h-9 w-full text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+        <CardContent className="px-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div>
-              <span className="text-sm font-medium">区域</span>
+              <label className="text-sm font-medium block mb-2">区域</label>
               <Select value={filterRegion} onValueChange={setFilterRegion}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择区域" />
                 </SelectTrigger>
                 <SelectContent>
@@ -398,9 +453,9 @@ export default function SchoolsPage() {
             </div>
             
             <div>
-              <span className="text-sm font-medium">学校类型</span>
+              <label className="text-sm font-medium block mb-2">学校类型</label>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择类型" />
                 </SelectTrigger>
                 <SelectContent>
@@ -415,9 +470,9 @@ export default function SchoolsPage() {
             </div>
             
             <div>
-              <span className="text-sm font-medium">状态</span>
+              <label className="text-sm font-medium block mb-2">状态</label>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="选择状态" />
                 </SelectTrigger>
                 <SelectContent>
@@ -428,109 +483,141 @@ export default function SchoolsPage() {
               </Select>
             </div>
             
-            <div className="flex items-end gap-2">
-              <Button onClick={applyFilters} className="flex-1">
-                应用筛选
-              </Button>
-              <Button variant="outline" onClick={clearFilters}>
-                清除
-              </Button>
+            <div className="flex flex-col justify-end">
+              <div className="flex gap-2">
+                <Button onClick={applyFilters} className="flex-1">
+                  应用筛选
+                </Button>
+                <Button variant="outline" onClick={clearFilters}>
+                  清除
+                </Button>
+              </div>
+              
+              {/* 活跃筛选条件标签 */}
+              {(filterRegion !== 'all' || filterType !== 'all' || filterStatus !== 'all') && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <div className="text-xs text-muted-foreground">筛选中:</div>
+                  {filterRegion !== 'all' && (
+                    <Badge variant="outline" className="text-xs">
+                      区域: {regions.find(r => r.id === filterRegion)?.name || filterRegion}
+                    </Badge>
+                  )}
+                  {filterType !== 'all' && (
+                    <Badge variant="outline" className="text-xs">
+                      类型: {filterType}
+                    </Badge>
+                  )}
+                  {filterStatus !== 'all' && (
+                    <Badge variant="outline" className="text-xs">
+                      状态: {filterStatus === 'true' ? '启用' : '禁用'}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
       
-      {/* 搜索栏 */}
-      <div className="flex items-center py-4">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="搜索学校、代码或区域..."
-            className="pl-8 md:w-[300px] lg:w-[400px]"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-      
       {/* 学校列表 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>学校</CardTitle>
-          <CardDescription>管理系统中的所有学校</CardDescription>
+      <Card className="overflow-hidden shadow-md border-0 rounded-xl">
+        <CardHeader className="bg-muted/20 px-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div>
+              <CardTitle>学校列表</CardTitle>
+              <CardDescription>管理系统中的所有学校</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 py-0">
           {isLoading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>学校</TableHead>
-                  <TableHead>代码</TableHead>
-                  <TableHead>区域</TableHead>
-                  <TableHead>学校类型</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSchools.length === 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/5">
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      没有找到学校
-                    </TableCell>
+                    <TableHead className="font-semibold px-6 py-4">学校</TableHead>
+                    <TableHead className="font-semibold px-6">代码</TableHead>
+                    <TableHead className="font-semibold px-6">区域</TableHead>
+                    <TableHead className="font-semibold px-6">学校类型</TableHead>
+                    <TableHead className="font-semibold px-6">状态</TableHead>
+                    <TableHead className="text-right font-semibold px-6">操作</TableHead>
                   </TableRow>
-                ) : (
-                  filteredSchools.map((school) => (
-                    <TableRow key={school.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center">
-                          <SchoolIcon className="h-4 w-4 mr-2 text-primary" />
-                          {school.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>{school.code}</TableCell>
-                      <TableCell>{school.regionName || '-'}</TableCell>
-                      <TableCell>{school.type}</TableCell>
-                      <TableCell>
-                        {school.status ? (
-                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">
-                            启用
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-red-50 text-red-800 hover:bg-red-50 border-red-200">
-                            禁用
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="icon" onClick={() => openEditDialog(school)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="icon" className="text-red-500" onClick={() => openDeleteDialog(school)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                </TableHeader>
+                <TableBody>
+                  {filteredSchools.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-16 text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Search className="h-10 w-10 text-muted-foreground/60" />
+                          没有找到学校
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    filteredSchools.map((school) => (
+                      <TableRow key={school.id} className="hover:bg-muted/10 transition-colors">
+                        <TableCell className="font-medium px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="p-1.5 bg-primary/10 rounded-md mr-2.5">
+                              <SchoolIcon className="h-4 w-4 text-primary" />
+                            </div>
+                            {school.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-6">
+                          <Badge variant="outline" className="bg-muted/50">
+                            {school.code}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-6">{school.regionName || '-'}</TableCell>
+                        <TableCell className="px-6">
+                          <div className="flex items-center">
+                            <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                            {school.type}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-6">
+                          {school.status ? (
+                            <Badge className="bg-green-50 text-green-800 hover:bg-green-100 border-green-200 font-medium">
+                              启用
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-red-50 text-red-800 hover:bg-red-50 border-red-200 font-medium">
+                              禁用
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right px-6">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => openEditDialog(school)} className="h-8 px-3 rounded-md hover:bg-primary/10 transition-colors">
+                              <Edit className="h-3.5 w-3.5 mr-1" />
+                              编辑
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-red-600 h-8 px-3 rounded-md hover:bg-red-50 transition-colors" onClick={() => openDeleteDialog(school)}>
+                              <Trash2 className="h-3.5 w-3.5 mr-1" />
+                              删除
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
       
       {/* 添加/编辑学校对话框 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] rounded-xl shadow-lg border-0">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? '编辑学校' : '添加学校'}</DialogTitle>
+            <DialogTitle className="text-xl">{isEditMode ? '编辑学校' : '添加学校'}</DialogTitle>
             <DialogDescription>
               {isEditMode ? '修改学校信息' : '添加一个新的学校到系统中'}
             </DialogDescription>
@@ -544,9 +631,9 @@ export default function SchoolsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>学校名称</FormLabel>
+                      <FormLabel className="font-medium">学校名称</FormLabel>
                       <FormControl>
-                        <Input placeholder="请输入学校名称" {...field} />
+                        <Input placeholder="请输入学校名称" className="rounded-md" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -558,15 +645,16 @@ export default function SchoolsPage() {
                   name="code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>学校代码</FormLabel>
+                      <FormLabel className="font-medium">学校代码</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="请输入3位数字代码" 
+                          className="rounded-md"
                           {...field} 
                           disabled={isEditMode} // 编辑模式下不允许修改代码
                         />
                       </FormControl>
-                      <FormDescription>
+                      <FormDescription className="text-xs">
                         学校代码必须是3位数字
                       </FormDescription>
                       <FormMessage />
@@ -581,13 +669,13 @@ export default function SchoolsPage() {
                   name="regionId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>所属区域</FormLabel>
+                      <FormLabel className="font-medium">所属区域</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="rounded-md">
                             <SelectValue placeholder="选择区域" />
                           </SelectTrigger>
                         </FormControl>
@@ -609,13 +697,13 @@ export default function SchoolsPage() {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>学校类型</FormLabel>
+                      <FormLabel className="font-medium">学校类型</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="rounded-md">
                             <SelectValue placeholder="选择学校类型" />
                           </SelectTrigger>
                         </FormControl>
@@ -637,10 +725,10 @@ export default function SchoolsPage() {
                 control={form.control}
                 name="grades"
                 render={() => (
-                  <FormItem>
+                  <FormItem className="p-4 border rounded-md bg-muted/10">
                     <div className="mb-4">
-                      <FormLabel>年级设置</FormLabel>
-                      <FormDescription>
+                      <FormLabel className="font-medium">年级设置</FormLabel>
+                      <FormDescription className="text-xs">
                         请选择学校包含的年级
                       </FormDescription>
                     </div>
@@ -660,7 +748,7 @@ export default function SchoolsPage() {
                               return (
                                 <FormItem
                                   key={grade}
-                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                  className="flex flex-row items-start space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/20 transition-colors"
                                 >
                                   <FormControl>
                                     <Checkbox
@@ -695,10 +783,10 @@ export default function SchoolsPage() {
                 control={form.control}
                 name="status"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                     <div className="space-y-0.5">
-                      <FormLabel>状态</FormLabel>
-                      <FormDescription>
+                      <FormLabel className="font-medium">状态</FormLabel>
+                      <FormDescription className="text-xs">
                         启用或禁用该学校
                       </FormDescription>
                     </div>
@@ -712,11 +800,11 @@ export default function SchoolsPage() {
                 )}
               />
               
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <DialogFooter className="pt-4">
+                <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDialogOpen(false)}>
                   取消
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="rounded-md shadow-sm">
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isEditMode ? '保存更改' : '创建学校'}
                 </Button>
@@ -728,18 +816,21 @@ export default function SchoolsPage() {
       
       {/* 删除确认对话框 */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] rounded-xl shadow-lg border-0">
           <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
-            <DialogDescription>
-              您确定要删除学校 "{schoolToDelete?.name}" 吗？此操作不可撤销。
+            <DialogTitle className="text-xl">确认删除</DialogTitle>
+            <DialogDescription className="pt-2">
+              您确定要删除学校 <span className="font-semibold">"{schoolToDelete?.name}"</span> 吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+          <div className="bg-red-50 p-4 rounded-lg my-2 text-sm text-red-700">
+            <p>删除学校将同时删除与该学校相关的所有数据，此操作无法恢复。</p>
+          </div>
+          <DialogFooter className="pt-2">
+            <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDeleteDialogOpen(false)}>
               取消
             </Button>
-            <Button type="button" variant="destructive" onClick={deleteSchool} disabled={isDeleting}>
+            <Button type="button" variant="destructive" className="rounded-md shadow-sm" onClick={deleteSchool} disabled={isDeleting}>
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               确认删除
             </Button>
