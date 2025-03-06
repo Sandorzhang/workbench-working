@@ -4,6 +4,7 @@
  */
 
 import { envConfig } from '@/lib/env-config';
+import tokenService from '@/shared/auth/token-service';
 
 // 使用环境配置
 const API_BASE_URL = envConfig.apiBaseUrl;
@@ -21,14 +22,8 @@ export const getAuthHeaders = (): HeadersInit => {
     return { 'Content-Type': 'application/json' };
   }
   
-  // 从localStorage获取令牌，确保它是字符串
-  let accessToken = localStorage.getItem('accessToken') || '';
-  
-  // 如果localStorage中没有token，尝试从内存中获取
-  if (!accessToken && (window as any).__AUTH_TOKEN__) {
-    console.log('从内存中获取token:', (window as any).__AUTH_TOKEN__?.substring(0, 10) + '...');
-    accessToken = (window as any).__AUTH_TOKEN__ || '';
-  }
+  // 使用令牌服务获取访问令牌
+  const accessToken = tokenService.getAccessToken();
   
   // 检查token是否有效
   const isTokenValid = accessToken && accessToken !== 'null' && accessToken !== 'undefined';
@@ -85,13 +80,32 @@ export async function handleRequest<T>(
     // 处理HTTP错误响应
     if (!response.ok) {
       if (response.status === 401) {
-        // 认证失败时清除无效令牌
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          // 可选：重定向到登录页
-          // window.location.href = '/login';
+        // 令牌过期，尝试刷新
+        const newToken = await tokenService.refreshAccessToken();
+        
+        // 如果刷新成功，使用新令牌重试请求
+        if (newToken) {
+          // 更新请求头中的令牌
+          const newHeaders = {
+            ...headers,
+            'Authorization': `Bearer ${newToken}`
+          };
+          
+          // 重试请求
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers: newHeaders
+          });
+          
+          // 如果重试成功，返回结果
+          if (retryResponse.ok) {
+            const data = await retryResponse.json();
+            return data;
+          }
         }
+        
+        // 如果刷新失败或重试失败，清除令牌
+        await tokenService.clearTokens();
         
         throw {
           message: '认证已失效，请重新登录',

@@ -4,6 +4,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { toast } from "sonner";
 import { api } from './api';
 import { LoginResponse, User as ApiUser } from './api-types';
+import tokenService from '@/shared/auth/token-service';
 
 declare global {
   interface Window {
@@ -71,14 +72,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('开始检查认证状态...');
       
       try {
-        // 尝试从localStorage获取token
-        let accessToken = localStorage.getItem('accessToken');
-        
-        // 如果localStorage中没有token，尝试从内存中获取
-        if (!accessToken && typeof window !== 'undefined' && window.__AUTH_TOKEN__) {
-          accessToken = window.__AUTH_TOKEN__;
-          console.log('使用内存中的token');
-        }
+        // 使用令牌服务获取访问令牌
+        const accessToken = tokenService.getAccessToken();
         
         // 如果没有token，用户未登录
         if (!accessToken) {
@@ -97,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         console.log('找到token，尝试获取用户信息');
         
-        // 尝试从localStorage获取用户信息
+        // 尝试从localStorage获取用户信息 (为了兼容性)
         try {
           const userJson = localStorage.getItem('user');
           if (userJson) {
@@ -121,16 +116,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // 继续尝试API获取
         }
         
-        // 如果localStorage中没有用户信息，尝试从API获取
+        // 尝试从API获取用户信息
         console.log('尝试从API获取用户信息');
         
-        // 设置内存中的token，确保API请求能使用
-        if (typeof window !== 'undefined') {
-          window.__AUTH_TOKEN__ = accessToken;
-        }
-        
         // 尝试获取用户信息
-        const userResponse: any = await api.auth.getCurrentUser();
+        const userResponse: any = await api.auth.me();
         
         if (userResponse.code !== 0) {
           throw new Error(userResponse.msg || '获取用户信息失败');
@@ -320,41 +310,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('用户信息:', data.user);
       console.log('权限列表:', data.permissions);
       
-      // 先删除原有token
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      
       // 设置token - 确保字符串值，防止null或undefined
       const accessTokenValue = data.accessToken || '';
       const refreshTokenValue = data.refreshToken || '';
       
-      try {
-        console.log('准备保存token到localStorage:', 
-          `accessToken (${accessTokenValue.length}字符): ${accessTokenValue.substring(0, 10)}...`, 
-          `refreshToken (${refreshTokenValue.length}字符): ${refreshTokenValue.substring(0, 10)}...`
-        );
-        
-        localStorage.setItem('accessToken', accessTokenValue);
-        localStorage.setItem('refreshToken', refreshTokenValue);
-        
-        // 立即验证token是否正确设置
-        const storedAccessToken = localStorage.getItem('accessToken');
-        const storedRefreshToken = localStorage.getItem('refreshToken');
-        
-        console.log('验证localStorage中的token:',
-          `accessToken: ${storedAccessToken ? (storedAccessToken === accessTokenValue ? '正确设置' : '值不匹配') : '未设置'}`,
-          `refreshToken: ${storedRefreshToken ? (storedRefreshToken === refreshTokenValue ? '正确设置' : '值不匹配') : '未设置'}`
-        );
-        
-        if (!storedAccessToken || storedAccessToken !== accessTokenValue) {
-          console.warn('Token设置可能失败，将尝试再次设置');
-          // 再次尝试设置
-          localStorage.setItem('accessToken', accessTokenValue);
-        }
-      } catch (storageError) {
-        console.error('保存token到localStorage失败:', storageError);
-        // 继续执行以更新状态
-      }
+      // 使用令牌服务设置令牌
+      tokenService.setTokens(accessTokenValue, refreshTokenValue);
       
       // 提取角色ID和名称的函数
       const extractRoleInfo = (data: any) => {
@@ -430,12 +391,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('用户信息已保存到localStorage');
       } catch (userStorageError) {
         console.error('保存用户信息到localStorage失败:', userStorageError);
-      }
-      
-      // 设置内存中的token，作为备份
-      if (typeof window !== 'undefined') {
-        window.__AUTH_TOKEN__ = accessTokenValue;
-        console.log('Token已保存到内存中');
       }
       
       console.log('准备设置认证状态为已登录');
@@ -618,13 +573,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('开始注销操作...');
       
-      // 先记录当前token用于API调用
-      const currentToken = localStorage.getItem('accessToken');
-      
-      // 清除本地token
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      console.log('已清除本地token');
+      // 获取当前令牌用于API调用
+      const currentToken = tokenService.getAccessToken();
       
       try {
         // 尝试调用API，但不等待结果
@@ -639,6 +589,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 如果API调用失败，记录错误但继续删除本地状态
         console.error('注销API调用失败，但会继续清除本地状态:', logoutError);
       }
+      
+      // 清除令牌
+      await tokenService.clearTokens();
+      console.log('已清除所有令牌');
       
       // 清除本地状态
       setState({
