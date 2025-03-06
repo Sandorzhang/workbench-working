@@ -1,4 +1,4 @@
-// import { MswInitializer } from '@/components/MswInitializer';
+import { MswInitializer } from '@/components/MswInitializer';
 import { AuthProvider } from '@/lib/auth';
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -33,7 +33,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* <MswInitializer> */}
+        <MswInitializer>
           <ErrorBoundary>
             <AuthProvider>
               <AppLayout>
@@ -42,7 +42,7 @@ export default function RootLayout({
             </AuthProvider>
           </ErrorBoundary>
           {process.env.NODE_ENV === 'development' && <DebugPanel />}
-        {/* </MswInitializer> */}
+        </MswInitializer>
         <Toaster />
       </body>
     </html>

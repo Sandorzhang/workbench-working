@@ -37,8 +37,20 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
   const retryCountRef = useRef(0);
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000; // 1秒
+  
+  // 检查是否启用了API模拟
+  const shouldUseMsw = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_MOCKING === 'enabled';
+  const environment = process.env.NEXT_PUBLIC_ENV || 'development';
 
   useEffect(() => {
+    // 如果没有启用API模拟，则直接返回
+    if (!shouldUseMsw) {
+      console.log(`当前环境(${environment})未启用API模拟，跳过MSW初始化`);
+      setStatus('success');
+      window.__MSW_READY__ = true;
+      return;
+    }
+
     // 防止重复初始化
     if (initAttemptedRef.current) return;
     initAttemptedRef.current = true;
@@ -198,7 +210,12 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
           }
         }}
       >
-        <span>MSW: {status === 'pending' ? '初始化中...' : status === 'success' ? '已启用' : '初始化失败 (点击刷新)'}</span>
+        <span>
+          {shouldUseMsw 
+            ? `MSW [${environment}]: ${status === 'pending' ? '初始化中...' : status === 'success' ? '已启用' : '初始化失败 (点击刷新)'}`
+            : `API [${environment}]: ${process.env.NEXT_PUBLIC_API_BASE_URL || '/api'}`
+          }
+        </span>
       </div>
       {children}
     </MswContext.Provider>

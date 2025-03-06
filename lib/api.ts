@@ -1,12 +1,18 @@
 import { ApiErrorResponse } from './api-types';
 
-const API_BASE_URL = '/api';
+// 使用环境变量配置API基础URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+const API_MOCKING = process.env.NEXT_PUBLIC_API_MOCKING === 'enabled';
+const ENVIRONMENT = process.env.NEXT_PUBLIC_ENV || 'development';
 const MSW_READY_TIMEOUT = 5000; // 5秒超时
 
 // 等待MSW准备就绪
 const waitForMsw = async (): Promise<boolean> => {
-  // 在生产环境中不等待MSW，直接返回
-  if (process.env.NODE_ENV !== 'development') return true;
+  // 只在启用了API模拟的环境中等待MSW
+  if (!API_MOCKING) {
+    console.log(`当前环境(${ENVIRONMENT})未启用API模拟，跳过MSW初始化等待`);
+    return true;
+  }
   
   // 只在浏览器环境中等待MSW
   if (typeof window === 'undefined') return true;
@@ -44,10 +50,13 @@ async function handleRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   try {
-    // 在开发环境中等待MSW就绪
-    if (process.env.NODE_ENV === 'development') {
+    // 只在启用了API模拟的环境中等待MSW
+    if (API_MOCKING) {
       await waitForMsw();
     }
+    
+    // 处理完整URL情况 - 如果URL已经是绝对URL，则直接使用
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
     
     // 每次请求时重新获取认证头，确保使用最新的token
     const headers = {
@@ -57,10 +66,10 @@ async function handleRequest<T>(
 
     // 检查是否有认证头并记录日志
     const hasAuthHeader = 'Authorization' in headers;
-    console.log(`API请求: ${url} - Authorization头: ${hasAuthHeader ? '已设置' : '未设置'}`);
+    console.log(`API请求: ${fullUrl} - 环境: ${ENVIRONMENT} - Authorization头: ${hasAuthHeader ? '已设置' : '未设置'}`);
     
     // 执行请求
-    const response = await fetch(url, {
+    const response = await fetch(fullUrl, {
       ...options,
       headers
     });
@@ -85,7 +94,7 @@ async function handleRequest<T>(
     
     // 处理404错误
     if (response.status === 404) {
-      console.error(`API路径不存在 (404): ${url}`);
+      console.error(`API路径不存在 (404): ${fullUrl}`);
       
       // 尝试获取响应内容以诊断问题
       const contentType = response.headers.get('content-type');
@@ -95,21 +104,21 @@ async function handleRequest<T>(
         throw {
           message: 'API路径不存在',
           code: 'API_PATH_NOT_FOUND',
-          details: { url, htmlSnippet: htmlText.substring(0, 200) }
+          details: { url: fullUrl, htmlSnippet: htmlText.substring(0, 200) }
         } as ApiErrorResponse;
       }
       
       throw {
         message: 'API路径不存在，请检查请求路径',
         code: '404',
-        details: { url }
+        details: { url: fullUrl }
       } as ApiErrorResponse;
     }
     
     // 先检查响应类型
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('text/html')) {
-      console.error(`API返回了HTML而不是JSON: ${url}`);
+      console.error(`API返回了HTML而不是JSON: ${fullUrl}`);
       const htmlText = await response.text();
       console.error('返回的HTML片段:', htmlText.substring(0, 200) + '...');
       throw {
@@ -146,7 +155,7 @@ async function handleRequest<T>(
     
     // 处理非成功状态码
     if (!response.ok) {
-      console.error(`API请求失败: ${url} - 状态码: ${response.status}`, data);
+      console.error(`API请求失败: ${fullUrl} - 状态码: ${response.status}`, data);
       throw {
         message: data.message || `请求失败 (${response.status})`,
         code: response.status.toString(),
@@ -304,10 +313,10 @@ export const api = {
   workbench: {
     getConfig: () => 
       handleRequest(`${API_BASE_URL}/workbench-config`),
-      
+    
     getModule: (id: string) => 
       handleRequest(`${API_BASE_URL}/workbench-config/${id}`),
-      
+    
     updatePreferences: (modules: string[]) => 
       handleRequest(`${API_BASE_URL}/workbench-config/preferences`, {
         method: 'POST',
@@ -319,10 +328,10 @@ export const api = {
   agents: {
     getList: () => 
       handleRequest(`${API_BASE_URL}/agents`),
-      
+    
     getDetails: (id: string) => 
       handleRequest(`${API_BASE_URL}/agents/${id}`),
-      
+    
     sendMessage: (id: string, message: string) => 
       handleRequest(`${API_BASE_URL}/agents/${id}/chat`, {
         method: 'POST',
@@ -347,13 +356,13 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(event)
       }),
-      
+    
     updateEvent: (id: string, event: any) => 
       handleRequest(`${API_BASE_URL}/calendar-events/${id}`, {
         method: 'PUT',
         body: JSON.stringify(event)
       }),
-      
+    
     deleteEvent: (id: string) => 
       handleRequest(`${API_BASE_URL}/calendar-events/${id}`, {
         method: 'DELETE'
@@ -364,7 +373,7 @@ export const api = {
   teachingPlans: {
     getList: (page = 1, pageSize = 10) => 
       handleRequest(`${API_BASE_URL}/teaching-plans?page=${page}&pageSize=${pageSize}`),
-      
+    
     getDetails: (id: string) => 
       handleRequest(`${API_BASE_URL}/teaching-plans/${id}`)
   }

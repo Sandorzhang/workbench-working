@@ -4,7 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:msw": "cp .env.development .env.local && next dev --turbopack",
+    "dev:test": "cp .env.test .env.local && next dev --turbopack",
+    "dev:prod": "cp .env.production .env.local && next dev --turbopack",
     "build": "next build",
+    "build:test": "cp .env.test .env && next build",
+    "build:prod": "cp .env.production .env && next build",
     "start": "next start",
     "lint": "next lint"
   },
