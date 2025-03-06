@@ -91,12 +91,6 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
               
               print.warning();
             },
-            serviceWorker: {
-              url: '/mockServiceWorker.js',
-              options: {
-                scope: '/',
-              },
-            },
           });
           
           console.log('MSW worker 启动成功');
