@@ -16,7 +16,7 @@ export const getApplicationsHandler = http.get('/api/applications', async ({ req
   await delay(300);
   
   try {
-    console.log('Fetching applications...');
+    console.log('>>> [MSW拦截] 获取应用列表');
     
     // 获取当前用户信息
     const token = request.headers.get('Authorization')?.split(' ')[1];
@@ -64,11 +64,17 @@ export const getApplicationsHandler = http.get('/api/applications', async ({ req
       );
     }
     
-    console.log(`User found: ${user.name}, role: ${user.role}`);
+    console.log(`>>> [MSW拦截] 用户信息: ${user.name}, 角色: ${user.role}, ID: ${user.id}`);
     
     // 获取所有应用
     const allApplications = db.application.getAll();
-    console.log(`Total applications: ${allApplications.length}`);
+    console.log(`>>> [MSW拦截] 系统中共有 ${allApplications.length} 个应用`);
+    
+    // 先记录应用的默认角色设置
+    allApplications.forEach(app => {
+      const roles = Array.isArray(app.roles) ? app.roles.join(', ') : '无';
+      console.log(`>>> [MSW拦截] 应用 "${app.name}" (ID: ${app.id}) 默认角色: ${roles}`);
+    });
     
     // 获取用户特定权限
     const userPermissions = db.permission.findMany({
@@ -79,7 +85,7 @@ export const getApplicationsHandler = http.get('/api/applications', async ({ req
       }
     });
     
-    console.log(`User specific permissions: ${userPermissions.length}`);
+    console.log(`>>> [MSW拦截] 用户特定权限记录数: ${userPermissions.length}`);
     
     // 获取角色权限
     const rolePermissions = db.rolePermission.findMany({
@@ -90,19 +96,38 @@ export const getApplicationsHandler = http.get('/api/applications', async ({ req
       }
     });
     
-    console.log(`Role permissions: ${rolePermissions.length}`);
+    console.log(`>>> [MSW拦截] 角色 "${user.role}" 权限记录数: ${rolePermissions.length}`);
+    
+    // 记录详细角色权限
+    rolePermissions.forEach(rp => {
+      const app = allApplications.find(a => a.id === rp.applicationId);
+      const appName = app ? app.name : '未知应用';
+      console.log(`>>> [MSW拦截] 角色权限: ${user.role} → ${appName} (ID: ${rp.applicationId}), 授权状态: ${rp.granted ? '允许' : '拒绝'}`);
+    });
     
     // 合并用户可访问的应用ID
     const accessibleAppIds = new Set();
     
+    // 检查默认角色权限 - 如果应用默认允许该角色访问，添加到可访问集合
+    allApplications.forEach(app => {
+      if (Array.isArray(app.roles) && app.roles.includes(user.role)) {
+        accessibleAppIds.add(app.id);
+        console.log(`>>> [MSW拦截] 基于默认角色设置添加应用: ${app.name} (ID: ${app.id})`);
+      }
+    });
+    
     // 添加角色权限中的应用 - 只添加granted为true的
     rolePermissions.forEach(permission => {
       if (permission.applicationId) {
+        const app = allApplications.find(a => a.id === permission.applicationId);
+        const appName = app ? app.name : '未知应用';
+        
         if (permission.granted) {
           accessibleAppIds.add(permission.applicationId);
-          console.log(`添加角色权限应用: ${permission.applicationId} (granted: true)`);
+          console.log(`>>> [MSW拦截] 添加角色权限应用: ${appName} (ID: ${permission.applicationId}), 授权: 允许`);
         } else {
-          console.log(`跳过角色权限应用: ${permission.applicationId} (granted: false)`);
+          accessibleAppIds.delete(permission.applicationId); // 确保显式拒绝可以覆盖默认允许
+          console.log(`>>> [MSW拦截] 移除角色权限应用: ${appName} (ID: ${permission.applicationId}), 授权: 拒绝`);
         }
       }
     });
@@ -110,24 +135,46 @@ export const getApplicationsHandler = http.get('/api/applications', async ({ req
     // 添加用户特定权限中的应用
     userPermissions.forEach(permission => {
       if (permission.applicationId) {
+        const app = allApplications.find(a => a.id === permission.applicationId);
+        const appName = app ? app.name : '未知应用';
+        
         if (permission.granted) {
           accessibleAppIds.add(permission.applicationId);
-          console.log(`添加用户权限应用: ${permission.applicationId} (granted: true)`);
+          console.log(`>>> [MSW拦截] 添加用户自定义权限应用: ${appName} (ID: ${permission.applicationId}), 授权: 允许`);
         } else {
           accessibleAppIds.delete(permission.applicationId);
-          console.log(`移除用户权限应用: ${permission.applicationId} (granted: false)`);
+          console.log(`>>> [MSW拦截] 移除用户自定义权限应用: ${appName} (ID: ${permission.applicationId}), 授权: 拒绝`);
         }
       }
     });
     
-    console.log(`Accessible application IDs: ${Array.from(accessibleAppIds).join(', ')}`);
+    console.log(`>>> [MSW拦截] 最终可访问应用ID列表: ${Array.from(accessibleAppIds).join(', ')}`);
     
     // 过滤用户可访问的应用
     let accessibleApplications = allApplications.filter(app => 
       accessibleAppIds.has(app.id)
     );
     
-    console.log(`Filtered applications: ${accessibleApplications.length}`);
+    console.log(`>>> [MSW拦截] 过滤后应用数量: ${accessibleApplications.length}`);
+    
+    // 如果用户是教师但没有任何应用权限，确保默认至少有一个应用可访问
+    if (user.role === 'teacher' && accessibleApplications.length === 0) {
+      console.log(`>>> [MSW拦截] 教师账户没有应用权限，添加默认应用`);
+      
+      // 查找教师默认可访问的应用
+      const teacherApps = allApplications.filter(app => 
+        Array.isArray(app.roles) && app.roles.includes('teacher')
+      );
+      
+      if (teacherApps.length > 0) {
+        accessibleApplications = teacherApps;
+        console.log(`>>> [MSW拦截] 为教师添加 ${teacherApps.length} 个默认应用`);
+      } else {
+        // 如果没有默认配置，添加第一个应用作为应急措施
+        accessibleApplications = [allApplications[0]];
+        console.log(`>>> [MSW拦截] 为教师添加一个应急应用: ${allApplications[0].name}`);
+      }
+    }
     
     // 按照排序字段排序
     accessibleApplications = accessibleApplications.sort((a, b) => {

@@ -48,6 +48,7 @@ export const getApplicationsPermissionsHandler = http.get('/api/permissions/appl
     
     // 获取角色权限
     const rolePermissions = db.rolePermission.getAll();
+    console.log(`>>> [MSW拦截] 找到 ${rolePermissions.length} 个角色权限记录`);
     
     // 获取用户权限
     const userPermissions = db.permission.getAll();
@@ -55,7 +56,12 @@ export const getApplicationsPermissionsHandler = http.get('/api/permissions/appl
     // 转换为带权限信息的资源列表
     const applicationsWithPermissions = applications.map(app => {
       // 初始化角色权限映射
-      const allowedRoles: { [key: string]: boolean } = {};
+      const allowedRoles: { [key: string]: boolean } = {
+        'superadmin': true, // 超级管理员默认有所有权限
+        'admin': false,
+        'teacher': false,
+        'student': false
+      };
       
       // 默认角色权限设置
       const defaultRoles: string[] = Array.isArray(app.roles) 
@@ -70,6 +76,7 @@ export const getApplicationsPermissionsHandler = http.get('/api/permissions/appl
       rolePermissions
         .filter(rp => rp.applicationId === app.id)
         .forEach(rp => {
+          console.log(`>>> [MSW拦截] 应用[${app.name}]的角色[${rp.role}]权限: ${rp.granted}`);
           allowedRoles[rp.role] = rp.granted;
         });
       
@@ -113,7 +120,9 @@ export const getApplicationsPermissionsHandler = http.get('/api/permissions/appl
       console.log(`>>> [MSW拦截] 应用角色过滤: ${roleFilter}`);
       result = result.filter(app => {
         // 检查这个角色是否能访问此应用
-        return app.allowedRoles[roleFilter] === true;
+        const hasAccess = app.allowedRoles[roleFilter] === true;
+        console.log(`>>> [MSW拦截] 应用[${app.name}]对角色[${roleFilter}]的访问: ${hasAccess}`);
+        return hasAccess;
       });
     }
     
