@@ -43,9 +43,12 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
     if (initAttemptedRef.current) return;
     initAttemptedRef.current = true;
 
-    // 添加全局变量标记MSW状态 - 显式设置为false表示正在初始化中
-    window.__MSW_READY__ = false;
-    console.log("MSW初始化开始，将__MSW_READY__设置为false");
+    // 明确定义全局变量类型
+    if (typeof window !== 'undefined') {
+      // 添加全局变量标记MSW状态 - 显式设置为false表示正在初始化中
+      window.__MSW_READY__ = false;
+      console.log("MSW初始化开始，将__MSW_READY__设置为false");
+    }
 
     const initMsw = async () => {
       const tryInit = async (): Promise<void> => {
@@ -56,11 +59,25 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
           if (!navigator.serviceWorker) {
             console.error('浏览器不支持 Service Worker, MSW 无法初始化');
             setStatus('error');
+            if (typeof window !== 'undefined') window.__MSW_READY__ = true; // 设置为true以避免API调用被阻塞
             return;
           }
           
           // 导入MSW模块
-          const { worker } = await import('@/mocks');
+          let worker;
+          try {
+            const mswModule = await import('@/mocks');
+            worker = mswModule.worker;
+            
+            if (!worker) {
+              throw new Error('MSW worker未定义');
+            }
+          } catch (err) {
+            console.error('导入MSW模块失败:', err);
+            setStatus('error');
+            if (typeof window !== 'undefined') window.__MSW_READY__ = true; // 设置为true以避免API调用被阻塞
+            return;
+          }
           
           console.log('准备启动MSW worker...');
           
@@ -117,6 +134,13 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
               
               print.warning();
             },
+            serviceWorker: {
+              // 添加一些额外的Service Worker选项
+              url: '/mockServiceWorker.js',
+              options: {
+                scope: '/',
+              },
+            },
           });
           
           console.log('MSW worker 启动成功');
@@ -138,8 +162,10 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
           setStatus('success');
           
           // 标记MSW准备就绪
-          window.__MSW_READY__ = true;
-          console.log("MSW初始化完成，将__MSW_READY__设置为true");
+          if (typeof window !== 'undefined') {
+            window.__MSW_READY__ = true;
+            console.log("MSW初始化完成，将__MSW_READY__设置为true");
+          }
           
           onInitialized?.();
         } catch (error) {
@@ -155,8 +181,10 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
           console.error('MSW 初始化失败，已达到最大重试次数');
           setStatus('error');
           // 即使MSW初始化失败，也将其标记为ready以防止API调用卡住
-          window.__MSW_READY__ = true;
-          console.log("MSW初始化失败，但将__MSW_READY__设置为true以避免API调用被阻塞");
+          if (typeof window !== 'undefined') {
+            window.__MSW_READY__ = true;
+            console.log("MSW初始化失败，但将__MSW_READY__设置为true以避免API调用被阻塞");
+          }
           toast.error('模拟服务初始化失败，请刷新页面重试');
         }
       };

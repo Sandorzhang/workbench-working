@@ -8,6 +8,12 @@ const waitForMsw = async (): Promise<boolean> => {
   // 只在浏览器环境中等待MSW
   if (typeof window === 'undefined') return true;
   
+  // 确保 __MSW_READY__ 属性存在
+  if (typeof window.__MSW_READY__ === 'undefined') {
+    window.__MSW_READY__ = false;
+    console.log('MSW全局标志未定义，已初始化为false');
+  }
+  
   // 如果MSW已经就绪，直接返回
   if (window.__MSW_READY__ === true) {
     console.log('MSW已就绪，继续API请求');
@@ -21,6 +27,11 @@ const waitForMsw = async (): Promise<boolean> => {
     const startTime = Date.now();
     
     const checkMswReady = () => {
+      // 确保 __MSW_READY__ 属性存在
+      if (typeof window.__MSW_READY__ === 'undefined') {
+        window.__MSW_READY__ = false;
+      }
+      
       // 如果MSW已就绪或超时，则解析Promise
       if (window.__MSW_READY__ === true) {
         console.log('MSW已就绪，继续API请求');

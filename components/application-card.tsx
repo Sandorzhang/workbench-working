@@ -59,70 +59,88 @@ const iconMap: Record<string, React.ElementType> = {
   'award': Award
 };
 
-// 颜色映射
+// 颜色映射 - 更新为渐变色
 const colorMap: Record<string, string> = {
-  'users': 'bg-blue-500',
-  'database': 'bg-green-500',
-  'file-text': 'bg-yellow-500',
-  'map': 'bg-purple-500',
-  'clock': 'bg-pink-500',
-  'book-open': 'bg-indigo-500',
-  'graduation-cap': 'bg-red-500',
-  'layout': 'bg-orange-500',
-  'user-check': 'bg-teal-500',
-  'home': 'bg-cyan-500',
-  'calendar': 'bg-lime-500',
-  'briefcase': 'bg-emerald-500',
-  'dollar-sign': 'bg-amber-500',
-  'settings': 'bg-slate-500',
-  'bar-chart': 'bg-violet-500',
-  'activity': 'bg-fuchsia-500',
-  'layers': 'bg-rose-500',
-  'shield': 'bg-sky-500',
-  'bell': 'bg-blue-600',
-  'search': 'bg-green-600',
-  'zap': 'bg-yellow-600',
-  'compass': 'bg-purple-600',
-  'heart': 'bg-pink-600',
-  'inbox': 'bg-indigo-600',
-  'mail': 'bg-red-600',
-  'message-square': 'bg-orange-600',
-  'phone': 'bg-teal-600',
-  'pie-chart': 'bg-cyan-600',
-  'smartphone': 'bg-lime-600',
-  'star': 'bg-emerald-600',
-  'target': 'bg-amber-600',
-  'truck': 'bg-slate-600',
-  'upload': 'bg-violet-600',
-  'video': 'bg-fuchsia-600',
-  'wifi': 'bg-rose-600',
-  'award': 'bg-sky-600'
+  'users': 'from-blue-500 to-blue-600',
+  'database': 'from-green-500 to-green-600',
+  'file-text': 'from-yellow-500 to-amber-600',
+  'map': 'from-purple-500 to-purple-600',
+  'clock': 'from-pink-500 to-pink-600',
+  'book-open': 'from-indigo-500 to-indigo-600',
+  'graduation-cap': 'from-red-500 to-red-600',
+  'layout': 'from-orange-500 to-orange-600',
+  'user-check': 'from-teal-500 to-teal-600',
+  'home': 'from-cyan-500 to-cyan-600',
+  'calendar': 'from-lime-500 to-lime-600',
+  'briefcase': 'from-emerald-500 to-emerald-600',
+  'dollar-sign': 'from-amber-500 to-amber-600',
+  'settings': 'from-slate-500 to-slate-600',
+  'bar-chart': 'from-violet-500 to-violet-600',
+  'activity': 'from-fuchsia-500 to-fuchsia-600',
+  'layers': 'from-rose-500 to-rose-600',
+  'shield': 'from-sky-500 to-sky-600',
+  'bell': 'from-blue-600 to-indigo-700',
+  'search': 'from-green-600 to-emerald-700',
+  'zap': 'from-yellow-600 to-amber-700',
+  'compass': 'from-purple-600 to-violet-700',
+  'heart': 'from-pink-600 to-rose-700',
+  'inbox': 'from-indigo-600 to-blue-700',
+  'mail': 'from-red-600 to-rose-700',
+  'message-square': 'from-orange-600 to-amber-700',
+  'phone': 'from-teal-600 to-green-700',
+  'pie-chart': 'from-cyan-600 to-sky-700',
+  'smartphone': 'from-lime-600 to-green-700',
+  'star': 'from-emerald-600 to-teal-700',
+  'target': 'from-amber-600 to-orange-700',
+  'truck': 'from-slate-600 to-gray-700',
+  'upload': 'from-violet-600 to-purple-700',
+  'video': 'from-fuchsia-600 to-pink-700',
+  'wifi': 'from-rose-600 to-red-700',
+  'award': 'from-sky-600 to-cyan-700'
 };
 
 export function ApplicationCard({ application }: { application: Application }) {
   const Icon = iconMap[application.icon] || Users;
-  const bgColor = colorMap[application.icon] || 'bg-gray-500';
+  const gradientColor = colorMap[application.icon] || 'from-gray-500 to-gray-600';
   
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
-      <CardContent className="p-6">
-        <div className="flex items-start mb-4">
-          <div className={`p-3 rounded-lg ${bgColor} mr-4`}>
-            <Icon className="h-5 w-5 text-white" />
+    <Link href={application.url} className="block h-full">
+      <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] border-gray-100/80 group">
+        <CardContent className="p-5">
+          <div className="flex items-start mb-4">
+            <div className={`p-3 rounded-xl bg-gradient-to-br ${gradientColor} mr-4 shadow-sm group-hover:shadow group-hover:scale-105 transition-all duration-300`}>
+              <Icon className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-200">{application.name}</h3>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{application.description}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-medium text-lg">{application.name}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{application.description}</p>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="bg-muted/50 px-6 py-3">
-        <Link href={application.url} className="w-full">
-          <Button variant="outline" className="w-full">
+        </CardContent>
+        <CardFooter className="bg-muted/30 px-5 py-3 border-t border-gray-100/80">
+          <Button 
+            variant="ghost" 
+            className="w-full group-hover:bg-primary/10 group-hover:text-primary transition-all duration-200"
+          >
             进入应用
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200"
+            >
+              <path d="M5 12h14"></path>
+              <path d="m12 5 7 7-7 7"></path>
+            </svg>
           </Button>
-        </Link>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 } 
