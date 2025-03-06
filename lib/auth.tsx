@@ -5,6 +5,13 @@ import { toast } from "sonner";
 import { api } from './api';
 import { LoginResponse, User as ApiUser } from './api-types';
 
+declare global {
+  interface Window {
+    __AUTH_TOKEN__?: string;
+    __MSW_READY__?: boolean;
+  }
+}
+
 // 用户类型
 interface User {
   id: string;
@@ -61,8 +68,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 初始化检查用户已登录状态
   useEffect(() => {
     const checkAuth = async () => {
-      const accessToken = localStorage.getItem('accessToken');
+      // 尝试从localStorage或内存中获取token
+      let accessToken = localStorage.getItem('accessToken');
       const refreshToken = localStorage.getItem('refreshToken');
+      
+      // 如果localStorage中没有token，尝试从内存获取
+      if (!accessToken && typeof window !== 'undefined' && window.__AUTH_TOKEN__) {
+        accessToken = window.__AUTH_TOKEN__;
+        console.log('从内存中获取token:', accessToken.substring(0, 10) + '...');
+        
+        // 尝试保存到localStorage
+        try {
+          localStorage.setItem('accessToken', accessToken);
+          console.log('将内存token保存到localStorage');
+        } catch (err) {
+          console.error('将内存token保存到localStorage失败:', err);
+        }
+      }
       
       if (!accessToken) {
         setState(prev => ({ ...prev, isLoading: false }));
@@ -70,21 +92,58 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       try {
-        console.log('正在验证用户会话，token:', accessToken.substring(0, 5) + '...');
+        console.log('令牌存在，尝试恢复会话状态');
+        
+        // 首先尝试从localStorage获取用户信息
+        const storedUserInfo = localStorage.getItem('user');
+        
+        if (storedUserInfo) {
+          console.log('从localStorage中找到用户信息，无需API调用');
+          
+          try {
+            // 解析用户信息
+            const user = JSON.parse(storedUserInfo) as User;
+            
+            // 更新状态
+            setState({
+              isAuthenticated: true,
+              user: user,
+              accessToken: accessToken,
+              refreshToken: refreshToken,
+              isLoading: false,
+              error: null,
+              permissions: user.permissions || [],
+            });
+            
+            console.log('用户会话已从localStorage恢复');
+            return; // 成功恢复，不再调用API
+          } catch (parseError) {
+            console.error('解析localStorage中的用户信息失败:', parseError);
+            // 解析失败时继续尝试API调用
+          }
+        }
+        
+        // localStorage中没有用户信息，尝试API调用
+        console.log('尝试API调用获取用户信息...');
         
         // 使用API工具获取用户信息
-        const userData = await api.auth.getCurrentUser() as any;
+        const response = await api.auth.getCurrentUser() as any;
         
-        if (userData && userData.data && userData.data.user) {
+        // 检查API响应格式
+        if (response.code === 0 && response.data && response.data.user) {
+          // 后端返回了成功的响应
+          const data = response.data;
+          
+          // 构建用户信息
           const user: User = {
-            id: userData.data.user.id,
-            name: userData.data.user.name,
-            email: userData.data.user.email,
-            avatar: userData.data.user.avatar,
-            role: userData.data.user.role?.id,
-            roleName: userData.data.user.role?.name,
-            schoolId: userData.data.user.schoolId,
-            schoolName: userData.data.user.schoolName,
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            avatar: data.user.avatar,
+            role: data.user.role?.id,
+            roleName: data.user.role?.name,
+            schoolId: data.user.schoolId,
+            schoolName: data.user.schoolName,
           };
           
           setState({
@@ -94,19 +153,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             refreshToken: refreshToken,
             isLoading: false,
             error: null,
-            permissions: userData.data.permissions || [],
+            permissions: data.permissions || [],
           });
+          
+          console.log('用户会话验证成功:', data.user.name);
         } else {
-          throw new Error('用户信息获取失败');
+          // 后端返回了错误响应
+          throw new Error(response.msg || '用户会话验证失败');
         }
-        
-        console.log('用户会话验证成功:', userData.data?.user?.name);
       } catch (error: any) {
         console.error('会话验证失败:', error);
+        
+        // 如果是404错误，但token有效，可能只是没有/me接口
+        // 我们可以尝试保持用户登录状态
+        if (error.message && (error.message.includes('404') || error.message.includes('Not Found'))) {
+          console.log('获取用户信息接口返回404，可能后端没有此接口，尝试保持会话');
+          // 创建基本用户信息
+          const basicUser: User = {
+            id: 'unknown',
+            name: '未知用户',
+            permissions: []
+          };
+          
+          setState({
+            isAuthenticated: true,
+            user: basicUser,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            isLoading: false,
+            error: null,
+            permissions: [],
+          });
+          
+          toast.warning('无法获取完整用户信息，使用基本配置继续');
+          return;
+        }
         
         // 清除无效token
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
         
         // 更健壮的错误消息提取
         let errorMessage = '会话验证失败';
@@ -136,8 +222,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           permissions: [],
         });
         
-        // 显示错误提示
-        toast.error(errorMessage);
+        // 如果是404错误，可能是API路径问题，显示更具体的错误信息
+        if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
+          toast.error('API路径可能有误，请联系管理员');
+        } else {
+          // 显示错误提示
+          toast.error(errorMessage);
+        }
       }
     };
     
@@ -161,10 +252,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = response.data;
       
       console.log('登录成功，获取到token和用户数据');
+      console.log('用户信息:', data.user);
+      console.log('权限列表:', data.permissions);
       
-      // 保存token
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      // 先删除原有token
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
+      // 设置token - 确保字符串值，防止null或undefined
+      const accessTokenValue = data.accessToken || '';
+      const refreshTokenValue = data.refreshToken || '';
+      
+      try {
+        console.log('准备保存token到localStorage:', 
+          `accessToken (${accessTokenValue.length}字符): ${accessTokenValue.substring(0, 10)}...`, 
+          `refreshToken (${refreshTokenValue.length}字符): ${refreshTokenValue.substring(0, 10)}...`
+        );
+        
+        localStorage.setItem('accessToken', accessTokenValue);
+        localStorage.setItem('refreshToken', refreshTokenValue);
+        
+        // 立即验证token是否正确设置
+        const storedAccessToken = localStorage.getItem('accessToken');
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        
+        console.log('验证localStorage中的token:',
+          `accessToken: ${storedAccessToken ? (storedAccessToken === accessTokenValue ? '正确设置' : '值不匹配') : '未设置'}`,
+          `refreshToken: ${storedRefreshToken ? (storedRefreshToken === refreshTokenValue ? '正确设置' : '值不匹配') : '未设置'}`
+        );
+        
+        if (!storedAccessToken || storedAccessToken !== accessTokenValue) {
+          console.warn('Token设置可能失败，将尝试再次设置');
+          // 再次尝试设置
+          localStorage.setItem('accessToken', accessTokenValue);
+        }
+      } catch (storageError) {
+        console.error('保存token到localStorage失败:', storageError);
+        // 继续执行以更新状态
+      }
       
       // 构建用户信息
       const user: User = {
@@ -179,6 +304,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         permissions: data.permissions,
       };
       
+      // 保存用户信息到localStorage，避免依赖/me接口
+      try {
+        localStorage.setItem('user', JSON.stringify(user));
+        console.log('已保存用户信息到localStorage');
+      } catch (err) {
+        console.error('保存用户信息到localStorage失败:', err);
+      }
+      
       // 立即更新状态
       setState({
         isAuthenticated: true,
@@ -191,6 +324,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       
       toast.success('登录成功');
+      
+      // 直接重定向到工作台，使用window.location以确保完全重新加载页面
+      setTimeout(async () => {
+        // 最后验证一次token设置
+        const finalAccessToken = localStorage.getItem('accessToken');
+        
+        if (!finalAccessToken || finalAccessToken.trim() === '') {
+          console.error('最终验证失败: token设置失败，尝试非localStorage方式');
+          
+          // 尝试直接设置到内存对象
+          try {
+            window.__AUTH_TOKEN__ = data.accessToken;
+            console.log('已设置内存token:', window.__AUTH_TOKEN__.substring(0, 10) + '...');
+          } catch (err) {
+            console.error('内存token设置失败:', err);
+          }
+        } else {
+          console.log('最终验证成功: token已正确设置，准备跳转');
+        }
+        
+        // 不管令牌是否设置成功，都重定向到工作台
+        window.location.href = '/workbench';
+      }, 1500);
     } catch (error: any) {
       console.error('登录失败:', error);
       const errorMessage = error.message || '登录时发生错误';

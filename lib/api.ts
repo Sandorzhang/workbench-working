@@ -30,18 +30,41 @@ const waitForMsw = async (): Promise<boolean> => {
 
 // 为请求添加认证头
 const getAuthHeaders = (): HeadersInit => {
-  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-  
-  if (accessToken) {
-    console.log(`添加认证头，token: ${accessToken.substring(0, 5)}...`);
-  } else {
-    console.log('没有token，使用无认证头');
+  // 确保在客户端环境
+  if (typeof window === 'undefined') {
+    return { 'Content-Type': 'application/json' };
   }
   
-  return {
-    'Content-Type': 'application/json',
-    ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
-  };
+  // 从localStorage获取令牌，确保它是字符串
+  let accessToken = localStorage.getItem('accessToken') || '';
+  
+  // 如果localStorage中没有token，尝试从内存获取
+  if (!accessToken && window.__AUTH_TOKEN__) {
+    accessToken = window.__AUTH_TOKEN__;
+    console.log('使用内存中的token:', accessToken.substring(0, 10) + '...');
+  }
+  
+  if (accessToken) {
+    const tokenPreview = accessToken.length > 10 ? 
+      `${accessToken.substring(0, 10)}...` : 
+      '(令牌格式可能不正确)';
+    
+    console.log(`添加认证头，token: ${tokenPreview}`);
+    
+    // 检查令牌是否是Bearer格式
+    if (!accessToken.trim()) {
+      console.warn('警告: 令牌为空字符串');
+    }
+    
+    // 返回带认证头的headers
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`
+    };
+  } else {
+    console.log('没有token，使用无认证头');
+    return { 'Content-Type': 'application/json' };
+  }
 };
 
 // 通用请求处理
@@ -66,8 +89,16 @@ async function handleRequest<T>(
 
     // 检查是否有认证头并记录日志
     const hasAuthHeader = 'Authorization' in headers;
-    console.log(`API请求: ${fullUrl} - 环境: ${ENVIRONMENT} - Authorization头: ${hasAuthHeader ? '已设置' : '未设置'}`);
+    const authValue = hasAuthHeader ? (headers as any)['Authorization'] : '未设置';
+    console.log(`API请求: ${fullUrl}`);
+    console.log(`环境: ${ENVIRONMENT} - Authorization头: ${authValue}`);
     
+    if (hasAuthHeader) {
+      // 验证localStorage中的token
+      const storedToken = localStorage.getItem('accessToken');
+      console.log(`localStorage中的token: ${storedToken ? storedToken.substring(0, 10) + '...' : '不存在'}`);
+    }
+
     // 执行请求
     const response = await fetch(fullUrl, {
       ...options,
@@ -79,7 +110,8 @@ async function handleRequest<T>(
       console.error('认证失败 (401)，清除token并提示用户重新登录');
       // 清除无效token
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         // 添加导航到登录页的逻辑，如果在客户端
         console.log('尝试重定向到登录页');
       }
@@ -187,6 +219,7 @@ async function handleRequest<T>(
 // 确保声明全局类型
 declare global {
   interface Window {
+    __AUTH_TOKEN__?: string;
     __MSW_READY__?: boolean;
   }
 }
@@ -222,11 +255,55 @@ export const api = {
         body: JSON.stringify({ phone })
       }),
     
-    getCurrentUser: () => 
-      handleRequest(`/auth/me`),
+    getCurrentUser: async () => {
+      // 尝试多个可能的API路径
+      const possiblePaths = [
+        '/auth/backend/me',            // 首先尝试当前路径
+        '/auth/me',                    // 尝试不带backend的路径
+        '/user/current',               // 尝试另一种常见用户路径
+        '/user/info',                  // 尝试另一种常见用户路径
+        '/auth/backend/user/current',  // 更多可能的路径
+        '/api/auth/me'                 // 尝试带api前缀的路径
+      ];
+      
+      // 优先从localStorage获取
+      if (typeof window !== 'undefined') {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            return { code: 0, msg: '成功', data: JSON.parse(storedUser) };
+          } catch (e) {
+            console.error('解析localStorage中的用户数据失败', e);
+            // 解析失败继续尝试API调用
+          }
+        }
+      }
+      
+      // 使用Promise.any尝试所有可能的路径，返回第一个成功的
+      try {
+        // 尝试第一个路径
+        return await handleRequest(`${possiblePaths[0]}`);
+      } catch (error) {
+        console.error(`尝试路径 ${possiblePaths[0]} 失败:`, error);
+        
+        // 顺序尝试其他路径
+        for (let i = 1; i < possiblePaths.length; i++) {
+          try {
+            console.log(`尝试备选路径: ${possiblePaths[i]}`);
+            return await handleRequest(`${possiblePaths[i]}`);
+          } catch (pathError) {
+            console.error(`尝试路径 ${possiblePaths[i]} 失败:`, pathError);
+            // 继续尝试下一个路径
+          }
+        }
+        
+        // 所有路径都失败
+        throw new Error('无法获取用户信息，所有API路径都失败');
+      }
+    },
     
     logout: () => 
-      handleRequest(`/auth/logout`, {
+      handleRequest(`/auth/backend/logout`, {
         method: 'POST'
       })
   },

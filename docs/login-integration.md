@@ -37,7 +37,12 @@
      }
      ```
 
-2. **手机验证码登录** (暂时使用MSW模拟)
+2. **获取当前用户信息**
+   - 请求地址：`/auth/backend/me`
+   - 请求方式：`GET`
+   - 请求头：需要包含有效的 `Authorization: Bearer <accessToken>`
+
+3. **手机验证码登录** (暂时使用MSW模拟)
    - 请求地址：`/auth/login-with-code`
    - 请求方式：`POST`
    - 请求参数：
@@ -155,4 +160,41 @@
 
 3. **环境配置问题**
    - 确保使用了正确的环境配置命令启动项目
-   - 检查`.env.test`文件中的API地址是否正确 
+   - 检查`.env.test`文件中的API地址是否正确
+
+## 后端API路径映射
+
+为方便参考，以下是所有与认证相关的API路径映射：
+
+| 功能 | API路径 | 方法 |
+|------|---------|------|
+| 登录 | `/auth/backend/login` | POST |
+| 获取当前用户信息 | `/auth/backend/me` | GET |
+| 登出 | `/auth/backend/logout` | POST |
+| 发送验证码 | `/auth/send-code` | POST |
+| 验证码登录 | `/auth/login-with-code` | POST |
+
+注意：目前后端可能只支持账号密码登录方式（`/auth/backend/login`），其他API路径如验证码登录等可能需要与后端团队确认。
+
+## 用户信息处理
+
+由于后端API中可能不存在`/auth/backend/me`接口，我们采取了以下备选方案：
+
+1. **在登录成功后保存用户信息**：
+   - 将用户信息直接从登录响应中保存到localStorage
+   - 避免依赖单独的用户信息API
+
+2. **多路径尝试获取用户信息**：
+   - 按顺序尝试多个可能的API路径：
+     - `/auth/backend/me`
+     - `/auth/me`
+     - `/user/current`
+     - `/user/info`
+     - `/auth/backend/user/current`
+     - `/api/auth/me`
+
+3. **降级机制**：
+   - 当无法获取用户信息但有有效token时，使用基本用户信息保持登录状态
+   - 确保UI不会因为缺少用户信息API而崩溃
+
+这种方法提供了最大的兼容性，确保即使API结构发生变化，登录功能仍能正常工作。 
