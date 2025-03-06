@@ -79,15 +79,15 @@ const userAgentRelations: UserAgentRelation[] = [
 ];
 
 // 处理程序
-export const aiLibraryHandlers = [
+export const agentLibraryHandlers = [
   // 获取所有智能体
-  http.get('*/api/ai-library/agents', async () => {
+  http.get('*/api/agent-library/agents', async () => {
     await delay(500);
     return HttpResponse.json(agents);
   }),
   
   // 获取单个智能体信息
-  http.get('*/api/ai-library/agents/:id', async ({ params }) => {
+  http.get('*/api/agent-library/agents/:id', async ({ params }) => {
     const id = params.id as string;
     const agent = agents.find(a => a.id === id);
     
@@ -100,7 +100,7 @@ export const aiLibraryHandlers = [
   }),
   
   // 获取用户添加的智能体
-  http.get('*/api/ai-library/user-agents', async ({ request }) => {
+  http.get('*/api/agent-library/user-agents', async ({ request }) => {
     try {
       // 在真实环境中，这里会基于授权信息获取用户ID
       const userId = 'default';
@@ -129,7 +129,7 @@ export const aiLibraryHandlers = [
   }),
   
   // 添加智能体到用户列表
-  http.post('*/api/ai-library/user-agents/:id', async ({ params }) => {
+  http.post('*/api/agent-library/user-agents/:id', async ({ params }) => {
     const id = params.id as string;
     const userId = 'default'; // 默认用户ID
     
@@ -157,7 +157,7 @@ export const aiLibraryHandlers = [
   }),
   
   // 从用户列表中移除智能体
-  http.delete('*/api/ai-library/user-agents/:id', async ({ params }) => {
+  http.delete('*/api/agent-library/user-agents/:id', async ({ params }) => {
     const id = params.id as string;
     const userId = 'default'; // 默认用户ID
     
@@ -174,7 +174,7 @@ export const aiLibraryHandlers = [
   }),
   
   // 获取用户是否已添加特定智能体
-  http.get('*/api/ai-library/user-agents/:id/status', async ({ params }) => {
+  http.get('*/api/agent-library/user-agents/:id/status', async ({ params }) => {
     const id = params.id as string;
     const userId = 'default'; // 默认用户ID
     

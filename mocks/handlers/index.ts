@@ -1,7 +1,7 @@
 import { http, HttpResponse, delay } from 'msw';
 
 import { authHandlers } from './auth';
-import { aiLibraryHandlers } from './ai-library';
+import { agentLibraryHandlers } from './agent-library';
 import { conceptMapHandlers } from './concept-map';
 import { academicJourneyHandlers } from './academic-journey';
 import { examHandlers } from './exam';
@@ -65,7 +65,7 @@ const originalHandlers = [
   }),
   
   ...authHandlers,
-  ...aiLibraryHandlers,
+  ...agentLibraryHandlers,
   ...conceptMapHandlers,
   ...academicJourneyHandlers,
   ...examHandlers,

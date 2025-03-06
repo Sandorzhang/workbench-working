@@ -74,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setIsLoading(true);
       }
       
-      const response = await fetch('/api/ai-library/user-agents');
+      const response = await fetch('/api/agent-library/user-agents');
       
       if (!response.ok) {
         throw new Error('获取AI助手列表失败');
@@ -217,7 +217,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <NavUserAuth 
-          user={user || undefined} 
+          user={user ? {
+            name: user.name,
+            email: user.email || '',
+            avatar: user.avatar || '',
+            role: user.role || ''
+          } : undefined} 
           onLogout={handleLogout} 
         />
       </SidebarFooter>

@@ -69,7 +69,7 @@ const pageTitleMap: Record<string, PageInfo> = {
     title: '全员导师',
     parent: { title: '工作台', path: '/workbench' }
   },
-  '/ai-library': {
+  '/agent-library': {
     title: '智能体库',
     parent: { title: '工作台', path: '/workbench' }
   },

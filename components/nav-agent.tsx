@@ -152,7 +152,7 @@ export const NavAgent = memo(({
       // 立即从本地状态中移除，实现即时UI反馈
       setLocalAgents(prev => prev.filter(agent => agent.id !== agentId));
       
-      const response = await fetch(`/api/ai-library/user-agents/${agentId}`, {
+      const response = await fetch(`/api/agent-library/user-agents/${agentId}`, {
         method: 'DELETE'
       });
       
@@ -205,7 +205,7 @@ export const NavAgent = memo(({
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <div className="flex items-center justify-between pr-2">
           <SidebarGroupLabel>智能体</SidebarGroupLabel>
-          <Link href="/ai-library" className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-hover">
+          <Link href="/agent-library" className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-hover">
             <Plus className="h-4 w-4" />
             <span className="sr-only">添加智能体</span>
           </Link>

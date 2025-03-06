@@ -42,7 +42,7 @@ interface AIAgent {
   isAdded?: boolean;
 }
 
-const AILibraryPage = () => {
+const AgentLibraryPage = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('all');
@@ -58,7 +58,7 @@ const AILibraryPage = () => {
         setLoading(true);
         
         // 获取所有智能体
-        const response = await fetch('/api/ai-library/agents');
+        const response = await fetch('/api/agent-library/agents');
         let agentData: AIAgent[] = [];
         
         if (response.ok) {
@@ -66,7 +66,7 @@ const AILibraryPage = () => {
         }
         
         // 获取用户已添加的智能体
-        const userAgentsResponse = await fetch('/api/ai-library/user-agents');
+        const userAgentsResponse = await fetch('/api/agent-library/user-agents');
         if (userAgentsResponse.ok) {
           const userAgents = await userAgentsResponse.json();
           setUserAgentIds(userAgents.map((agent: AIAgent) => agent.id));
@@ -115,7 +115,7 @@ const AILibraryPage = () => {
     setActionLoading(agentId);
     try {
       const isAdded = userAgentIds.includes(agentId);
-      const url = `/api/ai-library/user-agents/${agentId}`;
+      const url = `/api/agent-library/user-agents/${agentId}`;
       const method = isAdded ? 'DELETE' : 'POST';
       
       const response = await fetch(url, { method });
@@ -359,4 +359,4 @@ const AILibraryPage = () => {
   );
 };
 
-export default AILibraryPage; 
+export default AgentLibraryPage; 

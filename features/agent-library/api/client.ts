@@ -1,17 +1,17 @@
 /**
- * Client-side API methods for ai-library
+ * Client-side API methods for agent-library
  */
 import { buildApiPath, handleRequest, ApiResponse } from '@/shared/lib/api-utils';
 // Uncomment and adapt as needed:
 // import { Type1, Type2 } from '../types';
 
 // Feature name - used to create all API paths consistently
-const FEATURE = 'ai-library';
+const FEATURE = 'agent-library';
 
 /**
- * ai-library API client with standardized paths
+ * agent-library API client with standardized paths
  */
-export const ai-libraryApi = {
+export const agentLibraryApi = {
   /**
    * Example method - Replace with actual methods
    */
