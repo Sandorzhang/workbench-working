@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ChevronsUpDown, Plus, School, Building, BookOpen } from "lucide-react"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from '@/shared/auth'
 
 import {
   DropdownMenu,

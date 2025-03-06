@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Bot, X, Paperclip, Send, MessageSquare, Plus, Search, MoreHorizontal, Trash, Edit, CheckCheck, UserCircle } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,

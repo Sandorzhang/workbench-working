@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from '@/lib/auth';
 import { 
   Bell, 
   Search, 

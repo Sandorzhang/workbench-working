@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClassOverview as ClassOverviewType, LearningStandard } from '@/features/academic-journey/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { MasteryLegend } from './MasteryLegend';
 import { TimeRangeSelector } from './TimeRangeSelector';

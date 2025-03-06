@@ -54,7 +54,7 @@ import {
   ListSkeleton 
 } from "@/components/ui/skeleton-loader";
 import { HeroSection } from "@/components/ui/hero-section";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 // 数据资产类型
 interface DataAsset {

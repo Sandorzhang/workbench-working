@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw';
 import { db } from '../db';
-import { Mentor } from '@/lib/types';
+import { Mentor } from '@/shared/types';
 
 // 学生数据处理程序
 export const studentHandlers = [

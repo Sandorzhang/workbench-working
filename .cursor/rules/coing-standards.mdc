@@ -1,0 +1,799 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
+---
+description: 完整的前端编码规范，涵盖 TypeScript、React、Next.js、TailwindCSS 的最佳实践
+globs: ["**/*.{ts,tsx,js,jsx}"]
+---
+
+# 教育管理平台前端编码规范
+
+本文档为教育管理平台前端编码规范，适用于所有使用 React、Next.js、TypeScript 和 TailwindCSS 开发的项目代码。遵循这些规范可以确保代码的一致性、可维护性和高质量。
+
+## 1. 项目结构
+
+项目采用基于特性（Feature-based）的架构，主要目录结构如下：
+
+```
+/                           # 项目根目录
+├── app/                    # Next.js App Router 页面和布局
+├── components/             # 可复用的 UI 组件
+│   ├── ui/                 # 基础 UI 组件（按钮、表单等）
+│   └── {feature-name}/     # 特定功能的组件
+├── features/               # 功能模块，包含业务逻辑和 API
+│   └── {feature-name}/     # 特定功能的业务逻辑
+│       ├── api/            # API 调用
+│       └── types.ts        # 类型定义
+├── hooks/                  # 自定义 React Hooks
+├── lib/                    # 工具函数和辅助库
+├── mocks/                  # 模拟数据和 API
+├── public/                 # 静态资源
+├── shared/                 # 共享代码
+│   ├── api/                # API 核心功能
+│   ├── auth/               # 认证相关代码
+│   ├── lib/                # 通用工具函数
+│   └── types/              # 共享类型定义
+└── types/                  # 全局类型定义
+```
+
+## 2. TypeScript 最佳实践
+
+### 2.1 类型定义
+
+- 始终为变量、函数参数和返回值定义明确的类型
+- 避免使用 `any` 类型，优先使用 `unknown` 并进行类型缩小
+- 为组件 props 定义接口（Interface）
+- 使用类型别名（Type Alias）定义复杂或联合类型
+- 导出所有可能被其他模块使用的类型
+
+```typescript
+// ✅ 正确示例
+interface UserProps {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+}
+
+type UserRole = 'admin' | 'teacher' | 'student';
+
+function getUserDisplayName(user: UserProps): string {
+  return `${user.name} (${user.role})`;
+}
+
+// ❌ 错误示例
+function processData(data: any): void {
+  console.log(data.name); // 不安全，data 可能没有 name 属性
+}
+
+// ✅ 正确替代方案
+function processData(data: unknown): void {
+  if (typeof data === 'object' && data !== null && 'name' in data) {
+    console.log(data.name);
+  }
+}
+```
+
+### 2.2 类型导入/导出
+
+- 在 `features/{feature-name}/types.ts` 中定义功能特定类型
+- 在 `shared/types/` 中定义共享类型
+- 使用命名导出导出多个类型
+- 创建 barrel 文件（index.ts）以简化导入
+
+```typescript
+// features/auth/types.ts
+export interface LoginCredentials {
+  identity: string;
+  verify: string;
+  type: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: UserInfo;
+}
+
+// 在其他文件中导入
+import { LoginCredentials, LoginResponse } from '../types';
+```
+
+@docs/typescript-best-practices.md
+
+## 3. React 组件开发规范
+
+### 3.1 组件结构
+
+- 使用函数组件和 Hooks，避免使用类组件
+- 只在必要时使用 `"use client"` 指令
+- 在组件顶部声明状态和引用
+- 将事件处理函数命名为 `handle{Event}`
+- 使用早期返回（early return）进行条件渲染
+- 遵循单一职责原则，复杂组件拆分为小组件
+
+```typescript
+// components/feature-component.tsx
+
+"use client" // 仅在需要客户端交互时使用
+
+import { useState, useEffect } from "react";
+import { SomeIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+// 定义组件 Props 类型
+interface FeatureComponentProps {
+  title: string;
+  onAction: () => void;
+  initialData?: string[];
+}
+
+export function FeatureComponent({ 
+  title, 
+  onAction,
+  initialData = []
+}: FeatureComponentProps) {
+  // 状态声明放在顶部
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<string[]>(initialData);
+  
+  // 事件处理函数使用 handle 前缀
+  const handleClick = () => {
+    setIsLoading(true);
+    onAction();
+    setIsLoading(false);
+  };
+  
+  // 早期返回进行条件渲染
+  if (!title) {
+    return null;
+  }
+  
+  // 主要组件渲染
+  return (
+    <div className="p-4 rounded-md bg-background">
+      <h2 className="text-xl font-medium mb-2">{title}</h2>
+      <Button 
+        onClick={handleClick} 
+        disabled={isLoading}
+        aria-label="执行操作"
+      >
+        {isLoading ? <SomeIcon className="mr-2 size-4" /> : null}
+        提交
+      </Button>
+    </div>
+  );
+}
+```
+
+### 3.2 Props 传递
+
+- 使用对象解构来接收 props
+- 为可选 props 提供默认值
+- 避免过度传递 props；考虑使用 Context API 共享状态
+- 避免直接修改传入的 props 对象
+
+```typescript
+// ✅ 正确示例
+function UserCard({ user, isActive = false, onClick }: UserCardProps) {
+  // 组件实现
+}
+
+// ❌ 错误示例
+function UserCard(props) {
+  const isActive = props.isActive || false;
+  // 组件实现
+}
+```
+
+@docs/react-component-guidelines.md
+
+## 4. TailwindCSS 样式规范
+
+### 4.1 样式最佳实践
+
+- 使用 Tailwind 类名而非内联样式
+- 使用 `cn()` 工具函数合并类名
+- 对于条件类名，使用 `class:` 语法而非三元运算符
+- 使用语义化类名（如 `bg-primary`）而非直接使用颜色
+- 遵循一致的类名顺序：布局 -> 尺寸 -> 间距 -> 背景 -> 边框 -> 文本
+
+```typescript
+// ✅ 正确示例 - 使用 Tailwind 类名
+<div className="flex items-center gap-2 p-4 rounded-md bg-background">
+  <span className="text-sm font-medium text-primary">标签</span>
+</div>
+
+// ✅ 正确示例 - 使用 cn() 和 class: 语法
+<div className={cn(
+  "p-4 rounded-md transition-colors",
+  "class:bg-primary-foreground": isActive,
+  "class:bg-muted": !isActive
+)}>
+  内容
+</div>
+
+// ❌ 错误示例 - 不使用内联样式
+<div style={{ padding: '1rem', borderRadius: '0.375rem' }}>内容</div>
+
+// ❌ 错误示例 - 不使用三元运算符
+<div className={`p-4 rounded-md ${isActive ? 'bg-primary' : 'bg-muted'}`}>内容</div>
+```
+
+### 4.2 响应式设计
+
+- 使用 Tailwind 断点前缀（sm:, md:, lg:, xl:）进行响应式设计
+- 移动优先：先定义移动视图，再针对更大屏幕添加样式
+- 使用 Grid 和 Flexbox 进行布局
+- 考虑使用 container queries 进行组件级响应式设计
+
+```typescript
+// ✅ 正确示例 - 移动优先的响应式设计
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+  {items.map(item => (
+    <Card key={item.id} {...item} />
+  ))}
+</div>
+```
+
+@docs/tailwind-best-practices.md
+
+## 5. API 集成模式
+
+### 5.1 API 客户端实现
+
+- 在 `features/{feature-name}/api/client.ts` 中实现 API 调用
+- 使用共享的 API 工具函数进行请求处理
+- 为每个 API 模块定义一个常量命名空间
+- 使用 JSDoc 注释描述每个 API 方法
+- 明确定义请求和响应类型
+
+```typescript
+// features/auth/api/client.ts
+
+import { buildApiPath, handleRequest, ApiResponse } from '@/shared/api/core';
+import { LoginCredentials, LoginResponse } from '../types';
+
+// 功能名称常量
+const FEATURE = 'auth';
+
+/**
+ * 认证 API 客户端
+ */
+export const authApi = {
+  /**
+   * 用户名密码登录
+   * @param credentials 登录凭证
+   */
+  login: async (credentials: LoginCredentials): Promise<ApiResponse<LoginResponse>> => {
+    return handleRequest(
+      buildApiPath(FEATURE, '/login'),
+      {
+        method: 'POST',
+        body: JSON.stringify(credentials)
+      }
+    );
+  },
+  
+  /**
+   * 退出登录
+   */
+  logout: async (): Promise<ApiResponse<{ success: boolean }>> => {
+    return handleRequest(
+      buildApiPath(FEATURE, '/logout'),
+      { method: 'POST' }
+    );
+  }
+};
+```
+
+### 5.2 数据获取与缓存
+
+- 使用 React Query 或 SWR 进行数据获取和缓存
+- 实现适当的加载和错误状态
+- 使用乐观更新提升用户体验
+- 对频繁变化的数据实现轮询
+
+```typescript
+// 使用 SWR 获取数据示例
+import useSWR from 'swr';
+import { userApi } from '@/features/user/api/client';
+
+function UserProfile({ userId }: { userId: string }) {
+  const { data, error, isLoading } = useSWR(
+    `user/${userId}`, 
+    () => userApi.getUserProfile(userId)
+  );
+  
+  if (isLoading) return <SkeletonLoader />;
+  if (error) return <ErrorDisplay error={error} />;
+  
+  return <UserProfileCard user={data} />;
+}
+```
+
+@docs/api-integration-guide.md
+
+## 6. 状态管理
+
+### 6.1 本地组件状态
+
+- 使用 `useState` 和 `useReducer` 管理组件内部状态
+- 保持状态尽可能接近使用它的组件
+- 使用 `useState` 管理简单状态，使用 `useReducer` 管理复杂状态
+- 合理拆分状态，避免过大的状态对象
+
+```typescript
+// ✅ 正确示例 - 简单状态
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  const handleIncrement = () => setCount(prev => prev + 1);
+  
+  return (
+    <Button onClick={handleIncrement}>
+      Count: {count}
+    </Button>
+  );
+}
+
+// ✅ 正确示例 - 复杂状态
+function TaskList() {
+  const [state, dispatch] = useReducer(tasksReducer, initialTasks);
+  
+  const handleAddTask = (task) => {
+    dispatch({ type: 'ADD_TASK', payload: task });
+  };
+  
+  // 组件实现
+}
+
+function tasksReducer(state, action) {
+  switch (action.type) {
+    case 'ADD_TASK':
+      return [...state, action.payload];
+    // 其他 action 处理...
+    default:
+      return state;
+  }
+}
+```
+
+### 6.2 全局状态
+
+- 使用 Context API 共享状态
+- 创建特定目的的 Context 而非单一的全局状态
+- 提供合理的默认值
+- 考虑使用 Zustand 或 Jotai 等轻量状态管理库
+- 避免过度使用全局状态；优先考虑 props 传递或组合
+
+```typescript
+// 创建认证上下文
+import { createContext, useContext, useState } from 'react';
+import type { User } from '@/features/auth/types';
+
+interface AuthContextType {
+  user: User | null;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  
+  // 实现 login 和 logout 函数
+  
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+// 使用自定义 hook 消费上下文
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+```
+
+@docs/state-management-guide.md
+
+## 7. 错误处理
+
+### 7.1 API 错误处理
+
+- 使用 try/catch 包装 API 调用
+- 实现统一的错误处理逻辑
+- 为用户提供有意义的错误信息
+- 区分处理网络错误、服务器错误和验证错误
+
+```typescript
+// 错误处理示例
+async function handleSubmit() {
+  try {
+    setLoading(true);
+    await api.submitData(formData);
+    toast.success('提交成功！');
+    router.push('/dashboard');
+  } catch (error) {
+    if (error.status === 400) {
+      // 处理表单验证错误
+      setErrors(error.data.errors);
+      toast.error('请修正表单中的错误');
+    } else if (error.status === 401) {
+      // 处理认证错误
+      toast.error('会话已过期，请重新登录');
+      logout();
+    } else {
+      // 处理其他错误
+      toast.error('操作失败，请稍后重试');
+      console.error('提交失败:', error);
+    }
+  } finally {
+    setLoading(false);
+  }
+}
+```
+
+### 7.2 错误边界
+
+- 使用 Error Boundary 捕获组件渲染错误
+- 提供友好的错误页面或回退 UI
+- 实现错误日志记录
+
+```typescript
+// components/ErrorBoundary.tsx
+import { Component, ErrorInfo, ReactNode } from 'react';
+
+interface ErrorBoundaryProps {
+  fallback?: ReactNode;
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // 记录错误日志
+    console.error('组件错误:', error, errorInfo);
+    // 可以将错误上报到监控服务
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      
+      return (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+          <h2 className="text-lg font-medium text-red-800">组件出错了</h2>
+          <p className="mt-1 text-red-700">请刷新页面或联系管理员</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+@docs/error-handling-guide.md
+
+## 8. 性能优化
+
+### 8.1 组件优化
+
+- 使用 `React.memo` 避免不必要的重渲染
+- 使用 `useCallback` 优化事件处理函数
+- 使用 `useMemo` 缓存计算结果
+- 实现虚拟列表渲染大量数据
+- 懒加载非关键组件
+
+```typescript
+// ✅ 正确示例 - 使用 React.memo
+const UserCard = React.memo(function UserCard({ user }: UserCardProps) {
+  return (
+    <div className="p-4 rounded-md border">
+      <h3>{user.name}</h3>
+    </div>
+  );
+});
+
+// ✅ 正确示例 - 使用 useCallback
+function UserList({ users, onUserSelect }) {
+  // 使用 useCallback 优化事件处理函数
+  const handleUserClick = useCallback((userId) => {
+    onUserSelect(userId);
+  }, [onUserSelect]);
+  
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id} onClick={() => handleUserClick(user.id)}>
+          {user.name}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ✅ 正确示例 - 使用 useMemo
+function Stats({ data }) {
+  // 使用 useMemo 缓存计算结果
+  const stats = useMemo(() => {
+    return {
+      total: data.length,
+      active: data.filter(item => item.active).length,
+      average: data.reduce((acc, item) => acc + item.value, 0) / data.length
+    };
+  }, [data]);
+  
+  return (
+    <div>
+      <p>总计: {stats.total}</p>
+      <p>活跃: {stats.active}</p>
+      <p>平均值: {stats.average.toFixed(2)}</p>
+    </div>
+  );
+}
+```
+
+### 8.2 渲染优化
+
+- 使用 Next.js 的 Image 组件优化图片
+- 实现代码分割和懒加载
+- 使用 Suspense 和 Error Boundary 优化加载体验
+- 避免在渲染期间进行昂贵计算
+- 为列表项提供稳定的 key
+
+```typescript
+// ✅ 正确示例 - 代码分割与懒加载
+import dynamic from 'next/dynamic';
+
+const ExpensiveChart = dynamic(() => import('@/components/ExpensiveChart'), {
+  loading: () => <ChartSkeleton />,
+  ssr: false // 如果组件只在客户端渲染
+});
+
+// ✅ 正确示例 - 使用 Suspense
+import { Suspense } from 'react';
+
+function Dashboard() {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <Suspense fallback={<DataGridSkeleton />}>
+        <DataGrid />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+@docs/performance-optimization.md
+
+## 9. 可访问性标准
+
+### 9.1 基本可访问性原则
+
+- 使用语义化 HTML 元素
+- 提供适当的 ARIA 属性
+- 确保键盘可导航性
+- 保持足够的颜色对比度
+- 提供可访问的表单标签和错误提示
+
+```typescript
+// ✅ 正确示例 - 可访问的按钮
+<Button 
+  onClick={handleClick}
+  aria-label="提交表单"
+  tabIndex={0}
+  onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+>
+  提交
+</Button>
+
+// ✅ 正确示例 - 表单字段with
+<div>
+  <Label htmlFor="name" className="mb-2">姓名</Label>
+  <Input 
+    id="name"
+    name="name"
+    aria-invalid={!!errors.name}
+    aria-describedby="name-error"
+  />
+  {errors.name && (
+    <p id="name-error" className="text-sm text-destructive mt-1">
+      {errors.name}
+    </p>
+  )}
+</div>
+```
+
+### 9.2 高级可访问性提示
+
+- 提供跳过导航链接
+- 确保动态内容变化可被屏幕阅读器感知
+- 实现适当的焦点管理
+- 使用 aria-live 区域宣布重要更新
+- 考虑色盲用户的设计需求
+
+@docs/accessibility-guidelines.md
+
+## 10. 文档标准
+
+### 10.1 代码注释
+
+- 使用 JSDoc 注释描述函数和组件
+- 解释复杂的逻辑或算法
+- 标记 TODO 和 FIXME 项目
+- 避免注释显而易见的代码
+- 保持注释与代码同步
+
+```typescript
+/**
+ * 用户卡片组件
+ * 
+ * @param user - 用户信息
+ * @param isActive - 是否处于活跃状态
+ * @param onSelect - 选择用户时的回调函数
+ * @returns 用户卡片组件
+ */
+export function UserCard({ 
+  user, 
+  isActive = false, 
+  onSelect 
+}: UserCardProps) {
+  // 组件实现
+}
+
+// 复杂逻辑的注释示例
+function calculateScore(answers) {
+  // 使用加权平均算法计算得分
+  // 每个问题的权重基于难度级别 (1-5)
+  let totalWeight = 0;
+  let weightedSum = 0;
+  
+  answers.forEach(answer => {
+    const weight = answer.difficulty;
+    totalWeight += weight;
+    weightedSum += (answer.isCorrect ? answer.points : 0) * weight;
+  });
+  
+  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+}
+```
+
+### 10.2 README 和文档
+
+- 为每个主要功能模块提供 README
+- 在 README 中包含使用示例
+- 记录组件 props 和主要功能
+- 解释重要的架构决策
+- 提供安装和开发指南
+
+@docs/documentation-guide.md
+
+## 11. Git 工作流
+
+### 11.1 分支策略
+
+- 使用功能分支进行开发
+- 主分支（main/master）应始终保持可部署状态
+- 使用描述性的分支名称（如 `feature/user-authentication`）
+- 实现 CI/CD 流水线确保代码质量
+
+### 11.2 提交规范
+
+- 使用描述性提交消息
+- 遵循约定式提交格式（Conventional Commits）
+  - `feat:` 新功能
+  - `fix:` 错误修复
+  - `docs:` 文档变更
+  - `style:` 代码格式变更
+  - `refactor:` 代码重构
+  - `perf:` 性能优化
+  - `test:` 测试相关
+  - `chore:` 构建过程或辅助工具变动
+- 提供详细的 Pull Request 描述
+
+```
+feat(auth): 实现用户登录和认证流程
+
+- 添加登录表单组件
+- 实现认证 API 客户端
+- 添加令牌验证和刷新逻辑
+- 设置受保护路由
+
+Resolves: #123
+```
+
+@docs/git-workflow-guide.md
+
+## 12. 代码审查清单
+
+在提交代码审查前，请确保：
+
+- [ ] 代码遵循项目编码标准和约定
+- [ ] 新组件实现适当的可访问性功能
+- [ ] 代码使用 TypeScript 正确类型化
+- [ ] 实现了错误处理
+- [ ] 考虑了性能因素
+- [ ] 包含了新功能的测试
+- [ ] 文档已更新
+- [ ] 没有控制台警告或错误
+- [ ] 所有 lint 问题都已解决
+
+@docs/code-review-checklist.md
+
+## 13. 命名约定
+
+### 13.1 文件和目录命名
+
+- React 组件文件使用 PascalCase（如 `UserCard.tsx`）
+- 非组件文件使用 kebab-case（如 `api-utils.ts`）
+- 测试文件添加 `.test` 或 `.spec` 后缀
+- 页面组件使用 `page.tsx`
+- 布局组件使用 `layout.tsx`
+
+### 13.2 变量和函数命名
+
+- 使用描述性名称，避免缩写
+- 布尔变量使用 `is`、`has`、`should` 等前缀
+- 事件处理函数使用 `handle` 前缀
+- 回调函数使用 `on` 前缀（如 `onSubmit`）
+- 使用动词开头命名函数（如 `getUser`、`updateProfile`）
+
+```typescript
+// ✅ 正确示例 - 变量命名
+const isLoading = true;
+const hasPermission = checkPermission(user, 'edit');
+const userData = fetchUserData();
+
+// ✅ 正确示例 - 函数命名
+const handleSubmit = () => {
+  // 处理表单提交
+};
+
+const fetchUserData = async () => {
+  // 获取用户数据
+};
+
+// 组件中的 props
+function UserForm({ onSubmit, onCancel }) {
+  // 组件实现
+}
+```
+
+@docs/naming-conventions.md
+
+## 结论
+
+遵循本文档中的编码规范，将有助于保持代码库的一致性和可维护性。这些规范应被视为指南而非严格规则，在特殊情况下可以灵活调整。
+
+团队成员应该定期审查和更新这些规范，以适应项目的发展和新的最佳实践。

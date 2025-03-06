@@ -1,19 +1,36 @@
-import * as React from "react"
+import { useState, useEffect } from "react";
 
-const MOBILE_BREAKPOINT = 768
+const MOBILE_BREAKPOINT = 768;
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+/**
+ * 检测当前视口是否为移动设备尺寸的钩子
+ * @returns {boolean} 当前视口是否为移动设备尺寸
+ */
+export const useIsMobile = (): boolean => {
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
 
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+  useEffect(() => {
+    // 早期返回：如果不在浏览器环境中
+    if (typeof window === 'undefined') {
+      return;
     }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
 
-  return !!isMobile
-}
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    
+    const handleResize = (): void => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+    
+    // 添加事件监听器
+    mql.addEventListener("change", handleResize);
+    
+    // 立即设置初始值
+    handleResize();
+    
+    // 清理函数
+    return () => mql.removeEventListener("change", handleResize);
+  }, []);
+
+  // 确保返回布尔值
+  return Boolean(isMobile);
+};

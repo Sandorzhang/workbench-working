@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import SuperAdminSidebar from "@/components/superadmin/sidebar";
 import SuperAdminHeader from "@/components/superadmin/header";
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/shared/auth';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,7 +21,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import { Pencil } from 'lucide-react';
 
 interface AppLayoutProps {

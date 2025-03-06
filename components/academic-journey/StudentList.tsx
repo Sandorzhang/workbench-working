@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { StudentSummary } from '@/features/academic-journey/types';
 import { api } from '@/shared/api';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/lib/utils';
 import { Button } from '@/components/ui/button';
 import { MasteryBadge } from './MasteryLegend';
 import { Progress } from '@/components/ui/progress';

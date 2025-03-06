@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/select'
 import { Question, LearningObjective } from '@/features/exam-management/question-types'
 import { CheckCircle2, Image, Loader2, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 import { Label } from '@/components/ui/label'
 
 // 表单验证架构

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { db } from '../db';
-import { Student } from '@/lib/types';
+import { Student } from '@/shared/types';
 
 // 定义学生详细信息的类型
 interface StudentDetail {

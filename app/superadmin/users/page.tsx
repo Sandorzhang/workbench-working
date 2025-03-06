@@ -48,7 +48,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserFormModal } from './user-form-modal';
-import { superadminApi } from '@/lib/api';
+import { superadminApi } from '@/shared/api';
 
 // 用户类型定义
 interface User {

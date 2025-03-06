@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
@@ -11,9 +12,9 @@ import {
   Database,
   Megaphone
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from '@/lib/auth';
 import { 
   SidebarContent, 
   SidebarFooter,
@@ -156,7 +157,12 @@ export default function SuperAdminSidebar() {
       
       <SidebarFooter className="border-t px-3 py-2 mt-auto">
         <NavUserAuth 
-          user={user || undefined} 
+          user={user ? {
+            name: user.name,
+            email: user.email || '',
+            avatar: user.avatar || '',
+            role: user.role || 'user'
+          } : undefined} 
           onLogout={handleLogout} 
         />
       </SidebarFooter>

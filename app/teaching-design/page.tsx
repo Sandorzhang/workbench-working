@@ -38,7 +38,7 @@ import {
   FileText, Book, Pencil, Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn } from '@/shared/lib/utils';
 import { 
   TitleSkeleton, 
   CardSkeleton, 
@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/skeleton-loader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageContainer } from "@/components/ui/page-container";
-import { api } from "@/lib/api";
+import { api } from '@/shared/api';
 import { toast } from "sonner";
 
 // 模拟单元教案数据

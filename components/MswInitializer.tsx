@@ -27,37 +27,52 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000; // 1秒
 
-  // 是否开启MSW模拟 - 直接从环境变量读取
-  const isMswEnabled = typeof window !== 'undefined' 
-    ? localStorage.getItem('msw-enabled') === 'true' 
-        || (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_MOCKING === 'enabled')
-    : false;
-    
-  // 当前环境
-  const environment = typeof process !== 'undefined' 
-    ? (process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV || 'development')
-    : 'development';
+  // 是否显示MSW状态指示器 (从服务器端和客户端同步)
+  const [showIndicator, setShowIndicator] = useState(false);
+  // 是否启用MSW (初始值在服务器和客户端一致)
+  const [isMswEnabled, setIsMswEnabled] = useState(false);
+  // 当前环境 (初始值在服务器和客户端一致)
+  const [environment, setEnvironment] = useState('development');
 
-  // 调试环境变量
+  // 仅在客户端更新状态
   useEffect(() => {
+    // 读取环境变量和localStorage
+    const mswEnabledFromEnv = typeof process !== 'undefined' && 
+      process.env.NEXT_PUBLIC_API_MOCKING === 'enabled';
+    const mswEnabledFromStorage = typeof window !== 'undefined' && 
+      localStorage.getItem('msw-enabled') === 'true';
+    
+    // 设置MSW启用状态
+    setIsMswEnabled(mswEnabledFromEnv || mswEnabledFromStorage);
+    
+    // 设置环境
+    if (typeof process !== 'undefined') {
+      setEnvironment(process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV || 'development');
+    }
+    
+    // 显示指示器
+    setShowIndicator(mswEnabledFromEnv || mswEnabledFromStorage);
+    
+    // 调试信息
+    console.log('[MSW状态] 环境检测:');
+    console.log('- NEXT_PUBLIC_API_MOCKING:', typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_MOCKING : '未知');
+    console.log('- 启用状态:', (mswEnabledFromEnv || mswEnabledFromStorage) ? '已启用' : '未启用');
+    
+    // 保存状态到localStorage方便调试
     if (typeof window !== 'undefined') {
-      console.log('[MSW状态] 环境检测:');
-      console.log('- NEXT_PUBLIC_API_MOCKING:', typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_MOCKING : '未知');
-      console.log('- 启用状态:', isMswEnabled ? '已启用' : '未启用');
-      console.log('- 环境:', environment);
-      
-      // 保存状态到localStorage方便调试
       localStorage.setItem('msw-environment', JSON.stringify({
-        enabled: isMswEnabled,
-        env: environment,
+        enabled: mswEnabledFromEnv || mswEnabledFromStorage,
+        env: typeof process !== 'undefined' 
+          ? (process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV) 
+          : 'development',
         apiMocking: typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_MOCKING : null,
         timestamp: new Date().toISOString()
       }));
     }
-  }, [isMswEnabled, environment]);
+  }, []);
 
   useEffect(() => {
-    // 如果未启用MSW或者不是客户端，则直接返回
+    // 如果MSW未启用或不在客户端环境，则跳过初始化
     if (!isMswEnabled || typeof window === 'undefined') {
       console.log(`MSW未启用或不在客户端环境，跳过初始化`);
       setStatus('success');
@@ -141,7 +156,8 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
   // 显示MSW状态
   return (
     <MswContext.Provider value={contextValue}>
-      {isMswEnabled && (
+      {children}
+      {showIndicator && (
         <div 
           style={{
             position: 'fixed',
@@ -169,7 +185,6 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
           </span>
         </div>
       )}
-      {children}
     </MswContext.Provider>
   );
 } 

@@ -9,7 +9,7 @@ import {
   type LucideIcon
 } from "lucide-react"
 
-import { useAuth } from "@/lib/auth"
+import { useAuth } from '@/lib/auth'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
 import { SchoolSwitcher } from "@/components/school-switcher"
 import { NavMain } from "@/components/nav-main"

@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { MentorStudent, IndicatorRecord, Indicator } from "@/lib/types";
+import { MentorStudent, IndicatorRecord, Indicator } from '@/shared/types';
 import { format } from "date-fns";
 
 interface StudentDetailProps {

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronLeft, Calculator, BookOpen, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/shared/auth';
 import { StandardNavigation } from '@/components/academic-standards/standard-navigation';
 import { StandardDetails } from '@/components/academic-standards/standard-details';
 import { KnowledgeGraph } from '@/components/academic-standards/knowledge-graph';

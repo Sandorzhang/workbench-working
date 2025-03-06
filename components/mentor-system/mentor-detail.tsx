@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
-import { Mentor, MentorStudent } from "@/lib/types";
+import { Mentor, MentorStudent } from '@/shared/types';
 import { StudentDetail } from "./student-detail";
 
 interface MentorDetailProps {

@@ -22,7 +22,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Progress } from "../ui/progress";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
-import { EnrichedStudent } from "@/lib/types";
+import { EnrichedStudent } from '@/shared/types';
 import { StudentCompetency } from "./student-competency";
 import { StudentAcademic } from "./student-academic";
 import { StudentTracking } from "./student-tracking";
