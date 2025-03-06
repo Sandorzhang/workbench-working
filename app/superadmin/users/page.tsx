@@ -48,6 +48,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserFormModal } from './user-form-modal';
+import { superadminApi } from '@/lib/api';
 
 // 用户类型定义
 interface User {
@@ -125,13 +126,12 @@ export default function SuperAdminUsersPage() {
     try {
       setIsLoading(true);
       
-      // 从API获取数据
-      const response = await fetch('/api/superadmin/users');
-      const data = await response.json();
+      // 使用superadminApi获取用户列表
+      const data = await superadminApi.getUsers();
       
       // 模拟延迟
       setTimeout(() => {
-        setUsers(data);
+        setUsers(data as User[]);
         setIsLoading(false);
       }, 500);
     } catch (error) {
@@ -170,18 +170,10 @@ export default function SuperAdminUsersPage() {
     toast.promise(
       new Promise(async (resolve, reject) => {
         try {
-          // 调用删除API
-          const response = await fetch(`/api/superadmin/users/${userId}`, { 
-            method: 'DELETE' 
-          });
-          
-          if (response.ok) {
-            setUsers(users.filter(user => user.id !== userId));
-            resolve(true);
-          } else {
-            const errorData = await response.json();
-            reject(new Error(errorData.message || '删除用户失败'));
-          }
+          // 使用userApi删除用户
+          await superadminApi.deleteUser(userId);
+          setUsers(users.filter(user => user.id !== userId));
+          resolve(true);
         } catch (error) {
           console.error('删除用户出错:', error);
           reject(error);
@@ -200,24 +192,15 @@ export default function SuperAdminUsersPage() {
     try {
       const newStatus = currentStatus === 'locked' ? 'active' : 'locked';
       
-      // 调用API更新用户状态
-      const response = await fetch(`/api/superadmin/users/${userId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
+      // 使用superadminApi更新用户状态
+      await superadminApi.updateUserStatus(userId, newStatus as 'active' | 'inactive' | 'locked');
       
-      if (response.ok) {
-        // 更新本地状态
-        setUsers(users.map(user => 
-          user.id === userId ? { ...user, status: newStatus as 'active' | 'inactive' | 'locked' } : user
-        ));
-        
-        toast.success(`用户已${newStatus === 'locked' ? '锁定' : '解锁'}`);
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || '更新用户状态失败');
-      }
+      // 更新本地状态
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, status: newStatus as 'active' | 'inactive' | 'locked' } : user
+      ));
+      
+      toast.success(`用户已${newStatus === 'locked' ? '锁定' : '解锁'}`);
     } catch (error) {
       console.error('更新用户状态失败:', error);
       toast.error('更新用户状态失败');

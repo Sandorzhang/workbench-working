@@ -5,6 +5,9 @@ const MSW_READY_TIMEOUT = 5000; // 5秒超时
 
 // 等待MSW准备就绪
 const waitForMsw = async (): Promise<boolean> => {
+  // 在生产环境中不等待MSW，直接返回
+  if (process.env.NODE_ENV !== 'development') return true;
+  
   // 只在浏览器环境中等待MSW
   if (typeof window === 'undefined') return true;
   
@@ -14,35 +17,9 @@ const waitForMsw = async (): Promise<boolean> => {
     return true;
   }
   
-  console.log('等待MSW初始化...');
-  
-  // 等待MSW就绪，最多等待MSW_READY_TIMEOUT毫秒
-  return new Promise(resolve => {
-    const startTime = Date.now();
-    
-    const checkMswReady = () => {
-      // 如果MSW已就绪或超时，则解析Promise
-      if (window.__MSW_READY__ === true) {
-        console.log('MSW已就绪，继续API请求');
-        resolve(true);
-        return;
-      }
-      
-      // 检查是否超时
-      if (Date.now() - startTime > MSW_READY_TIMEOUT) {
-        console.warn('等待MSW就绪超时，继续API请求（可能会导致错误）');
-        // 即使超时也标记为true，以避免阻塞API请求
-        window.__MSW_READY__ = true;
-        resolve(false);
-        return;
-      }
-      
-      // 继续等待
-      setTimeout(checkMswReady, 100);
-    };
-    
-    checkMswReady();
-  });
+  // 不再等待MSW，直接继续API请求
+  console.log('不再等待MSW初始化，直接继续API请求');
+  return true;
 };
 
 // 为请求添加认证头
@@ -106,14 +83,9 @@ async function handleRequest<T>(
       } as ApiErrorResponse;
     }
     
-    // 处理404错误 - 这通常表示API路径问题或MSW未拦截
+    // 处理404错误
     if (response.status === 404) {
       console.error(`API路径不存在 (404): ${url}`);
-      
-      // 检查URL是否包含API路径
-      if (url.includes('/api/')) {
-        console.error(`检测到API路径 ${url} 返回404，这可能是MSW拦截问题`);
-      }
       
       // 尝试获取响应内容以诊断问题
       const contentType = response.headers.get('content-type');
@@ -121,14 +93,14 @@ async function handleRequest<T>(
         const htmlText = await response.text();
         console.error('返回的HTML片段:', htmlText.substring(0, 200) + '...');
         throw {
-          message: 'API路径不存在，MSW可能未正确拦截请求',
+          message: 'API路径不存在',
           code: 'API_PATH_NOT_FOUND',
           details: { url, htmlSnippet: htmlText.substring(0, 200) }
         } as ApiErrorResponse;
       }
       
       throw {
-        message: 'API路径不存在，请检查请求路径或MSW配置',
+        message: 'API路径不存在，请检查请求路径',
         code: '404',
         details: { url }
       } as ApiErrorResponse;
@@ -141,7 +113,7 @@ async function handleRequest<T>(
       const htmlText = await response.text();
       console.error('返回的HTML片段:', htmlText.substring(0, 200) + '...');
       throw {
-        message: '服务器返回了HTML而不是JSON，请检查API路径或MSW配置',
+        message: '服务器返回了HTML而不是JSON，请检查API路径',
         code: 'INVALID_RESPONSE_TYPE',
         details: { contentType, htmlSnippet: htmlText.substring(0, 200) }
       } as ApiErrorResponse;
@@ -250,6 +222,84 @@ export const api = {
       })
   },
   
+  // 用户管理API
+  userApi: {
+    // 获取用户列表
+    getUsers: (filters?: { role?: string; school?: string }) => {
+      const params = new URLSearchParams();
+      
+      if (filters) {
+        if (filters.role) params.append('role', filters.role);
+        if (filters.school) params.append('school', filters.school);
+      }
+      
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      return handleRequest(`${API_BASE_URL}/users${queryString}`);
+    },
+    
+    // 获取单个用户
+    getUser: (id: string) => 
+      handleRequest(`${API_BASE_URL}/users/${id}`),
+    
+    // 创建用户
+    createUser: (userData: any) => 
+      handleRequest(`${API_BASE_URL}/users`, {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      }),
+    
+    // 更新用户
+    updateUser: (id: string, userData: any) => 
+      handleRequest(`${API_BASE_URL}/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData)
+      }),
+    
+    // 删除用户
+    deleteUser: (id: string) => 
+      handleRequest(`${API_BASE_URL}/users/${id}`, {
+        method: 'DELETE'
+      })
+  },
+  
+  // 超级管理员专用API
+  superadminApi: {
+    // 获取所有用户
+    getUsers: () => 
+      handleRequest(`${API_BASE_URL}/superadmin/users`),
+    
+    // 获取单个用户
+    getUser: (id: string) => 
+      handleRequest(`${API_BASE_URL}/superadmin/users/${id}`),
+    
+    // 创建用户
+    createUser: (userData: any) => 
+      handleRequest(`${API_BASE_URL}/superadmin/users`, {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      }),
+    
+    // 更新用户
+    updateUser: (id: string, userData: any) => 
+      handleRequest(`${API_BASE_URL}/superadmin/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData)
+      }),
+    
+    // 删除用户
+    deleteUser: (id: string) => 
+      handleRequest(`${API_BASE_URL}/superadmin/users/${id}`, {
+        method: 'DELETE'
+      }),
+    
+    // 更新用户状态（锁定/解锁）
+    updateUserStatus: (id: string, status: 'active' | 'inactive' | 'locked') => 
+      handleRequest(`${API_BASE_URL}/superadmin/users/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      })
+  },
+  
   // 工作台配置
   workbench: {
     getConfig: () => 
@@ -319,3 +369,6 @@ export const api = {
       handleRequest(`${API_BASE_URL}/teaching-plans/${id}`)
   }
 };
+
+// 导出常用API模块，便于直接导入
+export const { userApi, superadminApi, auth, workbench, calendar, agents } = api;
