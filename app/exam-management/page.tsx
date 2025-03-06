@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { ExamTable } from '@/components/exam-management/exam-table'
 import { HeroSection } from '@/components/ui/hero-section'
 import { PlusCircle, FileSpreadsheet, Search, Info } from 'lucide-react'
-import { Exam } from '@/features/exam-management/types'
+import { Exam } from '@/types/exam'
 import { Card, CardContent } from '@/components/ui/card'
 import { ExamDialog } from '@/components/exam-management/exam-dialog'
 import {

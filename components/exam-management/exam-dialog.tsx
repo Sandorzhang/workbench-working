@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Exam } from '@/features/exam-management/types'
+import { Exam } from '@/types/exam'
 import { AlertCircle, CalendarIcon, CheckCircle2, ClockIcon, Loader2, Lock, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'

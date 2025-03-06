@@ -28,8 +28,19 @@ import {
 } from "@/components/ui/skeleton-loader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HeroSection } from '@/components/ui/hero-section';
-import { api } from '@/shared/api';
-import { CalendarEvent } from "@/features/calendar/types";
+
+// 日历事件类型
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  type: string;
+  description: string;
+  participants: string[];
+}
 
 // 获取当前月份的天数
 const getDaysInMonth = (year: number, month: number) => {
@@ -62,18 +73,15 @@ const eventTypeConfig: Record<string, { color: string, bgColor: string }> = {
 
 export default function CalendarPage() {
   const router = useRouter();
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
   
-  // 日期状态
+  // 日历状态
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  
-  // 页面状态
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedDateEvents, setSelectedDateEvents] = useState<CalendarEvent[]>([]);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
@@ -126,7 +134,7 @@ export default function CalendarPage() {
   // 数据获取逻辑
   const fetchEvents = async (retryCount = 0) => {
     try {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || !token) {
         console.log('未认证状态，取消获取日历数据');
         setError('请登录后查看您的日历');
         setIsLoading(false);
@@ -138,41 +146,104 @@ export default function CalendarPage() {
         setIsLoading(true);
       }
       
+      // 准备请求头和查询参数
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      
+      // 添加授权头
+      headers['Authorization'] = `Bearer ${token}`;
+      
+      // 构建查询参数
+      const queryParams = new URLSearchParams();
+      queryParams.append('year', currentYear.toString());
+      queryParams.append('month', (currentMonth + 1).toString());
+      
+      // 如果有用户ID，添加到查询参数
+      if (user?.id) {
+        queryParams.append('userId', user.id);
+      }
+      
       console.log(`正在获取 ${user?.name || '未知用户'} 的日历事件...`);
+      console.log(`请求URL: /api/calendar-events?${queryParams.toString()}`);
+      console.log(`Authorization头部: ${headers.Authorization ? '已设置' : '未设置'}`);
       
-      // 使用新的API客户端获取日历事件
-      const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      
-      const response = await api.calendar.getEvents({
-        startDate: format(startDate, 'yyyy-MM-dd'),
-        endDate: format(endDate, 'yyyy-MM-dd')
+      // 发起请求
+      const response = await fetch(`/api/calendar-events?${queryParams.toString()}`, { 
+        headers,
+        cache: 'no-store'
       });
       
-      if (response.success) {
-        console.log(`获取到的日历事件数据:`, response.data);
+      if (!response.ok) {
+        // 处理401未授权错误
+        if (response.status === 401) {
+          console.error('获取日历事件: 认证失败，状态码: 401');
+          toast.error('登录已过期，请重新登录');
+          
+          // 清除无效的token
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+          }
+          
+          // 重定向到登录页
+          setTimeout(() => {
+            router.push('/login');
+          }, 1000);
+          
+          setEvents([]);
+          setError('请登录后查看日历');
+          setIsLoading(false);
+          return;
+        }
         
-        // 更新事件列表
-        setEvents(response.data);
+        // 其他错误重试
+        if (retryCount < 2) { // 最多重试2次
+          console.log(`获取日历事件失败，正在重试(${retryCount + 1}/2)...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return fetchEvents(retryCount + 1);
+        }
+        
+        throw new Error(`获取日历事件失败: ${response.status}`);
+      }
+      
+      // 处理响应数据
+      const data = await response.json();
+      console.log(`获取到的日历事件数据 (${currentYear}年${currentMonth + 1}月):`, data);
+      
+      // 确保数据是数组，否则使用空数组
+      if (Array.isArray(data)) {
+        setEvents(data);
         
         // 如果当前有选中的日期，查看该日期是否有事件
         if (selectedDate) {
           const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-          const eventsForSelectedDate = response.data.filter(event => event.date === formattedDate);
-          setSelectedDateEvents(eventsForSelectedDate);
+          const eventsForSelectedDate = data.filter(event => event.date === formattedDate);
+          if (eventsForSelectedDate.length === 0) {
+            // 日期没有事件时也给予反馈
+            console.log(`选中的日期 ${formattedDate} 没有事件`);
+          }
         }
+        
+        if (!initialLoadDone) {
+          setInitialLoadDone(true);
+        }
+        
       } else {
-        console.error('获取日历事件失败:', response.message);
-        setError(response.message || '获取日历事件失败');
+        console.warn('API返回的数据不是数组:', data);
         setEvents([]);
+        toast.warning('日历数据格式不正确');
       }
-    } catch (error) {
-      console.error('获取日历事件出错:', error);
-      setError(error instanceof Error ? error.message : '获取日历事件时出现错误');
+    } catch (err) {
+      console.error('获取日历事件失败:', err);
+      setError('获取日历事件失败，请稍后重试');
+      toast.error('获取日历事件失败，请稍后重试');
       setEvents([]);
     } finally {
-      setIsLoading(false);
-      setInitialLoadDone(true);
+      const delay = initialLoadDone ? 300 : 500;
+      setTimeout(() => {
+        setIsLoading(false);
+        setInitialLoadDone(true);
+      }, delay);
     }
   };
   

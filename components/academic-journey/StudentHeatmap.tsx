@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MasteryLevel, HeatmapData } from '@/features/academic-journey/types';
-import { api } from '@/shared/api';
+import { MasteryLevel, HeatmapData } from '@/types/academic-journey';
+import { getStudentHeatmap } from '@/lib/api-academic-journey';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { MasteryLegend } from './MasteryLegend';
@@ -21,12 +21,12 @@ export function StudentHeatmap({ studentId, className }: StudentHeatmapProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchHeatmap = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await api.academicJourney.getStudentHeatmap(studentId);
-        setHeatmapData(response.data.heatmap);
+        const { heatmap } = await getStudentHeatmap(studentId);
+        setHeatmapData(heatmap);
       } catch (err) {
         console.error('Failed to fetch heatmap:', err);
         setError('加载热力图数据失败');
@@ -35,7 +35,7 @@ export function StudentHeatmap({ studentId, className }: StudentHeatmapProps) {
       }
     };
 
-    fetchData();
+    fetchHeatmap();
   }, [studentId]);
 
   // Map mastery levels to colors

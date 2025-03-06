@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { v4 as uuidv4 } from 'uuid'
-import { Question, LearningObjective } from '@/features/exam-management/question-types'
+import { Question, LearningObjective } from '@/types/question'
 
 // 问题数据存储
 export let questions: Question[] = []

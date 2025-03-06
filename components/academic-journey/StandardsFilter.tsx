@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { LearningStandard } from '@/features/academic-journey/types';
-import { api } from '@/shared/api';
+import { LearningStandard } from '@/types/academic-journey';
+import { getLearningStandards } from '@/lib/api-academic-journey';
 
 interface StandardsFilterProps {
   onChange: (selectedStandards: string[]) => void;
@@ -30,13 +30,12 @@ export function StandardsFilter({ onChange, className, multiple = true, sticky =
     const fetchStandards = async () => {
       try {
         setLoading(true);
-        const response = await api.academicJourney.getLearningStandards();
-        const data = response.data;
-        setStandards(data.standards);
+        const { standards } = await getLearningStandards();
+        setStandards(standards);
 
         // Extract unique subjects and grades
-        const uniqueSubjects = Array.from(new Set(data.standards.map(s => s.subject)));
-        const uniqueGrades = Array.from(new Set(data.standards.map(s => s.grade)));
+        const uniqueSubjects = Array.from(new Set(standards.map(s => s.subject)));
+        const uniqueGrades = Array.from(new Set(standards.map(s => s.grade)));
         
         setSubjects(uniqueSubjects);
         setGrades(uniqueGrades);

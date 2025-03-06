@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/use-toast'
-import { Question } from '@/features/exam-management/question-types'
+import { Question } from '@/types/question'
 import { Input } from '@/components/ui/input'
 import { Loader2, Save } from 'lucide-react'
 import {

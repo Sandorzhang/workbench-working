@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { Exam } from '@/features/exam-management/types'
+import { Exam } from '@/types/exam'
 import { useRouter } from 'next/navigation'
 import { formatDateTime } from '@/lib/utils'
 import { toast } from '@/components/ui/use-toast'

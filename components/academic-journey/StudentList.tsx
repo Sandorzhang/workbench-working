@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StudentSummary } from '@/features/academic-journey/types';
-import { api } from '@/shared/api';
+import { StudentSummary } from '@/types/academic-journey';
+import { getStudentList } from '@/lib/api-academic-journey';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -31,10 +31,9 @@ export function StudentList({ classId, className }: StudentListProps) {
       try {
         setLoading(true);
         setError(null);
-        const response = await api.academicJourney.getStudentList(classId, currentPage, pageSize);
-        const data = response.data;
-        setStudents(data.students);
-        setTotalStudents(data.total);
+        const { students, total } = await getStudentList(classId, currentPage, pageSize);
+        setStudents(students);
+        setTotalStudents(total);
       } catch (err) {
         console.error('Failed to fetch students:', err);
         setError('加载学生列表失败');

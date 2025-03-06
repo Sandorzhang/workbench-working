@@ -1,18 +1,14 @@
 import { http, HttpResponse } from "msw";
 import { faker } from "@faker-js/faker";
 import {
-  LearningStandard,
-  StudentProgress,
-  MasteryLevel,
-  ClassOverview,
-  StudentSummary,
-  HeatmapData,
-  StandardsResponse,
   ClassOverviewResponse,
+  HeatmapResponse,
+  LearningStandard,
+  MasteryLevel,
+  StandardsResponse,
   StudentListResponse,
   StudentProgressResponse,
-  HeatmapResponse
-} from "@/features/academic-journey/types";
+} from "@/types/academic-journey";
 
 // Generate mock learning standards
 const mockSubjects = ["数学", "语文", "英语", "科学", "社会"];

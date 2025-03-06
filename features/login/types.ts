@@ -1,3 +1,0 @@
-/**
- * Type definitions for login
- */

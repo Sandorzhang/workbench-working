@@ -12,10 +12,10 @@ import {
   StudentSummary, 
   LearningStandard, 
   MasteryLevel 
-} from "@/features/academic-journey/types";
+} from "@/types/academic-journey";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/shared/api";
+import { getStudentList, getLearningStandards } from "@/lib/api-academic-journey";
 import { MasteryBadge } from "@/components/academic-journey/MasteryLegend";
 
 // Student warning component
@@ -32,13 +32,13 @@ function StudentWarnings() {
         setLoading(true);
         
         // Fetch all students
-        const studentResponse = await api.academicJourney.getStudentList("class-1", 1, 100);
+        const studentResponse = await getStudentList("class-1", 1, 100);
         
         // Fetch all standards for reference
-        const standardsResponse = await api.academicJourney.getLearningStandards();
+        const standardsResponse = await getLearningStandards();
         
-        setStudents(studentResponse.data.students);
-        setStandards(standardsResponse.data.standards);
+        setStudents(studentResponse.students);
+        setStandards(standardsResponse.standards);
       } catch (err) {
         console.error("Failed to fetch data:", err);
         setError("加载数据失败");

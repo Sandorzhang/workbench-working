@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Exam } from '@/features/exam-management/types'
+import { Exam } from '@/types/exam'
 import { Card, CardContent } from '@/components/ui/card'
 import { CalendarIcon, CheckCircle2, ClockIcon, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'

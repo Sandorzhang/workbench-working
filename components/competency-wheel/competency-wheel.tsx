@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { WaveGraph } from './wave-graph';
 import { WaveGraphSegment, CompetencySegment } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api } from '@/shared/api';
-import { toast } from '@/components/ui/use-toast';
 
 // 状态对应的虚线样式
 const STATUS_DASH_ARRAY = {
@@ -30,7 +28,6 @@ export function CompetencyWheel({
     const [competencies, setCompetencies] = useState<any[]>([]);
     const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
     const [selectedDimension, setSelectedDimension] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(isLoading);
     
     // 如果提供了外部数据，直接使用
     useEffect(() => {
@@ -42,28 +39,13 @@ export function CompetencyWheel({
         // 否则从API获取数据
         const fetchCompetencies = async () => {
             try {
-                setLoading(true);
-                const response = await api.competencyWheel.getCompetencies();
-                
-                if (response.success) {
-                    setCompetencies(response.data);
-                } else {
-                    console.error('Failed to fetch competencies:', response.message);
-                    toast({
-                        title: '获取数据失败',
-                        description: response.message || '获取能力维度数据失败',
-                        variant: 'destructive',
-                    });
+                const response = await fetch('/api/student/competencies');
+                if (response.ok) {
+                    const data = await response.json();
+                    setCompetencies(data);
                 }
             } catch (error) {
                 console.error('Error fetching competencies:', error);
-                toast({
-                    title: '获取数据失败',
-                    description: '无法连接到服务器，请稍后再试',
-                    variant: 'destructive',
-                });
-            } finally {
-                setLoading(false);
             }
         };
         
@@ -127,7 +109,7 @@ export function CompetencyWheel({
     };
     
     // 显示加载状态
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="w-full flex justify-center items-center">
                 <Skeleton className="h-[300px] w-[300px] rounded-full" />

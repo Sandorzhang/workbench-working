@@ -65,7 +65,7 @@ const pageTitleMap: Record<string, PageInfo> = {
     title: '单元教案',
     parent: { title: '工作台', path: '/workbench' }
   },
-  '/mentor-system': {
+  '/mentor-hub': {
     title: '全员导师',
     parent: { title: '工作台', path: '/workbench' }
   },
