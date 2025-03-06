@@ -33,19 +33,39 @@ export default function LoginPage() {
 
   // 处理认证后的重定向
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // 重定向到工作台页面
-      const redirectPath = '/workbench';
-      toast.success(`登录成功，欢迎 ${user.name || ''}，即将跳转到工作台...`);
-      
-      // 短暂延迟以显示成功消息
-      const timer = setTimeout(() => {
-        router.push(redirectPath);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
+    // 检查全局变量，避免多次跳转
+    if (typeof window !== 'undefined') {
+      // @ts-ignore 添加全局变量跟踪登录跳转
+      if (window.__LOGIN_REDIRECT_IN_PROGRESS__) {
+        console.log('登录页面：跳转已在进行中，忽略');
+        return;
+      }
     }
-  }, [isAuthenticated, user, router]);
+    
+    // 只在满足所有条件时执行跳转：已登录、有用户信息、当前在登录页
+    if (!authContextLoading && isAuthenticated && user && 
+        window.location.pathname === '/login') {
+      
+      // 设置全局标记，避免重复跳转
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.__LOGIN_REDIRECT_IN_PROGRESS__ = true;
+        // 5秒后清除标记，以防万一
+        setTimeout(() => {
+          // @ts-ignore
+          window.__LOGIN_REDIRECT_IN_PROGRESS__ = false;
+        }, 5000);
+      }
+      
+      const targetPath = user.role === 'superadmin' ? '/superadmin' : '/workbench';
+      
+      console.log(`登录页面：用户已登录，角色 [${user.role}]，准备跳转到 ${targetPath}`);
+      toast.success(`登录成功，欢迎 ${user.name || ''}！`);
+      
+      // 直接跳转，不使用 setTimeout
+      router.push(targetPath);
+    }
+  }, [isAuthenticated, user, router, authContextLoading]);
 
   // 显示错误提示
   useEffect(() => {
@@ -69,7 +89,6 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 密码验证
     if (!username || !password) {
       toast.error('请输入账号和密码');
       return;
@@ -111,11 +130,12 @@ export default function LoginPage() {
       // 显示成功消息
       toast.success('登录成功，正在跳转...');
       
-      // 重要：给localStorage一点时间来存储token
-      setTimeout(() => {
-        // 重定向到工作台
-        router.push('/workbench');
-      }, 800); // 短暂延迟确保token已保存
+      // 不在这里执行跳转，由 useEffect 监听认证状态变化后统一处理跳转
+      // 登录成功后 isAuthenticated 会变为 true，触发 useEffect 执行跳转
+      // setTimeout(() => {
+      //   // 重定向到工作台
+      //   router.push('/workbench');
+      // }, 800); // 短暂延迟确保token已保存
       
     } catch (error) {
       console.error('登录失败:', error);

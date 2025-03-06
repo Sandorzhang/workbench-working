@@ -47,9 +47,12 @@ export function SchoolSwitcher() {
   const userSchool = user?.school 
     ? {
         id: "user-school",
-        name: user.school,
-        logo: getSchoolLogo(user.schoolType),
-        type: user.schoolType || "完全中学",
+        // 确保 school 是字符串
+        name: typeof user.school === 'object' && user.school !== null 
+          ? (user.school as any).name || '' 
+          : (user.school as string) || '',
+        logo: getSchoolLogo(undefined),
+        type: "完全中学",
         region: "全国"
       }
     : defaultSchool

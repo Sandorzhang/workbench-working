@@ -131,10 +131,48 @@ export const authHandlers = [
       
       console.log(`登录成功，返回用户信息: ${userWithoutPassword.name}`);
       
+      // 生成访问令牌和刷新令牌
+      const accessToken = token;
+      const refreshToken = generateToken();
+      
+      // 返回标准格式的登录响应，与验证码登录保持一致
       return new HttpResponse(
         JSON.stringify({
-          user: userWithoutPassword,
-          token,
+          code: 0,
+          msg: "成功",
+          data: {
+            accessToken,
+            refreshToken,
+            user: userWithoutPassword,
+            school: {
+              id: "school-default",
+              name: "示范学校",
+              logo: "/images/school-logo.png",
+              period: "九年一贯制"
+            },
+            terminal: "web",
+            terminalList: ["web", "mobile"],
+            permissions: ["read", "write"],
+            role: {
+              id: user.role || "user",
+              name: user.role === "admin" ? "管理员" : "普通用户",
+              weight: null,
+              description: null,
+              userId: null,
+              isBuiltIn: true,
+              terminal: "web"
+            },
+            roleList: [{
+              id: user.role || "user",
+              name: user.role === "admin" ? "管理员" : "普通用户",
+              weight: null,
+              description: null,
+              userId: null,
+              isBuiltIn: true,
+              terminal: "web"
+            }],
+            schoolList: null
+          }
         }),
         { 
           status: 200,
@@ -518,10 +556,47 @@ export const authHandlers = [
       
       console.log(`验证码登录成功，返回用户信息: ${userWithoutPassword.name}`);
       
+      // 生成访问令牌和刷新令牌
+      const accessToken = generateToken();
+      const refreshToken = generateToken();
+      
+      // 返回标准格式的登录响应
       return HttpResponse.json({
-        user: userWithoutPassword,
-        token,
-        isNewUser: !user.password, // 如果没有密码，说明是新用户
+        code: 0,
+        msg: "成功",
+        data: {
+          accessToken,
+          refreshToken,
+          user: userWithoutPassword,
+          school: {
+            id: "school-default",
+            name: "示范学校",
+            logo: "/images/school-logo.png",
+            period: "九年一贯制"
+          },
+          terminal: "web",
+          terminalList: ["web", "mobile"],
+          permissions: ["read", "write"],
+          role: {
+            id: user.role || "user",
+            name: user.role === "admin" ? "管理员" : "普通用户",
+            weight: null,
+            description: null,
+            userId: null,
+            isBuiltIn: true,
+            terminal: "web"
+          },
+          roleList: [{
+            id: user.role || "user",
+            name: user.role === "admin" ? "管理员" : "普通用户",
+            weight: null,
+            description: null,
+            userId: null,
+            isBuiltIn: true,
+            terminal: "web"
+          }],
+          schoolList: null
+        }
       });
     } catch (error) {
       console.error('验证码登录失败:', error);

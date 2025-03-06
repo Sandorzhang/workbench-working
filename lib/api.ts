@@ -229,7 +229,7 @@ export const api = {
       console.log(`尝试登录，用户名: ${username}`);
       
       try {
-        return await handleRequest(`/auth/backend/login`, {
+        return await handleRequest(`/auth/login`, {
           method: 'POST',
           body: JSON.stringify({ identity: username, verify: password, type: 'ACCOUNT' })
         });

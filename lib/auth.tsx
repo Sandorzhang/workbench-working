@@ -138,19 +138,89 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         const userData = userResponse.data;
         
+        // 在构建用户对象之前添加日志
+        console.log('登录响应数据结构:', {
+          'data.role': userData.role,
+          'data.user.role': userData.user?.role,
+          'topLevelPermissions': userData.permissions?.length || 0,
+          'roleFromUserObject': typeof userData.user?.role,
+          'roleFromTopLevel': typeof userData.role
+        });
+        
+        // 提取角色ID和名称的函数
+        const extractRoleInfo = (data: any) => {
+          // 尝试从 data.role 获取 (优先)
+          if (data.role) {
+            if (typeof data.role === 'object' && data.role !== null) {
+              return {
+                id: data.role.id,
+                name: data.role.name
+              };
+            } else if (typeof data.role === 'string') {
+              return {
+                id: data.role,
+                name: undefined
+              };
+            }
+          }
+          
+          // 尝试从 data.user.role 获取
+          if (data.user && data.user.role) {
+            if (typeof data.user.role === 'object' && data.user.role !== null) {
+              return {
+                id: data.user.role.id,
+                name: data.user.role.name
+              };
+            } else if (typeof data.user.role === 'string') {
+              return {
+                id: data.user.role,
+                name: undefined
+              };
+            }
+          }
+          
+          // 最后尝试从 roleList 获取第一个角色
+          if (data.roleList && Array.isArray(data.roleList) && data.roleList.length > 0) {
+            const firstRole = data.roleList[0];
+            if (firstRole && typeof firstRole === 'object') {
+              return {
+                id: firstRole.id,
+                name: firstRole.name
+              };
+            }
+          }
+          
+          // 如果都没有找到，返回默认值
+          return {
+            id: 'user',
+            name: '普通用户'
+          };
+        };
+
+        // 提取角色信息
+        const roleInfo = extractRoleInfo(userData);
+        console.log('提取的角色信息:', roleInfo);
+        
         // 构建用户信息
         const user: User = {
           id: userData.id,
           name: userData.name,
           email: userData.email || null,
           avatar: userData.avatar || null,
-          role: userData.role?.id,
-          roleName: userData.role?.name,
-          school: userData.school || undefined,
-          schoolId: userData.schoolId || undefined,
-          schoolName: userData.schoolName || undefined,
+          role: roleInfo.id,
+          roleName: roleInfo.name,
+          school: userData.school?.name,
+          schoolId: userData.schoolId || userData.school?.id,
+          schoolName: userData.schoolName || userData.school?.name,
           permissions: userData.permissions || [],
         };
+        
+        // 添加角色信息日志
+        console.log('登录用户对象设置完成，角色信息:', {
+          role: user.role,
+          roleName: user.roleName,
+          permissions: user.permissions?.length || 0
+        });
         
         // 保存用户信息到localStorage
         try {
@@ -169,6 +239,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           error: null,
           permissions: userData.permissions || [],
         });
+
+        // 记录登录成功信息
+        console.log(`用户 [${user.name}] 登录成功，角色 [${user.role}]`);
+        toast.success('登录成功');
       } catch (error) {
         console.error('认证检查失败:', error);
         
@@ -282,18 +356,72 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 继续执行以更新状态
       }
       
+      // 提取角色ID和名称的函数
+      const extractRoleInfo = (data: any) => {
+        // 尝试从 data.role 获取 (优先)
+        if (data.role) {
+          if (typeof data.role === 'object' && data.role !== null) {
+            return {
+              id: data.role.id,
+              name: data.role.name
+            };
+          } else if (typeof data.role === 'string') {
+            return {
+              id: data.role,
+              name: undefined
+            };
+          }
+        }
+        
+        // 尝试从 data.user.role 获取
+        if (data.user && data.user.role) {
+          if (typeof data.user.role === 'object' && data.user.role !== null) {
+            return {
+              id: data.user.role.id,
+              name: data.user.role.name
+            };
+          } else if (typeof data.user.role === 'string') {
+            return {
+              id: data.user.role,
+              name: undefined
+            };
+          }
+        }
+        
+        // 最后尝试从 roleList 获取第一个角色
+        if (data.roleList && Array.isArray(data.roleList) && data.roleList.length > 0) {
+          const firstRole = data.roleList[0];
+          if (firstRole && typeof firstRole === 'object') {
+            return {
+              id: firstRole.id,
+              name: firstRole.name
+            };
+          }
+        }
+        
+        // 如果都没有找到，返回默认值
+        return {
+          id: 'user',
+          name: '普通用户'
+        };
+      };
+
+      // 提取角色信息
+      const roleInfo = extractRoleInfo(data);
+      console.log('提取的角色信息:', roleInfo);
+      
       // 构建用户信息
       const user: User = {
         id: data.user.id,
         name: data.user.name,
-        email: data.user.email || null,
-        avatar: data.user.avatar || null,
-        role: data.user.role?.id,
-        roleName: data.user.role?.name,
-        school: data.user.school || undefined,
-        schoolId: data.user.schoolId || undefined,
-        schoolName: data.user.schoolName || undefined,
-        permissions: data.permissions || [],
+        email: data.user.email,
+        avatar: data.user.avatar,
+        role: roleInfo.id,
+        roleName: roleInfo.name,
+        school: data.school?.name,
+        schoolId: data.user.schoolId || data.school?.id,
+        schoolName: data.user.schoolName || data.school?.name,
+        permissions: data.permissions,
       };
       
       // 保存用户信息到localStorage，作为备份
@@ -323,30 +451,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         permissions: data.permissions || [],
       });
       
+      // 记录登录成功信息
+      console.log(`用户 [${user.name}] 登录成功，角色 [${user.role}]`);
       toast.success('登录成功');
-      
-      // 直接重定向到工作台，使用window.location以确保完全重新加载页面
-      setTimeout(async () => {
-        // 最后验证一次token设置
-        const finalAccessToken = localStorage.getItem('accessToken');
-        
-        if (!finalAccessToken || finalAccessToken.trim() === '') {
-          console.error('最终验证失败: token设置失败，尝试非localStorage方式');
-          
-          // 尝试直接设置到内存对象
-          try {
-            window.__AUTH_TOKEN__ = data.accessToken;
-            console.log('已设置内存token:', window.__AUTH_TOKEN__.substring(0, 10) + '...');
-          } catch (err) {
-            console.error('内存token设置失败:', err);
-          }
-        } else {
-          console.log('最终验证成功: token已正确设置，准备跳转');
-        }
-        
-        // 不管令牌是否设置成功，都重定向到工作台
-        window.location.href = '/workbench';
-      }, 1500);
     } catch (error: any) {
       console.error('登录失败:', error);
       const errorMessage = error.message || '登录时发生错误';
@@ -381,16 +488,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       
+      // 提取角色ID和名称的函数
+      const extractRoleInfo = (data: any) => {
+        // 尝试从 data.role 获取 (优先)
+        if (data.role) {
+          if (typeof data.role === 'object' && data.role !== null) {
+            return {
+              id: data.role.id,
+              name: data.role.name
+            };
+          } else if (typeof data.role === 'string') {
+            return {
+              id: data.role,
+              name: undefined
+            };
+          }
+        }
+        
+        // 尝试从 data.user.role 获取
+        if (data.user && data.user.role) {
+          if (typeof data.user.role === 'object' && data.user.role !== null) {
+            return {
+              id: data.user.role.id,
+              name: data.user.role.name
+            };
+          } else if (typeof data.user.role === 'string') {
+            return {
+              id: data.user.role,
+              name: undefined
+            };
+          }
+        }
+        
+        // 最后尝试从 roleList 获取第一个角色
+        if (data.roleList && Array.isArray(data.roleList) && data.roleList.length > 0) {
+          const firstRole = data.roleList[0];
+          if (firstRole && typeof firstRole === 'object') {
+            return {
+              id: firstRole.id,
+              name: firstRole.name
+            };
+          }
+        }
+        
+        // 如果都没有找到，返回默认值
+        return {
+          id: 'user',
+          name: '普通用户'
+        };
+      };
+
+      // 提取角色信息
+      const roleInfo = extractRoleInfo(data);
+      console.log('验证码登录 - 提取的角色信息:', roleInfo);
+      
       // 构建用户信息
       const user: User = {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
         avatar: data.user.avatar,
-        role: data.user.role?.id,
-        roleName: data.user.role?.name,
-        schoolId: data.user.schoolId,
-        schoolName: data.user.schoolName,
+        role: roleInfo.id,
+        roleName: roleInfo.name,
+        school: data.school?.name,
+        schoolId: data.user.schoolId || data.school?.id,
+        schoolName: data.user.schoolName || data.school?.name,
         permissions: data.permissions,
       };
       
@@ -405,6 +567,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         permissions: data.permissions || [],
       });
       
+      // 记录登录成功信息
+      console.log(`用户 [${user.name}] 登录成功，角色 [${user.role}]`);
       toast.success('登录成功');
     } catch (error: any) {
       console.error('验证码登录失败:', error);

@@ -96,28 +96,48 @@ export default function WorkbenchPage() {
   
   // 检查认证状态，防止无限重定向
   useEffect(() => {
-    // 检查localStorage中是否有token，即使它可能无效
-    const accessToken = localStorage.getItem('accessToken');
-    const userData = localStorage.getItem('user');
-    
-    console.log('工作台页面 - 检查认证状态:', { 
-      isAuthenticated, 
-      isLoading, 
-      hasLocalToken: !!accessToken,
-      hasLocalUser: !!userData
-    });
-    
-    // 如果localStorage中有token或用户数据，我们认为用户至少尝试过登录
-    const hasLocalAuthentication = accessToken || userData;
-    
-    // 只有当加载完成且没有任何本地认证信息时才重定向到登录页
-    if (!isLoading && !isAuthenticated && !hasLocalAuthentication) {
-      console.log('未认证且无本地认证数据，重定向到登录页');
-      toast.error('请先登录');
-      router.push('/login');
-    } else {
-      // 已完成认证检查
-      setIsCheckingAuth(false);
+    // 只有当加载完成后才检查认证状态
+    if (!isLoading) {
+      // 检查全局变量，避免多次跳转
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        if (window.__LOGIN_REDIRECT_IN_PROGRESS__) {
+          console.log('工作台：跳转已在进行中，忽略');
+          return;
+        }
+      }
+      
+      // 检查localStorage中是否有token或用户数据
+      const accessToken = localStorage.getItem('accessToken');
+      const userData = localStorage.getItem('user');
+      
+      console.log('工作台页面 - 检查认证状态:', { 
+        isAuthenticated, 
+        isLoading, 
+        hasLocalToken: !!accessToken,
+        hasLocalUser: !!userData
+      });
+      
+      // 只有当确认未认证且没有任何本地认证信息时才重定向到登录页
+      if (!isAuthenticated && !accessToken && !userData) {
+        // 设置全局标记，避免重复跳转
+        if (typeof window !== 'undefined') {
+          // @ts-ignore
+          window.__LOGIN_REDIRECT_IN_PROGRESS__ = true;
+          // 5秒后清除标记，以防万一
+          setTimeout(() => {
+            // @ts-ignore
+            window.__LOGIN_REDIRECT_IN_PROGRESS__ = false;
+          }, 5000);
+        }
+        
+        console.log('未认证且无本地认证数据，重定向到登录页');
+        toast.error('请先登录');
+        router.push('/login');
+      } else {
+        // 已完成认证检查
+        setIsCheckingAuth(false);
+      }
     }
   }, [isAuthenticated, isLoading, router]);
   
@@ -258,7 +278,7 @@ export default function WorkbenchPage() {
             {user?.school && (
               <p className="text-sm text-primary mt-1">
                 <School className="inline-block h-3.5 w-3.5 mr-1" />
-                {user.schoolName || user.school || '学校'}
+                {user.schoolName || (typeof user.school === 'string' ? user.school : (user.school as any)?.name) || '学校'}
               </p>
             )}
           </div>
