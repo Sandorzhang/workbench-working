@@ -22,23 +22,10 @@ const validateHandlers = () => {
     { pattern: '/api/auth/logout', method: 'POST' }
   ];
   
-  // 调试所有处理程序信息
-  console.log('MSW处理程序清单:');
-  handlers.forEach((handler: any, index) => {
-    try {
-      if (handler && handler.info) {
-        const { method, path } = handler.info;
-        if (method && path) {
-          console.log(`${method.toUpperCase()} ${path}`);
-        }
-      }
-    } catch (err) {
-      console.warn(`无法检查处理程序 #${index}`, err);
-    }
-  });
-  
   // 验证关键端点
-  console.log('\n验证关键API端点:');
+  console.log('验证关键API端点:');
+  let missingEndpoints = 0;
+  
   criticalEndpoints.forEach(endpoint => {
     let hasHandler = false;
     
@@ -73,10 +60,11 @@ const validateHandlers = () => {
     
     if (!hasHandler) {
       console.warn(`⚠️ 未找到 ${endpoint.method} ${endpoint.pattern} 处理程序!`);
+      missingEndpoints++;
     }
   });
   
-  return true;
+  return missingEndpoints === 0;
 };
 
 // 初始化MSW worker
@@ -87,30 +75,55 @@ export const startMSW = async () => {
   // 验证处理程序配置
   validateHandlers();
   
-  // 设置响应转换器
-  const customHandlers = handlers.map((handler: any) => handler);
-  
   // 启动worker
-  console.log('正在启动MSW...');
+  console.log('正在启动MSW worker...');
   
   try {
     await worker.start({
-      onUnhandledRequest: 'bypass',
+      onUnhandledRequest: (request, { warning, error }) => {
+        // 忽略静态资源请求
+        if (
+          request.url.includes('/_next/') || 
+          request.url.includes('.svg') || 
+          request.url.includes('.png') || 
+          request.url.includes('.jpg') || 
+          request.url.includes('.ico') ||
+          request.url.includes('favicon') ||
+          // 忽略Next.js RSC请求
+          request.url.includes('_rsc=')
+        ) {
+          return;
+        }
+        
+        try {
+          const url = new URL(request.url);
+          
+          // 忽略非API请求
+          if (!url.pathname.includes('/api/')) {
+            return;
+          }
+          
+          // 记录未处理的API请求
+          console.warn(`[MSW] 未处理的API请求: ${request.method} ${url.pathname}`);
+        } catch (error) {
+          console.error('[MSW] 无法解析请求URL:', error);
+        }
+        
+        warning();
+      },
       serviceWorker: {
         url: '/mockServiceWorker.js',
+        options: {
+          scope: '/',
+        },
       },
     });
     
-    console.log('MSW 已成功启动');
-    
-    // 在window对象上设置标志
-    if (typeof window !== 'undefined') {
-      window.__MSW_READY__ = true;
-    }
+    console.log('✅ MSW worker已启动');
     
     return true;
   } catch (error) {
-    console.error('启动MSW时出错:', error);
+    console.error('❌ 启动MSW时出错:', error);
     return false;
   }
 };

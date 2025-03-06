@@ -1,10 +1,13 @@
 import { ApiErrorResponse } from './api-types';
+import { envConfig } from './env-config';
 
-// 使用环境变量配置API基础URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
-const API_MOCKING = process.env.NEXT_PUBLIC_API_MOCKING === 'enabled';
-const ENVIRONMENT = process.env.NEXT_PUBLIC_ENV || 'development';
+// 使用环境配置
+const API_BASE_URL = envConfig.apiBaseUrl;
+const API_MOCKING = envConfig.apiMocking;
+const ENVIRONMENT = envConfig.environment;
 const MSW_READY_TIMEOUT = 5000; // 5秒超时
+
+console.log(`[API客户端] 配置: API_BASE_URL=${API_BASE_URL}, API_MOCKING=${API_MOCKING}, ENV=${ENVIRONMENT}`);
 
 // 等待MSW准备就绪
 const waitForMsw = async (): Promise<boolean> => {
@@ -23,8 +26,30 @@ const waitForMsw = async (): Promise<boolean> => {
     return true;
   }
   
-  // 不再等待MSW，直接继续API请求
-  console.log('不再等待MSW初始化，直接继续API请求');
+  // 设置超时等待
+  console.log(`等待MSW初始化，超时时间: ${MSW_READY_TIMEOUT}ms`);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      // 设置超时
+      const timeout = setTimeout(() => {
+        console.warn(`MSW初始化等待超时(${MSW_READY_TIMEOUT}ms)`);
+        resolve();
+      }, MSW_READY_TIMEOUT);
+      
+      // 监听MSW就绪状态变化
+      const checkInterval = setInterval(() => {
+        if (window.__MSW_READY__ === true) {
+          clearTimeout(timeout);
+          clearInterval(checkInterval);
+          console.log('MSW已就绪，继续API请求');
+          resolve();
+        }
+      }, 100);
+    });
+  } catch (error) {
+    console.error('等待MSW过程中出错:', error);
+  }
+  
   return true;
 };
 
@@ -64,6 +89,19 @@ const getAuthHeaders = (): HeadersInit => {
   };
 };
 
+// 构建API路径的辅助函数
+const buildApiPath = (path: string): string => {
+  // 处理API_BASE_URL，确保它没有尾随斜杠
+  const baseUrl = API_BASE_URL.endsWith('/') 
+    ? API_BASE_URL.slice(0, -1) 
+    : API_BASE_URL;
+  
+  // 确保path有前导斜杠
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  
+  return `${baseUrl}${normalizedPath}`;
+};
+
 // 通用请求处理
 async function handleRequest<T>(
   url: string, 
@@ -76,7 +114,9 @@ async function handleRequest<T>(
     }
     
     // 处理完整URL情况 - 如果URL已经是绝对URL，则直接使用
-    const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+    const fullUrl = url.startsWith('http') 
+      ? url 
+      : buildApiPath(url);
     
     // 每次请求时重新获取认证头，确保使用最新的token
     const headers = {
@@ -252,132 +292,90 @@ export const api = {
         body: JSON.stringify({ phone })
       }),
     
-    getCurrentUser: async () => {
-      // 尝试多个可能的API路径
-      const possiblePaths = [
-        '/auth/backend/me',            // 首先尝试当前路径
-        '/auth/me',                    // 尝试不带backend的路径
-        '/user/current',               // 尝试另一种常见用户路径
-        '/user/info',                  // 尝试另一种常见用户路径
-        '/auth/backend/user/current',  // 更多可能的路径
-        '/api/auth/me'                 // 尝试带api前缀的路径
-      ];
-      
-      // 优先从localStorage获取
-      if (typeof window !== 'undefined') {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          try {
-            return { code: 0, msg: '成功', data: JSON.parse(storedUser) };
-          } catch (e) {
-            console.error('解析localStorage中的用户数据失败', e);
-            // 解析失败继续尝试API调用
-          }
-        }
-      }
-      
-      // 使用Promise.any尝试所有可能的路径，返回第一个成功的
-      try {
-        // 尝试第一个路径
-        return await handleRequest(`${possiblePaths[0]}`);
-      } catch (error) {
-        console.error(`尝试路径 ${possiblePaths[0]} 失败:`, error);
-        
-        // 顺序尝试其他路径
-        for (let i = 1; i < possiblePaths.length; i++) {
-          try {
-            console.log(`尝试备选路径: ${possiblePaths[i]}`);
-            return await handleRequest(`${possiblePaths[i]}`);
-          } catch (pathError) {
-            console.error(`尝试路径 ${possiblePaths[i]} 失败:`, pathError);
-            // 继续尝试下一个路径
-          }
-        }
-        
-        // 所有路径都失败
-        throw new Error('无法获取用户信息，所有API路径都失败');
-      }
-    },
+    // 获取当前用户信息
+    me: () => handleRequest(`/auth/me`),
     
-    logout: () => 
-      handleRequest(`/auth/backend/logout`, {
-        method: 'POST'
-      })
+    // 退出登录
+    logout: () => handleRequest(`/auth/logout`, { method: 'POST' }),
   },
   
-  // 用户管理API
-  userApi: {
+  // 用户管理
+  users: {
     // 获取用户列表
-    getUsers: (filters?: { role?: string; school?: string }) => {
-      const params = new URLSearchParams();
+    list: (page = 1, pageSize = 10, filters = {}) => {
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      queryParams.append('pageSize', pageSize.toString());
       
-      if (filters) {
-        if (filters.role) params.append('role', filters.role);
-        if (filters.school) params.append('school', filters.school);
-      }
+      // 添加过滤条件
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value.toString());
+        }
+      });
       
-      const queryString = params.toString() ? `?${params.toString()}` : '';
-      return handleRequest(`${API_BASE_URL}/users${queryString}`);
+      const queryString = `?${queryParams.toString()}`;
+      return handleRequest(`/users${queryString}`);
     },
     
     // 获取单个用户
-    getUser: (id: string) => 
-      handleRequest(`${API_BASE_URL}/users/${id}`),
+    get: (id: string) => 
+      handleRequest(`/users/${id}`),
     
     // 创建用户
-    createUser: (userData: any) => 
-      handleRequest(`${API_BASE_URL}/users`, {
+    create: (userData: any) => 
+      handleRequest(`/users`, {
         method: 'POST',
         body: JSON.stringify(userData)
       }),
     
     // 更新用户
-    updateUser: (id: string, userData: any) => 
-      handleRequest(`${API_BASE_URL}/users/${id}`, {
+    update: (id: string, userData: any) => 
+      handleRequest(`/users/${id}`, {
         method: 'PUT',
         body: JSON.stringify(userData)
       }),
     
     // 删除用户
-    deleteUser: (id: string) => 
-      handleRequest(`${API_BASE_URL}/users/${id}`, {
+    delete: (id: string) => 
+      handleRequest(`/users/${id}`, {
         method: 'DELETE'
       })
   },
   
-  // 超级管理员专用API
-  superadminApi: {
+  // 超级管理员API
+  superadmin: {
     // 获取所有用户
-    getUsers: () => 
-      handleRequest(`${API_BASE_URL}/superadmin/users`),
+    listUsers: () => 
+      handleRequest(`/superadmin/users`),
     
     // 获取单个用户
     getUser: (id: string) => 
-      handleRequest(`${API_BASE_URL}/superadmin/users/${id}`),
+      handleRequest(`/superadmin/users/${id}`),
     
     // 创建用户
     createUser: (userData: any) => 
-      handleRequest(`${API_BASE_URL}/superadmin/users`, {
+      handleRequest(`/superadmin/users`, {
         method: 'POST',
         body: JSON.stringify(userData)
       }),
     
     // 更新用户
     updateUser: (id: string, userData: any) => 
-      handleRequest(`${API_BASE_URL}/superadmin/users/${id}`, {
+      handleRequest(`/superadmin/users/${id}`, {
         method: 'PUT',
         body: JSON.stringify(userData)
       }),
     
     // 删除用户
     deleteUser: (id: string) => 
-      handleRequest(`${API_BASE_URL}/superadmin/users/${id}`, {
+      handleRequest(`/superadmin/users/${id}`, {
         method: 'DELETE'
       }),
     
-    // 更新用户状态（锁定/解锁）
-    updateUserStatus: (id: string, status: 'active' | 'inactive' | 'locked') => 
-      handleRequest(`${API_BASE_URL}/superadmin/users/${id}/status`, {
+    // 更新用户状态
+    updateUserStatus: (id: string, status: 'active' | 'inactive') => 
+      handleRequest(`/superadmin/users/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status })
       })
@@ -385,29 +383,35 @@ export const api = {
   
   // 工作台配置
   workbench: {
+    // 获取工作台配置
     getConfig: () => 
-      handleRequest(`${API_BASE_URL}/workbench-config`),
+      handleRequest(`/workbench-config`),
     
-    getModule: (id: string) => 
-      handleRequest(`${API_BASE_URL}/workbench-config/${id}`),
+    // 获取特定配置
+    getConfigById: (id: string) => 
+      handleRequest(`/workbench-config/${id}`),
     
-    updatePreferences: (modules: string[]) => 
-      handleRequest(`${API_BASE_URL}/workbench-config/preferences`, {
+    // 保存用户偏好设置
+    savePreferences: (preferences: any) => 
+      handleRequest(`/workbench-config/preferences`, {
         method: 'POST',
-        body: JSON.stringify({ modules })
+        body: JSON.stringify(preferences)
       })
   },
   
-  // 智能体
+  // 智能助手
   agents: {
-    getList: () => 
-      handleRequest(`${API_BASE_URL}/agents`),
+    // 获取所有助手
+    list: () => 
+      handleRequest(`/agents`),
     
-    getDetails: (id: string) => 
-      handleRequest(`${API_BASE_URL}/agents/${id}`),
+    // 获取单个助手
+    get: (id: string) => 
+      handleRequest(`/agents/${id}`),
     
-    sendMessage: (id: string, message: string) => 
-      handleRequest(`${API_BASE_URL}/agents/${id}/chat`, {
+    // 与助手聊天
+    chat: (id: string, message: string) => 
+      handleRequest(`/agents/${id}/chat`, {
         method: 'POST',
         body: JSON.stringify({ message })
       })
@@ -415,43 +419,49 @@ export const api = {
   
   // 日历事件
   calendar: {
-    getEvents: (startDate?: string, endDate?: string) => {
+    // 获取日历事件
+    getEvents: (start?: string, end?: string, type?: string) => {
       const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      if (type) params.append('type', type);
       
       const queryString = params.toString() ? `?${params.toString()}` : '';
-      
-      return handleRequest(`${API_BASE_URL}/calendar-events${queryString}`);
+      return handleRequest(`/calendar-events${queryString}`);
     },
     
-    createEvent: (event: any) => 
-      handleRequest(`${API_BASE_URL}/calendar-events`, {
+    // 创建事件
+    createEvent: (eventData: any) => 
+      handleRequest(`/calendar-events`, {
         method: 'POST',
-        body: JSON.stringify(event)
+        body: JSON.stringify(eventData)
       }),
     
-    updateEvent: (id: string, event: any) => 
-      handleRequest(`${API_BASE_URL}/calendar-events/${id}`, {
+    // 更新事件
+    updateEvent: (id: string, eventData: any) => 
+      handleRequest(`/calendar-events/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(event)
+        body: JSON.stringify(eventData)
       }),
     
+    // 删除事件
     deleteEvent: (id: string) => 
-      handleRequest(`${API_BASE_URL}/calendar-events/${id}`, {
+      handleRequest(`/calendar-events/${id}`, {
         method: 'DELETE'
       })
   },
   
-  // 单课教案
+  // 教学计划
   teachingPlans: {
-    getList: (page = 1, pageSize = 10) => 
-      handleRequest(`${API_BASE_URL}/teaching-plans?page=${page}&pageSize=${pageSize}`),
+    // 获取教学计划列表
+    list: (page = 1, pageSize = 10) => 
+      handleRequest(`/teaching-plans?page=${page}&pageSize=${pageSize}`),
     
-    getDetails: (id: string) => 
-      handleRequest(`${API_BASE_URL}/teaching-plans/${id}`)
+    // 获取单个教学计划
+    get: (id: string) => 
+      handleRequest(`/teaching-plans/${id}`)
   }
 };
 
 // 导出常用API模块，便于直接导入
-export const { userApi, superadminApi, auth, workbench, calendar, agents } = api;
+export const { users, superadmin, auth, workbench, calendar, agents } = api;

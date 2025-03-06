@@ -3,10 +3,14 @@
  * 提供统一的API请求处理、错误处理和认证管理
  */
 
-// 使用环境变量配置API基础URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
-const API_MOCKING = process.env.NEXT_PUBLIC_API_MOCKING === 'enabled';
-const ENVIRONMENT = process.env.NEXT_PUBLIC_ENV || 'development';
+import { envConfig } from '@/lib/env-config';
+
+// 使用环境配置
+const API_BASE_URL = envConfig.apiBaseUrl;
+const API_MOCKING = envConfig.apiMocking;
+const ENVIRONMENT = envConfig.environment;
+
+console.log(`[共享API] 配置: API_BASE_URL=${API_BASE_URL}, API_MOCKING=${API_MOCKING}, ENV=${ENVIRONMENT}`);
 
 /**
  * 为请求添加认证头
@@ -139,8 +143,13 @@ export const buildApiPath = (feature: string, path: string): string => {
     ? (path.startsWith('/') ? path : `/${path}`)
     : '';
   
-  // 格式: /api/[feature]/[path]
-  return `${API_BASE_URL}/${normalizedFeature}${normalizedPath}`;
+  // 处理API_BASE_URL，确保它没有尾随斜杠
+  const baseUrl = API_BASE_URL.endsWith('/') 
+    ? API_BASE_URL.slice(0, -1) 
+    : API_BASE_URL;
+  
+  // 格式: [baseUrl]/[feature]/[path]
+  return `${baseUrl}/${normalizedFeature}${normalizedPath}`;
 };
 
 // 声明全局窗口接口扩展

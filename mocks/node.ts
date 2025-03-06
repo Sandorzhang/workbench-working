@@ -6,4 +6,6 @@ import { seedDb } from './db';
 seedDb();
 
 // 创建并导出server
-export const server = setupServer(...handlers); 
+export const server = setupServer(...handlers);
+
+console.log(`MSW 服务器端配置完成，处理程序数量: ${handlers.length}`); 

@@ -3,10 +3,14 @@
  * This file provides standardized API path handling and request functions
  */
 
+import { envConfig } from '@/lib/env-config';
+
 // API configurations
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
-const API_MOCKING = process.env.NEXT_PUBLIC_API_MOCKING === 'enabled';
-const ENVIRONMENT = process.env.NEXT_PUBLIC_ENV || 'development';
+const API_BASE_URL = envConfig.apiBaseUrl;
+const API_MOCKING = envConfig.apiMocking;
+const ENVIRONMENT = envConfig.environment;
+
+console.log(`[API工具] 配置: API_BASE_URL=${API_BASE_URL}, API_MOCKING=${API_MOCKING}, ENV=${ENVIRONMENT}`);
 
 /**
  * Get authentication headers from localStorage
@@ -40,8 +44,13 @@ export const buildApiPath = (feature: string, path: string): string => {
   // Ensure path has leading slash but no trailing slash
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   
-  // Format: /api/[feature]/[path]
-  return `${API_BASE_URL}/${normalizedFeature}${normalizedPath}`;
+  // Handle API_BASE_URL, ensure it has no trailing slash
+  const baseUrl = API_BASE_URL.endsWith('/') 
+    ? API_BASE_URL.slice(0, -1) 
+    : API_BASE_URL;
+  
+  // Format: [baseUrl]/[feature]/[path]
+  return `${baseUrl}/${normalizedFeature}${normalizedPath}`;
 };
 
 /**

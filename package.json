@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:msw": "cp .env.development .env.local && next dev --turbopack",
-    "dev:test": "cp .env.test .env.local && next dev --turbopack",
-    "dev:prod": "cp .env.production .env.local && next dev --turbopack",
+    "dev:msw": "cross-env NEXT_PUBLIC_API_MOCKING=enabled next dev --turbopack",
+    "dev:test": "powershell -Command \"Copy-Item .env.test .env.local\" && next dev --turbopack",
+    "dev:prod": "powershell -Command \"Copy-Item .env.production .env.local\" && next dev --turbopack",
     "build": "next build",
-    "build:test": "cp .env.test .env && next build",
-    "build:prod": "cp .env.production .env && next build",
+    "build:test": "powershell -Command \"Copy-Item .env.test .env\" && next build",
+    "build:prod": "powershell -Command \"Copy-Item .env.production .env\" && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "msw:init": "msw init public/ --no-save"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
@@ -67,6 +68,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.2.0-canary.76",
     "msw": "^2.7.3",
