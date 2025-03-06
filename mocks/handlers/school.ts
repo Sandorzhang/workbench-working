@@ -422,7 +422,7 @@ export const schoolHandlers = [
         grades = ['初一', '初二', '初三'];
         break;
       case SchoolType.MIDDLE_FOUR:
-        grades = ['初一', '初二', '初三', '初四'];
+        grades = ['六年级', '初一', '初二', '初三'];
         break;
       case SchoolType.HIGH_THREE:
         grades = ['高一', '高二', '高三'];
@@ -434,7 +434,7 @@ export const schoolHandlers = [
         grades = ['初一', '初二', '初三', '高一', '高二', '高三'];
         break;
       case SchoolType.COMPLETE_SEVEN:
-        grades = ['初一', '初二', '初三', '初四', '高一', '高二', '高三'];
+        grades = [ '六年级','初一', '初二', '初三', '高一', '高二', '高三'];
         break;
       case SchoolType.TWELVE_YEAR:
         grades = [

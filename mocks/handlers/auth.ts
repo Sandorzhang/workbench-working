@@ -28,78 +28,141 @@ interface CodeLoginRequest {
   code: string;
 }
 
+// 适配URL模式
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
 export const authHandlers = [
-  // 账号密码登录
-  http.post('*/api/auth/login', async ({ request }) => {
-    await delay(500);
-    const { username, password } = await request.json() as LoginRequest;
-    
-    console.log(`尝试账号登录: ${username}, 请求URL: ${request.url}`);
-    
-    const user = db.user.findFirst({
-      where: {
-        username: {
-          equals: username,
+  // 账号密码登录 - 使用明确路径以确保正确匹配
+  http.post('/api/auth/login', async ({ request }) => {
+    try {
+      await delay(500);
+      
+      // 记录请求详细信息，帮助调试
+      const requestUrl = request.url;
+      console.log(`收到登录请求 - URL: ${requestUrl}`);
+      
+      // 解析请求体
+      const body = await request.json() as LoginRequest;
+      const { username, password } = body;
+      
+      console.log(`尝试账号登录: ${username}`);
+      
+      // 检查必要字段
+      if (!username || !password) {
+        console.log('登录请求缺少用户名或密码');
+        return new HttpResponse(
+          JSON.stringify({
+            message: '用户名和密码不能为空',
+            code: '400',
+            details: { reason: 'missing_credentials' }
+          }),
+          { 
+            status: 400,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      const user = db.user.findFirst({
+        where: {
+          username: {
+            equals: username,
+          },
         },
-      },
-    });
-    
-    // 检查用户是否存在且密码是否匹配
-    if (!user) {
-      console.log(`用户 ${username} 不存在`);
-      return HttpResponse.json(
-        {
-          message: '用户名或密码错误',
-          code: '401',
-          details: { reason: 'invalid_credentials' }
-        },
-        { status: 401 }
+      });
+      
+      // 检查用户是否存在且密码是否匹配
+      if (!user) {
+        console.log(`用户 ${username} 不存在`);
+        return new HttpResponse(
+          JSON.stringify({
+            message: '用户名或密码错误',
+            code: '401',
+            details: { reason: 'invalid_credentials' }
+          }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      // 检查密码是否匹配
+      console.log(`检查密码: ${password}, 数据库密码: ${user.password}`);
+      if (user.password !== password) {
+        console.log(`用户 ${username} 密码不匹配`);
+        return new HttpResponse(
+          JSON.stringify({
+            message: '用户名或密码错误',
+            code: '401',
+            details: { reason: 'invalid_credentials' }
+          }),
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      // 创建会话
+      const token = generateToken();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
+      
+      console.log(`创建会话，token: ${token.substr(0, 8)}...`);
+      
+      db.session.create({
+        id: String(Date.now()),
+        userId: user.id,
+        token,
+        expiresAt: expiresAt.toISOString(),
+      });
+      
+      // 保存数据库状态
+      saveDb();
+      
+      const { password: _, ...userWithoutPassword } = user;
+      
+      console.log(`登录成功，返回用户信息: ${userWithoutPassword.name}`);
+      
+      return new HttpResponse(
+        JSON.stringify({
+          user: userWithoutPassword,
+          token,
+        }),
+        { 
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (err) {
+      console.error('处理登录请求时出错:', err);
+      return new HttpResponse(
+        JSON.stringify({
+          message: '服务器错误，请稍后重试',
+          code: '500',
+          details: { reason: 'server_error' }
+        }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
     }
-    
-    // 检查密码是否匹配
-    console.log(`检查密码: ${password}, 数据库密码: ${user.password}`);
-    if (user.password !== password) {
-      console.log(`用户 ${username} 密码不匹配`);
-      return HttpResponse.json(
-        {
-          message: '用户名或密码错误',
-          code: '401',
-          details: { reason: 'invalid_credentials' }
-        },
-        { status: 401 }
-      );
-    }
-    
-    // 创建会话
-    const token = generateToken();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
-    
-    console.log(`创建会话，token: ${token.substr(0, 8)}...`);
-    
-    db.session.create({
-      id: String(Date.now()),
-      userId: user.id,
-      token,
-      expiresAt: expiresAt.toISOString(),
-    });
-    
-    // 保存数据库状态
-    saveDb();
-    
-    const { password: _, ...userWithoutPassword } = user;
-    
-    console.log(`登录成功，返回用户信息: ${userWithoutPassword.name}`);
-    
-    return HttpResponse.json({
-      user: userWithoutPassword,
-      token,
-    });
   }),
   
   // 获取当前登录用户信息
-  http.get('*/api/auth/me', async ({ request }) => {
+  http.get('/api/auth/me', async ({ request }) => {
     try {
       await delay(300);
       
@@ -474,7 +537,7 @@ export const authHandlers = [
   }),
   
   // 退出登录
-  http.post('*/api/auth/logout', async ({ request }) => {
+  http.post('/api/auth/logout', async ({ request }) => {
     await delay(300);
     
     // 从请求头获取令牌

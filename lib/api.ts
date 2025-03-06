@@ -31,6 +31,8 @@ const waitForMsw = async (): Promise<boolean> => {
       // 检查是否超时
       if (Date.now() - startTime > MSW_READY_TIMEOUT) {
         console.warn('等待MSW就绪超时，继续API请求（可能会导致错误）');
+        // 即使超时也标记为true，以避免阻塞API请求
+        window.__MSW_READY__ = true;
         resolve(false);
         return;
       }
@@ -101,6 +103,34 @@ async function handleRequest<T>(
         message: errorData.message || '登录已过期，请重新登录',
         code: '401',
         details: errorData.details || {}
+      } as ApiErrorResponse;
+    }
+    
+    // 处理404错误 - 这通常表示API路径问题或MSW未拦截
+    if (response.status === 404) {
+      console.error(`API路径不存在 (404): ${url}`);
+      
+      // 检查URL是否包含API路径
+      if (url.includes('/api/')) {
+        console.error(`检测到API路径 ${url} 返回404，这可能是MSW拦截问题`);
+      }
+      
+      // 尝试获取响应内容以诊断问题
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        const htmlText = await response.text();
+        console.error('返回的HTML片段:', htmlText.substring(0, 200) + '...');
+        throw {
+          message: 'API路径不存在，MSW可能未正确拦截请求',
+          code: 'API_PATH_NOT_FOUND',
+          details: { url, htmlSnippet: htmlText.substring(0, 200) }
+        } as ApiErrorResponse;
+      }
+      
+      throw {
+        message: 'API路径不存在，请检查请求路径或MSW配置',
+        code: '404',
+        details: { url }
       } as ApiErrorResponse;
     }
     
@@ -184,11 +214,20 @@ declare global {
 export const api = {
   // 用户认证
   auth: {
-    login: (username: string, password: string) => 
-      handleRequest(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        body: JSON.stringify({ username, password })
-      }),
+    login: async (username: string, password: string) => {
+      console.log(`尝试登录，用户名: ${username}`);
+      
+      try {
+        return await handleRequest(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+        });
+      } catch (error) {
+        console.error('登录失败:', error);
+        // 重新抛出错误以便被上层处理
+        throw error;
+      }
+    },
     
     loginWithCode: (phone: string, code: string) => 
       handleRequest(`${API_BASE_URL}/auth/login-with-code`, {
@@ -204,37 +243,11 @@ export const api = {
     
     getCurrentUser: () => 
       handleRequest(`${API_BASE_URL}/auth/me`),
-      
-    logout: () => {
-      // 首先清除本地token
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
-      
-      // 然后调用退出登录API (如果在浏览器环境)
-      if (typeof window !== 'undefined') {
-        return fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: getAuthHeaders()
-        })
-        .then(response => {
-          if (!response.ok && response.status !== 401) {
-            // 如果不是401错误（表示已经没有有效会话），则记录错误
-            console.warn('登出API调用返回非200状态码:', response.status);
-          }
-          // 即使API调用失败，也返回成功，因为我们已经清除了本地存储
-          return Promise.resolve();
-        })
-        .catch(error => {
-          console.error('登出API调用失败:', error);
-          // 因为我们已经清除了本地存储，即使API调用失败，也视为登出成功
-          return Promise.resolve();
-        });
-      }
-      
-      // 如果不在浏览器环境，直接返回成功
-      return Promise.resolve();
-    }
+    
+    logout: () => 
+      handleRequest(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST'
+      })
   },
   
   // 工作台配置
@@ -303,49 +316,6 @@ export const api = {
       handleRequest(`${API_BASE_URL}/teaching-plans?page=${page}&pageSize=${pageSize}`),
       
     getDetails: (id: string) => 
-      handleRequest(`${API_BASE_URL}/teaching-plans/${id}`),
-      
-    create: (plan: any) => 
-      handleRequest(`${API_BASE_URL}/teaching-plans`, {
-        method: 'POST',
-        body: JSON.stringify(plan)
-      }),
-      
-    update: (id: string, plan: any) => 
-      handleRequest(`${API_BASE_URL}/teaching-plans/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(plan)
-      }),
-      
-    delete: (id: string) => 
-      handleRequest(`${API_BASE_URL}/teaching-plans/${id}`, {
-        method: 'DELETE'
-      })
-  },
-  
-  // 单元教案
-  teachingDesigns: {
-    getList: (page = 1, pageSize = 10) => 
-      handleRequest(`${API_BASE_URL}/teaching-designs?page=${page}&pageSize=${pageSize}`),
-      
-    getDetails: (id: string) => 
-      handleRequest(`${API_BASE_URL}/teaching-designs/${id}`),
-      
-    create: (design: any) => 
-      handleRequest(`${API_BASE_URL}/teaching-designs`, {
-        method: 'POST',
-        body: JSON.stringify(design)
-      }),
-      
-    update: (id: string, design: any) => 
-      handleRequest(`${API_BASE_URL}/teaching-designs/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(design)
-      }),
-      
-    delete: (id: string) => 
-      handleRequest(`${API_BASE_URL}/teaching-designs/${id}`, {
-        method: 'DELETE'
-      })
+      handleRequest(`${API_BASE_URL}/teaching-plans/${id}`)
   }
-}; 
+};

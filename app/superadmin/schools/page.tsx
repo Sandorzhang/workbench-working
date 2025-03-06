@@ -3,9 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { School, SchoolType, Region } from '@/lib/api-types';
+import { toast } from 'sonner';
 
-// UI Components
+// 类型导入
+import { School, Region } from '@/lib/api-types';
+import { SchoolForm, SchoolFormValues } from '@/components/superadmin/school-form';
+
+// UI 组件导入
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,13 +28,6 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Loader2, Search, Plus, Edit, Trash2, 
-  School as SchoolIcon, CalendarDays, X
-} from 'lucide-react';
-import { toast } from 'sonner';
-
-// 对话框和表单组件
 import {
   Dialog,
   DialogContent,
@@ -40,6 +37,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { 
+  Loader2, Search, Plus, Pencil, Trash2, 
+  School as SchoolIcon
+} from 'lucide-react';
+
+// UI Components
+import {
   Form,
   FormControl,
   FormDescription,
@@ -48,39 +58,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-
-// 学校表单验证模式
-const schoolFormSchema = z.object({
-  name: z.string().min(1, '学校名称不能为空'),
-  code: z.string()
-    .min(3, '学校代码必须是3位数字')
-    .max(3, '学校代码必须是3位数字')
-    .regex(/^\d+$/, '学校代码必须是数字'),
-  regionId: z.string().min(1, '必须选择所属区域'),
-  type: z.string().min(1, '必须选择学校类型'),
-  grades: z.array(z.string()).min(1, '至少选择一个年级'),
-  status: z.boolean().default(true),
-});
-
-type SchoolFormValues = z.infer<typeof schoolFormSchema>;
-
-// 默认表单值
-const defaultValues: Partial<SchoolFormValues> = {
-  status: true,
-  grades: [],
-};
 
 export default function SchoolsPage() {
   const { isAuthenticated, user } = useAuth();
@@ -101,27 +83,12 @@ export default function SchoolsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentSchool, setCurrentSchool] = useState<School | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState<School | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // 年级加载状态
   const [isLoadingGrades, setIsLoadingGrades] = useState(false);
-
-  // 创建表单
-  const form = useForm<SchoolFormValues>({
-    resolver: zodResolver(schoolFormSchema),
-    defaultValues,
-  });
-  
-  // 监听学校类型变化，加载对应的年级选项
-  useEffect(() => {
-    const schoolType = form.watch('type');
-    if (schoolType) {
-      loadGradesForType(schoolType);
-    }
-  }, [form.watch('type')]);
 
   // 获取学校数据
   const fetchSchools = async () => {
@@ -184,31 +151,6 @@ export default function SchoolsPage() {
       toast.error('获取学校类型失败');
     }
   };
-  
-  // 根据学校类型加载年级选项
-  const loadGradesForType = async (type: string) => {
-    try {
-      setIsLoadingGrades(true);
-      const response = await fetch(`/api/school-grades?type=${encodeURIComponent(type)}`);
-      
-      if (!response.ok) {
-        throw new Error('获取年级列表失败');
-      }
-      
-      const grades = await response.json();
-      setAllGrades(grades);
-      
-      // 如果是编辑模式，保留已选年级；如果是新建模式，清除所有年级选择
-      if (!isEditMode) {
-        form.setValue('grades', []);
-      }
-    } catch (error) {
-      console.error('Error loading grades:', error);
-      toast.error('获取年级列表失败');
-    } finally {
-      setIsLoadingGrades(false);
-    }
-  };
 
   // 过滤学校
   const filteredSchools = schools.filter(school => {
@@ -227,7 +169,6 @@ export default function SchoolsPage() {
   const openAddDialog = () => {
     setIsEditMode(false);
     setCurrentSchool(null);
-    form.reset(defaultValues);
     setIsDialogOpen(true);
   };
 
@@ -235,27 +176,12 @@ export default function SchoolsPage() {
   const openEditDialog = (school: School) => {
     setIsEditMode(true);
     setCurrentSchool(school);
-    
-    // 预加载年级选项
-    loadGradesForType(school.type);
-    
-    form.reset({
-      name: school.name,
-      code: school.code,
-      regionId: school.regionId,
-      type: school.type,
-      grades: school.grades,
-      status: school.status,
-    });
-    
     setIsDialogOpen(true);
   };
 
   // 提交表单
   const onSubmit = async (values: SchoolFormValues) => {
     try {
-      setIsSubmitting(true);
-      
       if (isEditMode && currentSchool) {
         // 更新学校
         const response = await fetch(`/api/schools/${currentSchool.id}`, {
@@ -286,13 +212,12 @@ export default function SchoolsPage() {
         toast.success('学校创建成功');
       }
       
-      setIsDialogOpen(false);
       fetchSchools(); // 重新获取数据
+      return Promise.resolve();
     } catch (error: any) {
       console.error('Error submitting school:', error);
       toast.error(error.message || '操作失败');
-    } finally {
-      setIsSubmitting(false);
+      return Promise.reject(error);
     }
   };
 
@@ -456,7 +381,7 @@ export default function SchoolsPage() {
               <label className="text-sm font-medium block mb-2">学校类型</label>
               <Select value={filterType} onValueChange={setFilterType}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="选择类型" />
+                  <SelectValue placeholder="选择学校类型" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全部类型</SelectItem>
@@ -576,7 +501,7 @@ export default function SchoolsPage() {
                         <TableCell className="px-6">{school.regionName || '-'}</TableCell>
                         <TableCell className="px-6">
                           <div className="flex items-center">
-                            <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                            <SchoolIcon className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
                             {school.type}
                           </div>
                         </TableCell>
@@ -594,7 +519,7 @@ export default function SchoolsPage() {
                         <TableCell className="text-right px-6">
                           <div className="flex justify-end gap-2">
                             <Button variant="outline" size="sm" onClick={() => openEditDialog(school)} className="h-8 px-3 rounded-md hover:bg-primary/10 transition-colors">
-                              <Edit className="h-3.5 w-3.5 mr-1" />
+                              <Pencil className="h-3.5 w-3.5 mr-1" />
                               编辑
                             </Button>
                             <Button variant="ghost" size="sm" className="text-red-600 h-8 px-3 rounded-md hover:bg-red-50 transition-colors" onClick={() => openDeleteDialog(school)}>
@@ -613,226 +538,48 @@ export default function SchoolsPage() {
         </CardContent>
       </Card>
       
-      {/* 添加/编辑学校对话框 */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] rounded-xl shadow-lg border-0">
-          <DialogHeader>
-            <DialogTitle className="text-xl">{isEditMode ? '编辑学校' : '添加学校'}</DialogTitle>
-            <DialogDescription>
-              {isEditMode ? '修改学校信息' : '添加一个新的学校到系统中'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">学校名称</FormLabel>
-                      <FormControl>
-                        <Input placeholder="请输入学校名称" className="rounded-md" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">学校代码</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="请输入3位数字代码" 
-                          className="rounded-md"
-                          {...field} 
-                          disabled={isEditMode} // 编辑模式下不允许修改代码
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs">
-                        学校代码必须是3位数字
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="regionId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">所属区域</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="rounded-md">
-                            <SelectValue placeholder="选择区域" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {regions.map(region => (
-                            <SelectItem key={region.id} value={region.id}>
-                              {region.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium">学校类型</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="rounded-md">
-                            <SelectValue placeholder="选择学校类型" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {schoolTypes.map(type => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="grades"
-                render={() => (
-                  <FormItem className="p-4 border rounded-md bg-muted/10">
-                    <div className="mb-4">
-                      <FormLabel className="font-medium">年级设置</FormLabel>
-                      <FormDescription className="text-xs">
-                        请选择学校包含的年级
-                      </FormDescription>
-                    </div>
-                    
-                    {isLoadingGrades ? (
-                      <div className="flex justify-center py-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {allGrades.map((grade) => (
-                          <FormField
-                            key={grade}
-                            control={form.control}
-                            name="grades"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={grade}
-                                  className="flex flex-row items-start space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/20 transition-colors"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(grade)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, grade])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== grade
-                                              )
-                                            )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer">
-                                    {grade}
-                                  </FormLabel>
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel className="font-medium">状态</FormLabel>
-                      <FormDescription className="text-xs">
-                        启用或禁用该学校
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDialogOpen(false)}>
-                  取消
-                </Button>
-                <Button type="submit" disabled={isSubmitting} className="rounded-md shadow-sm">
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isEditMode ? '保存更改' : '创建学校'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      {/* 使用分离出的学校表单组件 */}
+      <SchoolForm 
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={onSubmit}
+        isEditMode={isEditMode}
+        currentSchool={currentSchool}
+        regions={regions}
+        schoolTypes={schoolTypes}
+      />
       
       {/* 删除确认对话框 */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-xl shadow-lg border-0">
+        <DialogContent className="max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-xl">确认删除</DialogTitle>
-            <DialogDescription className="pt-2">
-              您确定要删除学校 <span className="font-semibold">"{schoolToDelete?.name}"</span> 吗？此操作不可撤销。
+            <DialogTitle>确认删除学校</DialogTitle>
+            <DialogDescription>
+              您确定要删除学校 "{schoolToDelete?.name}" 吗？此操作不可撤销，删除后所有相关数据将无法恢复。
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-red-50 p-4 rounded-lg my-2 text-sm text-red-700">
-            <p>删除学校将同时删除与该学校相关的所有数据，此操作无法恢复。</p>
-          </div>
-          <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDeleteDialogOpen(false)}>
+          <DialogFooter className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
               取消
             </Button>
-            <Button type="button" variant="destructive" className="rounded-md shadow-sm" onClick={deleteSchool} disabled={isDeleting}>
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              确认删除
+            <Button 
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                e.preventDefault();
+                deleteSchool();
+              }}
+              disabled={isDeleting}
+              variant="destructive"
+            >
+              {isDeleting ? (
+                <div className="flex items-center gap-1">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  删除中...
+                </div>
+              ) : "确认删除"}
             </Button>
           </DialogFooter>
         </DialogContent>

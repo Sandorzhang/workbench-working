@@ -43,8 +43,9 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
     if (initAttemptedRef.current) return;
     initAttemptedRef.current = true;
 
-    // 添加全局变量标记MSW状态
+    // 添加全局变量标记MSW状态 - 显式设置为false表示正在初始化中
     window.__MSW_READY__ = false;
+    console.log("MSW初始化开始，将__MSW_READY__设置为false");
 
     const initMsw = async () => {
       const tryInit = async (): Promise<void> => {
@@ -86,6 +87,13 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
               // 如果是API请求但没有被处理，增加更明显的警告
               if (request.url.includes('/api/')) {
                 console.error(`[MSW] ⚠️ API请求未被拦截: ${request.method} ${request.url} - 这可能导致解析错误`);
+                // 检查这个URL是否有对应的处理器
+                try {
+                  const urlPath = new URL(request.url).pathname;
+                  console.error(`[MSW] 检查路径 '${urlPath}' 是否有对应的处理器配置`);
+                } catch (err) {
+                  console.error('[MSW] 无法解析请求URL', err);
+                }
                 toast.error(`API请求未被拦截: ${request.method} ${new URL(request.url).pathname}`);
               }
               
@@ -113,6 +121,7 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
           
           // 标记MSW准备就绪
           window.__MSW_READY__ = true;
+          console.log("MSW初始化完成，将__MSW_READY__设置为true");
           
           onInitialized?.();
         } catch (error) {
@@ -127,6 +136,9 @@ export function MswInitializer({ onInitialized, children }: MswInitializerProps)
           
           console.error('MSW 初始化失败，已达到最大重试次数');
           setStatus('error');
+          // 即使MSW初始化失败，也将其标记为ready以防止API调用卡住
+          window.__MSW_READY__ = true;
+          console.log("MSW初始化失败，但将__MSW_READY__设置为true以避免API调用被阻塞");
           toast.error('模拟服务初始化失败，请刷新页面重试');
         }
       };

@@ -1,4 +1,4 @@
-import { http } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 
 import { authHandlers } from './auth';
 import { aiLibraryHandlers } from './ai-library';
@@ -33,7 +33,8 @@ import { teachingPlanHandlers } from './teaching-plans';
 import { mentorHandlers } from './mentor';
 // 导入其他处理器...
 
-export const handlers = [
+// 定义原始处理程序集合
+const originalHandlers = [
   ...authHandlers,
   ...aiLibraryHandlers,
   ...conceptMapHandlers,
@@ -77,4 +78,121 @@ export const handlers = [
   ...teachingDesignsHandlers,
   ...teachingPlanHandlers,
   ...mentorHandlers,
+];
+
+// 添加关键认证处理程序 - 确保始终有这些路径的处理程序
+const criticalAuthHandlers = [
+  // 登录处理程序 - 保底实现，如果原处理程序不起作用
+  http.post('/api/auth/login', async ({ request }) => {
+    console.log('使用保底登录处理程序 - 如果看到此消息，表明原处理程序未命中');
+    
+    try {
+      await delay(500);
+      const body = await request.json();
+      const { username, password } = body as { username: string; password: string };
+      
+      console.log(`保底登录处理程序接收到请求: 用户名=${username}`);
+      
+      // 简单验证
+      if (username === 'admin' && password === 'admin') {
+        return new HttpResponse(
+          JSON.stringify({
+            user: {
+              id: '1',
+              name: '管理员',
+              email: 'admin@example.com',
+              avatar: '/avatars/admin.png',
+              role: 'admin',
+              username: 'admin'
+            },
+            token: 'mock-token-backup-handler'
+          }),
+          { 
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      return new HttpResponse(
+        JSON.stringify({
+          message: '用户名或密码错误',
+          code: '401',
+          details: { reason: 'invalid_credentials' }
+        }),
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (err) {
+      console.error('保底登录处理程序出错:', err);
+      return new HttpResponse(
+        JSON.stringify({
+          message: '服务器错误',
+          code: '500',
+          details: { reason: 'server_error' }
+        }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+  }),
+  
+  // 获取当前用户信息 - 保底实现
+  http.get('/api/auth/me', async () => {
+    console.log('使用保底用户信息处理程序');
+    
+    await delay(300);
+    
+    return new HttpResponse(
+      JSON.stringify({
+        id: '1',
+        name: '管理员',
+        email: 'admin@example.com',
+        avatar: '/avatars/admin.png',
+        role: 'admin',
+        username: 'admin'
+      }),
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  }),
+  
+  // 登出处理程序 - 保底实现
+  http.post('/api/auth/logout', async () => {
+    console.log('使用保底登出处理程序');
+    
+    await delay(300);
+    
+    return new HttpResponse(
+      JSON.stringify({
+        message: '已成功登出',
+        code: '200' 
+      }),
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  })
+];
+
+export const handlers = [
+  ...originalHandlers,
+  ...criticalAuthHandlers
 ]; 

@@ -198,6 +198,72 @@ initializeRolePermissions();
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1秒
 
+// 打印MSW处理程序配置信息 (开发调试用)
+// 注意: 仅在开发环境和浏览器环境打印此信息
+const printHandlerInfo = () => {
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('=== MSW处理程序配置信息 ===');
+    console.log(`总共配置的处理程序数: ${handlers.length}`);
+    
+    // 分析处理程序路径
+    const pathMap = new Map<string, number>();
+    const methodMap = new Map<string, number>();
+    
+    handlers.forEach(handler => {
+      try {
+        // MSW v2 格式 - 使用 handler.info
+        if (handler && 'info' in handler) {
+          const info = (handler as any).info;
+          
+          if (info && info.path && info.method) {
+            // 提取路径和方法
+            const pathStr = String(info.path);
+            const method = String(info.method);
+            
+            pathMap.set(pathStr, (pathMap.get(pathStr) || 0) + 1);
+            methodMap.set(method, (methodMap.get(method) || 0) + 1);
+          }
+        }
+      } catch (err) {
+        console.warn('提取处理程序信息时出错:', err);
+      }
+    });
+    
+    // 打印路径统计
+    console.log('API路径统计:');
+    const sortedPaths = Array.from(pathMap.entries()).sort((a, b) => b[1] - a[1]);
+    sortedPaths.forEach(([path, count]) => {
+      console.log(`  ${path}: ${count}个处理程序`);
+    });
+    
+    // 打印方法统计
+    console.log('HTTP方法统计:');
+    const sortedMethods = Array.from(methodMap.entries()).sort((a, b) => b[1] - a[1]);
+    sortedMethods.forEach(([method, count]) => {
+      console.log(`  ${method}: ${count}个处理程序`);
+    });
+    
+    // 检查常见的认证路径
+    const authPaths = ['/api/auth/login', '/api/auth/me', '/api/auth/logout'];
+    console.log('认证路径检查:');
+    authPaths.forEach(path => {
+      // 更适合MSW v2的路径检查
+      const hasPath = Array.from(pathMap.keys()).some(p => 
+        p === path || 
+        p.includes(path) || 
+        p === `*${path}` || 
+        p === `*/${path}`
+      );
+      console.log(`  ${path}: ${hasPath ? '已配置' : '未配置'}`);
+    });
+  }
+};
+
+// 在浏览器环境中执行一次处理程序检查
+if (typeof window !== 'undefined') {
+  setTimeout(printHandlerInfo, 1000);
+}
+
 // 浏览器
 export const worker = {
   start: async (options = {}) => {
@@ -210,6 +276,9 @@ export const worker = {
     const tryStart = async (): Promise<any> => {
       try {
         console.log(`尝试启动 MSW worker (尝试 ${retries + 1}/${MAX_RETRIES})...`);
+        
+        // 打印当前已配置的处理器信息
+        printHandlerInfo();
         
         // 动态导入browser模块
         const { worker } = await import('./browser');
@@ -248,34 +317,33 @@ export const worker = {
                     },
                   },
                 });
+                console.log('已删除旧的default-token会话');
               } catch (e) {
-                // 忽略不存在的会话
+                // 忽略错误，可能是不存在旧会话
               }
               
               // 创建新会话
               db.session.create({
-                id: String(Date.now()),
+                id: `default-session-${Date.now()}`,
                 userId: defaultUser.id,
                 token: 'default-token',
                 expiresAt: expiresAt.toISOString(),
               });
               
-              console.log('默认会话创建成功');
+              console.log('已为默认用户创建会话，到期日期:', expiresAt.toISOString());
             } else {
-              console.warn('找不到默认用户，无法创建默认会话');
+              console.warn('找不到默认用户(ID: 1)，无法创建默认会话');
             }
           } catch (e) {
-            console.error('创建默认会话失败:', e);
+            console.error('创建默认会话时出错:', e);
           }
         }
         
-        // 初始化角色权限
-        initializeRolePermissions();
+        console.log('MSW worker已成功初始化和启动');
         
-        console.log('MSW worker 启动成功，handlers:', handlers.length);
         return worker;
       } catch (error) {
-        console.error(`MSW worker 启动失败 (尝试 ${retries + 1}/${MAX_RETRIES}):`, error);
+        console.error(`启动MSW失败 (尝试 ${retries + 1}/${MAX_RETRIES}):`, error);
         
         if (retries < MAX_RETRIES - 1) {
           retries++;
@@ -284,31 +352,26 @@ export const worker = {
           return tryStart();
         }
         
+        console.error('MSW启动失败，已达到最大重试次数');
         throw error;
       }
     };
     
-    return tryStart();
-  },
+    try {
+      return await tryStart();
+    } catch (error) {
+      console.error('MSW启动最终失败:', error);
+      // 设置MSW就绪标志以避免API调用被阻塞
+      if (typeof window !== 'undefined') {
+        window.__MSW_READY__ = true;
+      }
+      return null;
+    }
+  }
 };
 
-// 服务器
+// 用于类型检查 - 确保server导出可用
 export const server = async () => {
-  if (typeof window !== 'undefined') {
-    return;
-  }
-
-  try {
-    // 动态导入node模块
-    const { server } = await import('./node');
-    
-    // 启动服务器
-    server.listen();
-    console.log('MSW server 启动成功');
-    
-    return server;
-  } catch (error) {
-    console.error('MSW server 启动失败:', error);
-    throw error;
-  }
+  console.warn('server()被调用，但这是仅客户端模式的MSW'); 
+  return null;
 }; 
