@@ -56,9 +56,10 @@ export const superadminHandlers = [
     // 增强用户数据
     const enhancedUsers: EnhancedUser[] = users.map(user => {
       // 查找学校名称（如果存在）
-      let schoolName = user.school || '';
+      let schoolName = '';
+      let schoolId = undefined;
       
-      // 如果用户有schoolId，通过schoolId查找学校名称
+      // 如果用户有school，通过school查找学校ID和名称
       if (user.school) {
         const school = db.school.findFirst({
           where: {
@@ -69,8 +70,13 @@ export const superadminHandlers = [
         });
         if (school) {
           schoolName = school.name;
+          schoolId = school.id;
         }
       }
+      
+      // 生成随机状态（可选）
+      const statuses: ('active' | 'inactive' | 'locked')[] = ['active', 'inactive', 'locked'];
+      const randomStatus = user.role === 'superadmin' ? 'active' : statuses[Math.floor(Math.random() * (user.role === 'student' ? 3 : 2))];
       
       // 为用户添加额外字段
       return {
@@ -78,11 +84,11 @@ export const superadminHandlers = [
         name: user.name,
         username: user.username || user.email.split('@')[0], // 如果没有username，则使用邮箱前缀
         email: user.email,
-        phone: user.phone,
+        phone: user.phone || undefined,
         role: user.role,
-        status: 'active' as const, // 默认为active
-        schoolId: user.school ? getSchoolIdFromName(user.school) : undefined,
-        schoolName: schoolName,
+        status: randomStatus, // 使用随机状态而不是硬编码的'active'
+        schoolId: schoolId,
+        schoolName: schoolName || undefined,
         lastLogin: new Date(Date.now() - Math.random() * 10000000000).toISOString(), // 随机上次登录时间
         createdAt: user.createdAt
       };
@@ -121,6 +127,9 @@ export const superadminHandlers = [
         );
       }
       
+      // 获取学校名称（如果提供了schoolId）
+      const schoolName = data.schoolId ? getSchoolNameFromId(data.schoolId) : '';
+      
       // 创建新用户
       const newUser = db.user.create({
         id: String(Date.now()),
@@ -130,7 +139,7 @@ export const superadminHandlers = [
         password: data.password || 'password123', // 默认密码
         phone: data.phone || '',
         role: data.role,
-        school: data.schoolId ? getSchoolNameFromId(data.schoolId) : '',
+        school: schoolName,
         schoolType: data.schoolType || '',
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
         createdAt: new Date().toISOString()
@@ -139,7 +148,22 @@ export const superadminHandlers = [
       // 保存数据库状态
       saveDb();
       
-      return HttpResponse.json(newUser, { status: 201 });
+      // 构建返回前端的增强用户数据
+      const enhancedUser: EnhancedUser = {
+        id: newUser.id,
+        name: newUser.name,
+        username: newUser.username,
+        email: newUser.email,
+        phone: newUser.phone || undefined,
+        role: newUser.role,
+        status: 'active',
+        schoolId: data.schoolId,
+        schoolName: schoolName || undefined,
+        lastLogin: new Date().toISOString(),
+        createdAt: newUser.createdAt
+      };
+      
+      return HttpResponse.json(enhancedUser, { status: 201 });
     } catch (error) {
       console.error('创建用户失败:', error);
       return HttpResponse.json(
@@ -190,6 +214,12 @@ export const superadminHandlers = [
         }
       }
       
+      // 获取学校名称（如果提供了schoolId）
+      let schoolName = user.school;
+      if (data.schoolId) {
+        schoolName = getSchoolNameFromId(data.schoolId);
+      }
+      
       // 更新用户数据
       const updatedUser = db.user.update({
         where: {
@@ -203,7 +233,7 @@ export const superadminHandlers = [
           username: data.username !== undefined ? data.username : user.username,
           phone: data.phone !== undefined ? data.phone : user.phone,
           role: data.role !== undefined ? data.role : user.role,
-          school: data.schoolId !== undefined ? getSchoolNameFromId(data.schoolId) : user.school,
+          school: schoolName,
           avatar: data.avatar !== undefined ? data.avatar : user.avatar,
           password: data.password !== undefined ? data.password : user.password,
         }
@@ -212,7 +242,30 @@ export const superadminHandlers = [
       // 保存数据库状态
       saveDb();
       
-      return HttpResponse.json(updatedUser);
+      // 检查更新是否成功
+      if (!updatedUser) {
+        return HttpResponse.json(
+          { message: '更新用户失败' },
+          { status: 500 }
+        );
+      }
+      
+      // 构建返回前端的增强用户数据
+      const enhancedUser: EnhancedUser = {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phone: updatedUser.phone || undefined,
+        role: updatedUser.role,
+        status: 'active', // 默认状态
+        schoolId: data.schoolId || findSchoolIdByName(updatedUser.school),
+        schoolName: updatedUser.school || undefined,
+        lastLogin: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+        createdAt: updatedUser.createdAt
+      };
+      
+      return HttpResponse.json(enhancedUser);
     } catch (error) {
       console.error('更新用户失败:', error);
       return HttpResponse.json(
@@ -270,7 +323,7 @@ export const superadminHandlers = [
   }),
   
   // 修改用户状态（锁定/解锁/激活）
-  http.patch('/api/superadmin/users/:id', async ({ params, request }) => {
+  http.patch('/api/superadmin/users/:id/status', async ({ params, request }) => {
     await delay(300);
     const { id } = params;
     const data = await request.json() as UpdateUserStatusData;
@@ -292,15 +345,25 @@ export const superadminHandlers = [
         );
       }
       
-      // 更新用户状态
-      // 注意：由于我们的db模型中没有status字段，这里只是模拟返回
+      // 我们没有在数据库中实际存储状态字段，所以只需要返回成功响应
+      // 在实际应用中，这里会更新用户的状态字段
       
-      // 保存数据库状态
-      saveDb();
+      // 构建增强用户数据用于响应
+      const enhancedUser: EnhancedUser = {
+        id: user.id,
+        name: user.name,
+        username: user.username || user.email.split('@')[0],
+        email: user.email,
+        phone: user.phone || undefined,
+        role: user.role,
+        status: data.status, // 使用请求中提供的新状态
+        schoolId: findSchoolIdByName(user.school),
+        schoolName: user.school || undefined,
+        lastLogin: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+        createdAt: user.createdAt
+      };
       
-      return HttpResponse.json(
-        { message: '用户状态更新成功', status: data.status }
-      );
+      return HttpResponse.json(enhancedUser);
     } catch (error) {
       console.error('更新用户状态失败:', error);
       return HttpResponse.json(
@@ -335,4 +398,19 @@ function getSchoolNameFromId(id: string): string {
   });
   
   return school ? school.name : '';
+}
+
+// 添加一个新的辅助函数来根据学校名称查找ID
+function findSchoolIdByName(name?: string): string | undefined {
+  if (!name) return undefined;
+  
+  const school = db.school.findFirst({
+    where: {
+      name: {
+        equals: name
+      }
+    }
+  });
+  
+  return school ? school.id : undefined;
 } 

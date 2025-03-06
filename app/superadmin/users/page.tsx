@@ -13,8 +13,8 @@ import { toast } from 'sonner';
 import { 
   Search, 
   Plus, 
-  PenLine, 
-  Trash, 
+  Edit2, 
+  Trash2, 
   Shield, 
   User, 
   Users, 
@@ -25,7 +25,12 @@ import {
   Filter,
   CheckCircle2,
   XCircle,
-  DownloadCloud
+  DownloadCloud,
+  Lock,
+  Unlock,
+  MoreHorizontal,
+  FileEdit,
+  UserCog
 } from 'lucide-react';
 import {
   Select,
@@ -35,6 +40,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { UserFormModal } from './user-form-modal';
 
 // 用户类型定义
 interface User {
@@ -84,6 +97,11 @@ export default function SuperAdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<string>('all');
+
+  // 用户表单模态窗口状态
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   
   // 检查认证状态并加载数据
   useEffect(() => {
@@ -107,7 +125,7 @@ export default function SuperAdminUsersPage() {
     try {
       setIsLoading(true);
       
-      // 真实环境中应该从API获取数据
+      // 从API获取数据
       const response = await fetch('/api/superadmin/users');
       const data = await response.json();
       
@@ -150,25 +168,29 @@ export default function SuperAdminUsersPage() {
   // 删除用户处理函数
   const handleDeleteUser = async (userId: string, userName: string) => {
     toast.promise(
-      new Promise((resolve, reject) => {
-        // 这里可以添加真实的删除API调用
-        // fetch(`/api/superadmin/users/${userId}`, { method: 'DELETE' })
-        //   .then(response => {
-        //     if (response.ok) resolve(true);
-        //     else reject(new Error('API error'));
-        //   })
-        //   .catch(error => reject(error));
-        
-        // 模拟API调用
-        setTimeout(() => {
-          setUsers(users.filter(user => user.id !== userId));
-          resolve(true);
-        }, 500);
+      new Promise(async (resolve, reject) => {
+        try {
+          // 调用删除API
+          const response = await fetch(`/api/superadmin/users/${userId}`, { 
+            method: 'DELETE' 
+          });
+          
+          if (response.ok) {
+            setUsers(users.filter(user => user.id !== userId));
+            resolve(true);
+          } else {
+            const errorData = await response.json();
+            reject(new Error(errorData.message || '删除用户失败'));
+          }
+        } catch (error) {
+          console.error('删除用户出错:', error);
+          reject(error);
+        }
       }),
       {
         loading: '正在删除用户...',
         success: '用户已成功删除',
-        error: '删除用户失败',
+        error: (err) => `删除用户失败: ${err.message}`,
       }
     );
   };
@@ -178,19 +200,24 @@ export default function SuperAdminUsersPage() {
     try {
       const newStatus = currentStatus === 'locked' ? 'active' : 'locked';
       
-      // 实际应用中调用API更新用户状态
-      // await fetch(`/api/superadmin/users/${userId}`, {
-      //   method: 'PATCH',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ status: newStatus })
-      // });
+      // 调用API更新用户状态
+      const response = await fetch(`/api/superadmin/users/${userId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
       
-      // 更新本地状态
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, status: newStatus as 'active' | 'inactive' | 'locked' } : user
-      ));
-      
-      toast.success(`用户已${newStatus === 'locked' ? '锁定' : '解锁'}`);
+      if (response.ok) {
+        // 更新本地状态
+        setUsers(users.map(user => 
+          user.id === userId ? { ...user, status: newStatus as 'active' | 'inactive' | 'locked' } : user
+        ));
+        
+        toast.success(`用户已${newStatus === 'locked' ? '锁定' : '解锁'}`);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || '更新用户状态失败');
+      }
     } catch (error) {
       console.error('更新用户状态失败:', error);
       toast.error('更新用户状态失败');
@@ -200,6 +227,33 @@ export default function SuperAdminUsersPage() {
   // 更改标签页
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+  };
+
+  // 打开添加用户模态窗口
+  const handleOpenAddUserModal = () => {
+    setIsAddUserModalOpen(true);
+  };
+
+  // 打开编辑用户模态窗口
+  const handleOpenEditUserModal = (user: User) => {
+    setSelectedUser(user);
+    setIsEditUserModalOpen(true);
+  };
+
+  // 关闭添加用户模态窗口
+  const handleCloseAddUserModal = () => {
+    setIsAddUserModalOpen(false);
+  };
+
+  // 关闭编辑用户模态窗口
+  const handleCloseEditUserModal = () => {
+    setIsEditUserModalOpen(false);
+    setSelectedUser(undefined);
+  };
+
+  // 用户操作成功后的回调
+  const handleUserFormSuccess = () => {
+    fetchUsers();
   };
   
   return (
@@ -215,7 +269,7 @@ export default function SuperAdminUsersPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button className="sm:w-auto" size="sm">
+            <Button variant="outline" size="sm">
               <Upload className="mr-2 h-4 w-4" />
               导入用户
             </Button>
@@ -223,7 +277,10 @@ export default function SuperAdminUsersPage() {
               <DownloadCloud className="mr-2 h-4 w-4" />
               导出数据
             </Button>
-            <Button className="sm:w-auto bg-red-500 hover:bg-red-600">
+            <Button 
+              className="sm:w-auto bg-primary hover:bg-primary/90"
+              onClick={handleOpenAddUserModal}
+            >
               <Plus className="mr-2 h-4 w-4" />
               添加用户
             </Button>
@@ -231,7 +288,7 @@ export default function SuperAdminUsersPage() {
         </div>
         
         {/* 用户管理卡片 */}
-        <Card>
+        <Card className="overflow-hidden border-border/40 shadow-sm">
           <CardHeader className="px-6 pb-3">
             <CardTitle>用户列表</CardTitle>
             <CardDescription>
@@ -290,14 +347,14 @@ export default function SuperAdminUsersPage() {
                   </Select>
                 </div>
                 
-                <Button variant="outline" size="icon" onClick={fetchUsers}>
+                <Button variant="outline" size="icon" onClick={fetchUsers} title="刷新数据">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="icon" onClick={() => {
                   setSearchQuery('');
                   setRoleFilter('all');
                   setStatusFilter('all');
-                }}>
+                }} title="清除筛选">
                   <XCircle className="h-4 w-4" />
                 </Button>
               </div>
@@ -305,7 +362,7 @@ export default function SuperAdminUsersPage() {
             
             {/* 标签页 */}
             <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="mb-4">
-              <TabsList>
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all" className="flex items-center">
                   <Users className="mr-2 h-4 w-4" />
                   全部用户
@@ -326,10 +383,10 @@ export default function SuperAdminUsersPage() {
             </Tabs>
             
             {/* 用户列表 */}
-            <div className="rounded-md border">
+            <div className="rounded-md border shadow-sm overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/30">
                     <TableHead>用户名</TableHead>
                     <TableHead>联系方式</TableHead>
                     <TableHead>角色</TableHead>
@@ -364,10 +421,10 @@ export default function SuperAdminUsersPage() {
                     </TableRow>
                   ) : (
                     filteredUsers.map(user => (
-                      <TableRow key={user.id}>
+                      <TableRow key={user.id} className="hover:bg-muted/30">
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <div className="rounded-full bg-primary/10 p-1">
+                            <div className="rounded-full bg-primary/10 p-1.5">
                               {roleIconMap[user.role]}
                             </div>
                             <div>
@@ -391,13 +448,18 @@ export default function SuperAdminUsersPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {user.schoolName || '-'}
+                          {user.schoolName || '—'}
                         </TableCell>
                         <TableCell>
                           {user.status === 'active' ? (
-                            <div className="flex items-center">
-                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-1" />
-                              <span className="text-sm">{statusMap[user.status].label}</span>
+                            <div className="flex items-center gap-1">
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              <span className="text-sm text-green-700">{statusMap[user.status].label}</span>
+                            </div>
+                          ) : user.status === 'locked' ? (
+                            <div className="flex items-center gap-1">
+                              <Lock className="h-4 w-4 text-red-500" />
+                              <span className="text-sm text-red-700">{statusMap[user.status].label}</span>
                             </div>
                           ) : (
                             <Badge variant={statusMap[user.status].variant}>
@@ -406,60 +468,78 @@ export default function SuperAdminUsersPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button size="icon" variant="ghost">
-                              <PenLine className="h-4 w-4" />
-                            </Button>
-                            
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className={user.status === 'locked' ? 'text-green-500 hover:text-green-700' : 'text-amber-500 hover:text-amber-700'}
-                              onClick={() => handleToggleUserStatus(user.id, user.status)}
-                            >
-                              {user.status === 'locked' ? 
-                                <CheckCircle2 className="h-4 w-4" /> : 
-                                <XCircle className="h-4 w-4" />
-                              }
-                            </Button>
-                            
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() => {
-                                toast.custom((t) => (
-                                  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border max-w-md mx-auto">
-                                    <h2 className="text-xl font-semibold mb-2">确认删除用户</h2>
-                                    <p className="text-gray-500 dark:text-gray-400 mb-4">
-                                      您确定要删除用户 "{user.name}" 吗？此操作不可撤销。
-                                    </p>
-                                    <div className="flex justify-end gap-2">
-                                      <Button 
-                                        variant="outline" 
-                                        onClick={() => toast.dismiss(t)}
-                                      >
-                                        取消
-                                      </Button>
-                                      <Button
-                                        className="bg-red-500 hover:bg-red-600"
-                                        onClick={() => {
-                                          handleDeleteUser(user.id, user.name);
-                                          toast.dismiss(t);
-                                        }}
-                                      >
-                                        删除
-                                      </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">打开菜单</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[160px]">
+                              <DropdownMenuItem 
+                                onClick={() => handleOpenEditUserModal(user)}
+                                className="cursor-pointer"
+                              >
+                                <FileEdit className="h-4 w-4 mr-2" />
+                                编辑用户
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem 
+                                onClick={() => handleToggleUserStatus(user.id, user.status)}
+                                className={`cursor-pointer ${user.status === 'locked' ? 'text-green-600' : 'text-amber-600'}`}
+                              >
+                                {user.status === 'locked' ? (
+                                  <>
+                                    <Unlock className="h-4 w-4 mr-2" />
+                                    解锁用户
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock className="h-4 w-4 mr-2" />
+                                    锁定用户
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuSeparator />
+                              
+                              <DropdownMenuItem 
+                                className="cursor-pointer text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  toast.custom((t) => (
+                                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border max-w-md mx-auto">
+                                      <h2 className="text-xl font-semibold mb-2">确认删除用户</h2>
+                                      <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                        您确定要删除用户 "{user.name}" 吗？此操作不可撤销。
+                                      </p>
+                                      <div className="flex justify-end gap-2">
+                                        <Button 
+                                          variant="outline" 
+                                          onClick={() => toast.dismiss(t)}
+                                        >
+                                          取消
+                                        </Button>
+                                        <Button
+                                          variant="destructive"
+                                          onClick={() => {
+                                            handleDeleteUser(user.id, user.name);
+                                            toast.dismiss(t);
+                                          }}
+                                        >
+                                          删除
+                                        </Button>
+                                      </div>
                                     </div>
-                                  </div>
-                                ), {
-                                  duration: Infinity,
-                                });
-                              }}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
+                                  ), {
+                                    duration: Infinity,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                删除用户
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
@@ -470,6 +550,21 @@ export default function SuperAdminUsersPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 添加用户模态窗口 */}
+      <UserFormModal
+        isOpen={isAddUserModalOpen}
+        onClose={handleCloseAddUserModal}
+        onSuccess={handleUserFormSuccess}
+      />
+
+      {/* 编辑用户模态窗口 */}
+      <UserFormModal
+        isOpen={isEditUserModalOpen}
+        onClose={handleCloseEditUserModal}
+        user={selectedUser}
+        onSuccess={handleUserFormSuccess}
+      />
     </PageContainer>
   );
 } 
