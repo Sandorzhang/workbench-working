@@ -11,8 +11,8 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Loader2 } from 'lucide-react'
 import { QuestionManagement } from '@/components/exam-management/question-management'
-import { Question } from '@/types/question'
-import { Exam } from '@/types/exam'
+import { Question } from '@/features/exam-management/question-types'
+import { Exam } from '@/features/exam-management/types'
 
 interface DetailPageProps {
   params: {

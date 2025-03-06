@@ -32,6 +32,9 @@ import { permissionHandlers } from './permission';
 import { teachingDesignsHandlers } from './teaching-designs';
 import { teachingPlanHandlers } from './teaching-plans';
 import { mentorHandlers } from './mentor';
+import { calendarHandlers } from './calendar';
+import { workbenchHandlers } from './workbench';
+import { notificationHandlers } from './notification';
 // 导入其他处理器...
 
 // 定义原始处理程序集合
@@ -105,6 +108,9 @@ const originalHandlers = [
   ...teachingDesignsHandlers,
   ...teachingPlanHandlers,
   ...mentorHandlers,
+  ...workbenchHandlers,
+  ...calendarHandlers,
+  ...notificationHandlers,
 ];
 
 // 添加关键认证处理程序 - 确保始终有这些路径的处理程序

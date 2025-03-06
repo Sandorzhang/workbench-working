@@ -49,324 +49,191 @@ export const authHandlers = [
       
       // 检查必要字段
       if (!username || !password) {
-        console.log('登录请求缺少用户名或密码');
-        return new HttpResponse(
-          JSON.stringify({
-            message: '用户名和密码不能为空',
-            code: '400',
-            details: { reason: 'missing_credentials' }
-          }),
-          { 
-            status: 400,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        console.log('登录失败: 缺少必要字段');
+        return HttpResponse.json({
+          code: 400,
+          message: '用户名和密码不能为空',
+          success: false,
+          data: null
+        }, { status: 400 });
       }
       
-      const user = db.user.findFirst({
-        where: {
-          username: {
-            equals: username,
-          },
-        },
-      });
-      
-      // 检查用户是否存在且密码是否匹配
-      if (!user) {
-        console.log(`用户 ${username} 不存在`);
-        return new HttpResponse(
-          JSON.stringify({
-            message: '用户名或密码错误',
-            code: '401',
-            details: { reason: 'invalid_credentials' }
-          }),
-          { 
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
-      
-      // 检查密码是否匹配
-      console.log(`检查密码: ${password}, 数据库密码: ${user.password}`);
-      if (user.password !== password) {
-        console.log(`用户 ${username} 密码不匹配`);
-        return new HttpResponse(
-          JSON.stringify({
-            message: '用户名或密码错误',
-            code: '401',
-            details: { reason: 'invalid_credentials' }
-          }),
-          { 
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
-      
-      // 创建会话
-      const token = generateToken();
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
-      
-      console.log(`创建会话，token: ${token.substr(0, 8)}...`);
-      
-      db.session.create({
-        id: String(Date.now()),
-        userId: user.id,
-        token,
-        expiresAt: expiresAt.toISOString(),
-      });
-      
-      // 保存数据库状态
-      saveDb();
-      
-      const { password: _, ...userWithoutPassword } = user;
-      
-      console.log(`登录成功，返回用户信息: ${userWithoutPassword.name}`);
-      
-      // 生成访问令牌和刷新令牌
-      const accessToken = token;
-      const refreshToken = generateToken();
-      
-      // 返回标准格式的登录响应，与验证码登录保持一致
-      return new HttpResponse(
-        JSON.stringify({
+      // 模拟登录逻辑
+      if (username === 'admin' && password === 'admin') {
+        console.log('管理员登录成功');
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        // 返回登录成功响应
+        return HttpResponse.json({
           code: 0,
-          msg: "成功",
+          message: '登录成功',
+          success: true,
           data: {
             accessToken,
             refreshToken,
-            user: userWithoutPassword,
-            school: {
-              id: "school-default",
-              name: "示范学校",
-              logo: "/images/school-logo.png",
-              period: "九年一贯制"
-            },
-            terminal: "web",
-            terminalList: ["web", "mobile"],
-            permissions: ["read", "write"],
-            role: {
-              id: user.role || "user",
-              name: user.role === "admin" ? "管理员" : "普通用户",
-              weight: null,
-              description: null,
-              userId: null,
-              isBuiltIn: true,
-              terminal: "web"
-            },
-            roleList: [{
-              id: user.role || "user",
-              name: user.role === "admin" ? "管理员" : "普通用户",
-              weight: null,
-              description: null,
-              userId: null,
-              isBuiltIn: true,
-              terminal: "web"
-            }],
-            schoolList: null
+            user: {
+              id: '1',
+              username: 'admin',
+              email: 'admin@example.com',
+              fullName: '系统管理员',
+              avatar: '/avatars/admin.png',
+              role: 'admin',
+              permissions: ['*']
+            }
           }
-        }),
-        { 
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json'
+        }, { status: 200 });
+      } 
+      // 教师账号
+      else if (username === 'teacher' && password === 'teacher') {
+        console.log('教师登录成功');
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        return HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: '2',
+              username: 'teacher',
+              email: 'teacher@example.com',
+              fullName: '张老师',
+              avatar: '/avatars/teacher.png',
+              role: 'teacher',
+              permissions: ['classroom:read', 'classroom:write', 'student:read']
+            }
           }
-        }
-      );
-    } catch (err) {
-      console.error('处理登录请求时出错:', err);
-      return new HttpResponse(
-        JSON.stringify({
-          message: '服务器错误，请稍后重试',
-          code: '500',
-          details: { reason: 'server_error' }
-        }),
-        { 
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json'
+        }, { status: 200 });
+      }
+      // 学生账号
+      else if (username === 'student' && password === 'student') {
+        console.log('学生登录成功');
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        return HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: '3',
+              username: 'student',
+              email: 'student@example.com',
+              fullName: '李同学',
+              avatar: '/avatars/student.png',
+              role: 'student',
+              permissions: ['course:read']
+            }
           }
-        }
-      );
+        }, { status: 200 });
+      } 
+      // 登录失败
+      else {
+        console.log('登录失败: 用户名或密码错误');
+        return HttpResponse.json({
+          code: 401,
+          message: '用户名或密码错误',
+          success: false,
+          data: null
+        }, { status: 401 });
+      }
+    } catch (error) {
+      console.error('登录处理发生错误:', error);
+      return HttpResponse.json({
+        code: 500,
+        message: '服务器内部错误',
+        success: false,
+        data: null
+      }, { status: 500 });
     }
   }),
   
-  // 获取当前登录用户信息
+  // 获取当前用户信息
   http.get('/api/auth/me', async ({ request }) => {
-    try {
-      await delay(300);
-      
-      console.log('收到 /api/auth/me 请求', request.url);
+    await delay(300);
     
-      // 从请求头获取令牌
-      const authHeader = request.headers.get('Authorization');
-      console.log('Authorization 头:', authHeader ? authHeader.substring(0, 20) + '...' : 'undefined');
-      
-      // 始终记录当前存储的token，帮助调试
-      if (typeof window !== 'undefined') {
-        const localToken = localStorage.getItem('token');
-        console.log('本地存储token:', localToken ? localToken.substring(0, 10) + '...' : 'null');
-      }
-      
-      // 检查是否为开发环境下的默认token
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
-      
-      // 开发环境中，如果没有有效的token或使用默认token，返回默认用户
-      if (!token || token === 'default-token') {
-        console.log('使用默认用户响应，token:', token);
-        const defaultUser = db.user.findFirst({
-          where: {
-            id: {
-              equals: '1', // 默认管理员
-            },
-          },
-        });
-        
-        if (defaultUser) {
-          const { password: _, ...userWithoutPassword } = defaultUser;
-          console.log('返回默认用户信息:', userWithoutPassword.name);
-          return new HttpResponse(
-            JSON.stringify(userWithoutPassword),
-            { 
-              status: 200,
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-        } else {
-          console.error('无法找到默认用户，请检查数据库初始化');
-          return new HttpResponse(
-            JSON.stringify({
-              message: '无法找到默认用户，请检查数据库初始化',
-              code: '404',
-              details: { reason: 'default_user_not_found' }
-            }),
-            { 
-              status: 404,
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }
-          );
+    // 检查授权头
+    const authHeader = request.headers.get('Authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('获取用户信息失败: 未提供有效的认证信息');
+      return HttpResponse.json({
+        code: 401,
+        message: '未授权',
+        success: false,
+        data: null
+      }, { status: 401 });
+    }
+    
+    // 模拟检查token
+    // 在实际应用中，我们会验证token的有效性，但在这里我们只检查其存在性
+    
+    // 为演示目的，根据token末尾字符返回不同用户
+    const token = authHeader.replace('Bearer ', '');
+    
+    // 根据token最后一个字符模拟不同用户
+    const lastChar = token.charAt(token.length - 1);
+    
+    // 超级管理员
+    if (lastChar === 'a' || lastChar === '0' || lastChar === '5') {
+      return HttpResponse.json({
+        code: 0,
+        message: '成功',
+        success: true,
+        data: {
+          id: '1',
+          username: 'admin',
+          email: 'admin@example.com',
+          fullName: '系统管理员',
+          avatar: '/avatars/admin.png',
+          role: 'admin',
+          permissions: ['*']
         }
-      }
-      
-      // 尝试根据token查找会话
-      const session = db.session.findFirst({
-        where: {
-          token: {
-            equals: token,
-          },
-        },
       });
-      
-      if (!session) {
-        console.log('会话未找到，token无效:', token.substring(0, 10) + '...');
-        return new HttpResponse(
-          JSON.stringify({
-            message: '会话已过期或无效',
-            code: '401',
-            details: { reason: 'invalid_session' }
-          }),
-          { 
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
-      
-      // 检查会话是否过期
-      const expiresAt = new Date(session.expiresAt);
-      if (expiresAt < new Date()) {
-        console.log('会话已过期:', expiresAt);
-        db.session.delete({
-          where: {
-            id: {
-              equals: session.id,
-            },
-          },
-        });
-        
-        return new HttpResponse(
-          JSON.stringify({
-            message: '会话已过期，请重新登录',
-            code: '401',
-            details: { reason: 'session_expired' }
-          }),
-          { 
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
-      
-      // 查找用户
-      const user = db.user.findFirst({
-        where: {
-          id: {
-            equals: session.userId,
-          },
-        },
+    } 
+    // 教师用户
+    else if (lastChar === 'b' || lastChar === '1' || lastChar === '6') {
+      return HttpResponse.json({
+        code: 0,
+        message: '成功',
+        success: true,
+        data: {
+          id: '2',
+          username: 'teacher',
+          email: 'teacher@example.com',
+          fullName: '张老师',
+          avatar: '/avatars/teacher.png',
+          role: 'teacher',
+          permissions: ['classroom:read', 'classroom:write', 'student:read']
+        }
       });
-      
-      if (!user) {
-        console.log('用户未找到:', session.userId);
-        return new HttpResponse(
-          JSON.stringify({
-            message: '用户不存在',
-            code: '401',
-            details: { reason: 'user_not_found' }
-          }),
-          { 
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
-      
-      // 返回用户信息（不包含密码）
-      const { password: _, ...userWithoutPassword } = user;
-      console.log('返回用户信息:', userWithoutPassword.name);
-      
-      return new HttpResponse(
-        JSON.stringify(userWithoutPassword),
-        { 
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json'
-          }
+    } 
+    // 学生用户
+    else {
+      return HttpResponse.json({
+        code: 0,
+        message: '成功',
+        success: true,
+        data: {
+          id: '3',
+          username: 'student',
+          email: 'student@example.com',
+          fullName: '李同学',
+          avatar: '/avatars/student.png',
+          role: 'student',
+          permissions: ['course:read']
         }
-      );
-    } catch (error) {
-      console.error('获取当前用户信息失败:', error);
-      return new HttpResponse(
-        JSON.stringify({
-          message: '获取用户信息失败',
-          code: '500',
-          details: { reason: 'server_error' }
-        }),
-        { 
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      });
     }
   }),
   
@@ -613,41 +480,28 @@ export const authHandlers = [
   
   // 退出登录
   http.post('/api/auth/logout', async ({ request }) => {
-    await delay(300);
+    await delay(200);
     
-    // 从请求头获取令牌
+    // 检查授权头
     const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
     
-    if (!token) {
-      return new HttpResponse(null, { status: 204 });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('登出失败: 未提供有效的认证信息');
+      return HttpResponse.json({
+        code: 401,
+        message: '未授权',
+        success: false,
+        data: null
+      }, { status: 401 });
     }
     
-    // 查找会话
-    const session = db.session.findFirst({
-      where: {
-        token: {
-          equals: token,
-        },
-      },
+    // 在实际应用中，我们会从服务器的黑名单或存储中删除token
+    
+    return HttpResponse.json({
+      code: 0,
+      message: '登出成功',
+      success: true,
+      data: null
     });
-    
-    if (session) {
-      // 删除会话
-      db.session.delete({
-        where: {
-          id: {
-            equals: session.id,
-          },
-        },
-      });
-      
-      // 保存数据库状态
-      saveDb();
-      
-      console.log('用户登出成功，删除会话:', session.id);
-    }
-    
-    return new HttpResponse(null, { status: 204 });
   }),
 ]; 

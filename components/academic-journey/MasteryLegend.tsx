@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { MasteryLevel } from '@/types/academic-journey';
+import { MasteryLevel } from '@/features/academic-journey/types';
 
 interface MasteryLegendProps {
   className?: string;

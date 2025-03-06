@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw';
 import { v4 as uuidv4 } from 'uuid';
-import { StudentRecord, RecordType, RecordStatus } from '@/types/record';
+import { StudentRecord, RecordType, RecordStatus } from '@/features/mentor-system/types';
 
 // 模拟数据
 let studentRecords: StudentRecord[] = [

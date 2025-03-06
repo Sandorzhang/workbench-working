@@ -66,12 +66,12 @@ const mockDesigns = [
   },
   {
     id: '2',
-    title: '数学函数专题',
+    title: '函数与方程专题',
     subject: '初中数学',
     unit: '第三单元',
-    description: '一次函数、二次函数的概念与应用',
+    description: '一元二次方程的解法与应用',
     status: 'draft',
-    lastModified: '2024-03-18',
+    lastModified: '2024-03-12',
     progress: 60,
     lessons: []
   },
@@ -94,70 +94,12 @@ export const teachingDesignsHandlers = [
     await delay(500);
     
     console.log('[MSW] 处理请求: GET /api/teaching-designs');
-    return HttpResponse.json(mockDesigns, { status: 200 });
-  }),
-  
-  // 创建新的教学设计
-  http.post('*/api/teaching-designs', async ({ request }) => {
-    await delay(800);
-    
-    console.log('[MSW] 处理请求: POST /api/teaching-designs');
-    
-    try {
-      let formData: FormData;
-      // 处理不同类型的请求体
-      if (request.headers.get('Content-Type')?.includes('multipart/form-data')) {
-        formData = await request.formData();
-        console.log('[MSW] 接收到multipart表单数据');
-      } else {
-        const body = await request.json() as Record<string, any>;
-        formData = new FormData();
-        Object.entries(body).forEach(([key, value]) => {
-          formData.append(key, String(value));
-        });
-        console.log('[MSW] 接收到JSON数据');
-      }
-      
-      // 记录所有接收到的字段
-      console.log('[MSW] 表单字段:');
-      for (const [key, value] of formData.entries()) {
-        console.log(`  - ${key}: ${value instanceof File ? `文件 (${value.name}, ${value.size} bytes)` : value}`);
-      }
-      
-      // 创建新的教学设计对象
-      const newDesign = {
-        id: `design-${Date.now()}`,
-        title: formData.get('title') || '未命名设计',
-        subject: formData.get('subject') || '未指定学科',
-        grade: formData.get('grade') || '未指定年级',
-        semester: formData.get('semester') || '未指定学期',
-        unit: '第一单元',
-        author: '当前用户',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        status: 'draft',
-        description: `${formData.get('title')} - ${formData.get('subject')} ${formData.get('grade')} ${formData.get('semester')}`,
-        lastModified: new Date().toLocaleDateString('zh-CN').replace(/\//g, '-'),
-        progress: 0,
-        lessons: []
-      };
-      
-      // 模拟文件处理
-      const document = formData.get('document');
-      if (document instanceof File) {
-        console.log(`[MSW] 接收到文件: ${document.name}, 大小: ${document.size} bytes`);
-      }
-      
-      console.log('[MSW] 创建的新设计:', newDesign);
-      
-      return HttpResponse.json(newDesign, { status: 201 });
-    } catch (error) {
-      console.error('[MSW] 创建教学设计时出错:', error);
-      return HttpResponse.json(
-        { error: '创建教学设计失败', details: String(error) },
-        { status: 500 }
-      );
-    }
+    return HttpResponse.json({
+      code: 0,
+      message: 'success',
+      success: true,
+      data: mockDesigns
+    });
   }),
   
   // 获取单个教学设计
@@ -170,33 +112,104 @@ export const teachingDesignsHandlers = [
     const design = mockDesigns.find(d => d.id === id);
     
     if (!design) {
-      return HttpResponse.json(
-        { error: '找不到指定的教学设计' },
-        { status: 404 }
-      );
+      return HttpResponse.json({
+        code: 404,
+        message: 'Teaching design not found',
+        success: false,
+        data: null
+      }, { status: 404 });
     }
     
-    return HttpResponse.json(design, { status: 200 });
+    return HttpResponse.json({
+      code: 0,
+      message: 'success',
+      success: true,
+      data: design
+    });
+  }),
+  
+  // 创建新的教学设计
+  http.post('*/api/teaching-designs', async ({ request }) => {
+    await delay(800);
+    
+    console.log('[MSW] 处理请求: POST /api/teaching-designs');
+    
+    try {
+      const body = await request.json() as Record<string, any>;
+      console.log('[MSW] 接收到的教学设计数据:', body);
+      
+      const newDesign = {
+        id: String(mockDesigns.length + 1),
+        ...body,
+        lastModified: new Date().toISOString().split('T')[0],
+        progress: 0,
+        status: 'draft',
+        lessons: []
+      };
+      
+      // In a real handler we would add this to the database
+      // mockDesigns.push(newDesign);
+      
+      return HttpResponse.json({
+        code: 0,
+        message: 'Teaching design created successfully',
+        success: true,
+        data: newDesign
+      }, { status: 201 });
+    } catch (error) {
+      console.error('[MSW] Error creating teaching design:', error);
+      return HttpResponse.json({
+        code: 500,
+        message: 'Failed to create teaching design',
+        success: false,
+        data: null
+      }, { status: 500 });
+    }
   }),
   
   // 更新教学设计
   http.put('*/api/teaching-designs/:id', async ({ params, request }) => {
-    await delay(500);
+    await delay(600);
     
     const { id } = params;
     console.log(`[MSW] 处理请求: PUT /api/teaching-designs/${id}`);
     
     try {
-      const updates = await request.json() as Record<string, any>;
-      return HttpResponse.json(
-        { id, ...updates, updatedAt: new Date().toISOString() },
-        { status: 200 }
-      );
+      const body = await request.json() as Record<string, any>;
+      console.log('[MSW] 接收到的更新数据:', body);
+      
+      const designIndex = mockDesigns.findIndex(d => d.id === id);
+      
+      if (designIndex === -1) {
+        return HttpResponse.json({
+          code: 404,
+          message: 'Teaching design not found',
+          success: false,
+          data: null
+        }, { status: 404 });
+      }
+      
+      // In a real handler we would update the database
+      const updatedDesign = {
+        ...mockDesigns[designIndex],
+        ...body,
+        lastModified: new Date().toISOString().split('T')[0]
+      };
+      
+      return HttpResponse.json({
+        code: 0,
+        message: 'Teaching design updated successfully',
+        success: true,
+        data: updatedDesign
+      });
     } catch (error) {
-      return HttpResponse.json(
-        { error: '更新教学设计失败', details: String(error) },
-        { status: 500 }
-      );
+      console.error('[MSW] Error updating teaching design:', error);
+      return HttpResponse.json({
+        code: 500,
+        message: 'Failed to update teaching design',
+        success: false,
+        data: null
+      }, { status: 500 });
     }
   }),
   
@@ -207,9 +220,102 @@ export const teachingDesignsHandlers = [
     const { id } = params;
     console.log(`[MSW] 处理请求: DELETE /api/teaching-designs/${id}`);
     
-    return HttpResponse.json(
-      { message: '教学设计已成功删除' },
-      { status: 200 }
-    );
+    const designIndex = mockDesigns.findIndex(d => d.id === id);
+    
+    if (designIndex === -1) {
+      return HttpResponse.json({
+        code: 404,
+        message: 'Teaching design not found',
+        success: false,
+        data: null
+      }, { status: 404 });
+    }
+    
+    // In a real handler we would remove from the database
+    // mockDesigns.splice(designIndex, 1);
+    
+    return HttpResponse.json({
+      code: 0,
+      message: 'Teaching design deleted successfully',
+      success: true,
+      data: null
+    });
+  }),
+  
+  // 获取教学设计的课时列表
+  http.get('*/api/teaching-designs/:id/lessons', async ({ params }) => {
+    await delay(300);
+    
+    const { id } = params;
+    console.log(`[MSW] 处理请求: GET /api/teaching-designs/${id}/lessons`);
+    
+    const design = mockDesigns.find(d => d.id === id);
+    
+    if (!design) {
+      return HttpResponse.json({
+        code: 404,
+        message: 'Teaching design not found',
+        success: false,
+        data: null
+      }, { status: 404 });
+    }
+    
+    return HttpResponse.json({
+      code: 0,
+      message: 'success',
+      success: true,
+      data: design.lessons || []
+    });
+  }),
+  
+  // 添加课时到教学设计
+  http.post('*/api/teaching-designs/:id/lessons', async ({ params, request }) => {
+    await delay(500);
+    
+    const { id } = params;
+    console.log(`[MSW] 处理请求: POST /api/teaching-designs/${id}/lessons`);
+    
+    try {
+      const body = await request.json() as Record<string, any>;
+      console.log('[MSW] 接收到的课时数据:', body);
+      
+      const designIndex = mockDesigns.findIndex(d => d.id === id);
+      
+      if (designIndex === -1) {
+        return HttpResponse.json({
+          code: 404,
+          message: 'Teaching design not found',
+          success: false,
+          data: null
+        }, { status: 404 });
+      }
+      
+      const newLesson = {
+        id: String(Date.now()),
+        ...body,
+        order: (mockDesigns[designIndex].lessons?.length || 0) + 1
+      };
+      
+      // In a real handler we would update the database
+      // mockDesigns[designIndex].lessons = [
+      //   ...(mockDesigns[designIndex].lessons || []),
+      //   newLesson
+      // ];
+      
+      return HttpResponse.json({
+        code: 0,
+        message: 'Lesson added successfully',
+        success: true,
+        data: newLesson
+      }, { status: 201 });
+    } catch (error) {
+      console.error('[MSW] Error adding lesson:', error);
+      return HttpResponse.json({
+        code: 500,
+        message: 'Failed to add lesson',
+        success: false,
+        data: null
+      }, { status: 500 });
+    }
   })
 ];

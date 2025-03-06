@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClassOverview as ClassOverviewType, LearningStandard } from '@/types/academic-journey';
-import { getClassOverview, getLearningStandards } from '@/lib/api-academic-journey';
+import { ClassOverview as ClassOverviewType, LearningStandard } from '@/features/academic-journey/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -12,6 +11,7 @@ import { TimeRangeSelector } from './TimeRangeSelector';
 import { StandardsFilter } from './StandardsFilter';
 import { SectionContainer } from '@/components/ui/section-container';
 import { Users, BookOpen, TrendingUp } from 'lucide-react';
+import { api } from '@/shared/api';
 
 interface ClassOverviewProps {
   classId: string;
@@ -29,18 +29,17 @@ export function ClassOverview({ classId, className }: ClassOverviewProps) {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
         
         // Fetch class overview data
-        const { overview } = await getClassOverview(classId);
-        setOverviewData(overview);
+        const overviewResponse = await api.academicJourney.getClassOverview(classId);
+        setOverviewData(overviewResponse.data.overview);
         
         // Fetch standards data for reference
-        const { standards } = await getLearningStandards();
-        setStandards(standards);
+        const standardsResponse = await api.academicJourney.getLearningStandards();
+        setStandards(standardsResponse.data.standards);
       } catch (err) {
         console.error('Failed to fetch class overview:', err);
-        setError('加载班级概览数据失败');
+        setError('获取班级数据失败');
       } finally {
         setLoading(false);
       }

@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/use-toast'
 import { Progress } from '@/components/ui/progress'
 import { FileUp, File, Loader2, CheckCircle2 } from 'lucide-react'
-import { Question } from '@/types/question'
+import { Question } from '@/features/exam-management/question-types'
 import { cn } from '@/lib/utils'
+import { api } from '@/shared/api'
 
 interface PdfImportDialogProps {
   examId: string
@@ -121,36 +122,23 @@ export function PdfImportDialog({
         })
       }, 300)
 
-      // 模拟API请求
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-      formData.append('examId', examId)
-
-      const response = await fetch('/api/questions/import-pdf', {
-        method: 'POST',
-        body: formData,
-      })
+      // 使用新的API客户端处理PDF导入
+      const response = await api.examManagement.importQuestionsFromPdf(examId, selectedFile)
 
       clearInterval(processProgressInterval)
       setProgress(100)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || '导入失败')
-      }
-
       // 处理识别结果
-      const importedData = await response.json()
-      setImportedQuestions(importedData.questions)
+      setImportedQuestions(response.data.questions)
       setProcessStatus('success')
 
       toast({
         title: 'PDF处理成功',
-        description: `已成功识别 ${importedData.questions.length} 道题目`,
+        description: `已成功识别 ${response.data.questions.length} 道题目`,
       })
 
       // 通知父组件更新题目列表
-      onQuestionsImport(importedData.questions)
+      onQuestionsImport(response.data.questions)
       
       // 完成后1.5秒关闭对话框
       setTimeout(() => {

@@ -14,11 +14,12 @@ import {
 } from '@/components/ui/table'
 import { AlertCircle, Edit, FileUp, Image as ImageIcon, Plus, Trash2, Calculator } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Question, LearningObjective } from '@/types/question'
+import { Question, LearningObjective } from '@/features/exam-management/question-types'
+import { Exam } from '@/features/exam-management/types'
 import { QuestionDialog } from './question-dialog'
-import { Exam } from '@/types/exam'
 import { PdfImportDialog } from './pdf-import-dialog'
 import { BulkScoreDialog } from './bulk-score-dialog'
+import { api } from '@/shared/api'
 
 interface QuestionManagementProps {
   examId: string
@@ -41,6 +42,8 @@ export function QuestionManagement({
   const [learningObjectives, setLearningObjectives] = useState<LearningObjective[]>([])
   const [isLoadingObjectives, setIsLoadingObjectives] = useState(false)
   const [examInfo, setExamInfo] = useState<Partial<Exam> | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 获取考试信息
   useEffect(() => {
@@ -62,25 +65,20 @@ export function QuestionManagement({
 
   // 获取学业目标，根据考试学科筛选
   const fetchLearningObjectives = async () => {
-    setIsLoadingObjectives(true)
     try {
-      // 使用考试学科或传入的学科参数
-      const subject = examInfo?.subject || examSubject
-      const response = await fetch(`/api/learning-objectives?subject=${encodeURIComponent(subject)}`)
-      if (!response.ok) {
-        throw new Error('获取学业目标失败')
-      }
-      const data = await response.json()
-      setLearningObjectives(data)
+      setIsLoading(true)
+      // 使用考试学科作为筛选条件
+      const response = await api.examManagement.getLearningObjectives(examSubject)
+      setLearningObjectives(response.data)
     } catch (error) {
-      console.error('获取学业目标出错:', error)
+      console.error('获取学习目标失败:', error)
       toast({
-        title: '获取学业目标失败',
-        description: '请稍后再试',
+        title: '加载失败',
+        description: '无法加载学习目标数据',
         variant: 'destructive',
       })
     } finally {
-      setIsLoadingObjectives(false)
+      setIsLoading(false)
     }
   }
 
@@ -99,43 +97,19 @@ export function QuestionManagement({
 
   // 处理题目对话框提交
   const handleQuestionDialogSubmit = async (data: Partial<Question>) => {
-    setIsLoading(true)
     try {
-      let updatedQuestion: Question
+      setIsSaving(true)
       
-      if (data.id) {
+      if (selectedQuestion) {
         // 更新现有题目
-        const response = await fetch(`/api/questions/${data.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
+        const updatedQuestion = await api.examManagement.updateQuestion(selectedQuestion.id, {
+          ...data,
+          examId
         })
         
-        if (!response.ok) {
-          // 尝试详细记录错误响应
-          const responseText = await response.text();
-          console.error('错误响应原始内容:', responseText);
-          
-          let errorMessage = '更新题目失败';
-          try {
-            const errorData = JSON.parse(responseText);
-            if (errorData && errorData.message) {
-              errorMessage = errorData.message;
-            }
-          } catch (parseError) {
-            console.error('解析错误响应失败:', parseError);
-          }
-          
-          throw new Error(errorMessage);
-        }
-        
-        updatedQuestion = await response.json()
-        
-        // 更新本地题目列表
+        // 更新本地状态
         const updatedQuestions = questions.map(q => 
-          q.id === updatedQuestion.id ? updatedQuestion : q
+          q.id === updatedQuestion.data.id ? updatedQuestion.data : q
         )
         
         onQuestionsUpdate(updatedQuestions)
@@ -145,39 +119,13 @@ export function QuestionManagement({
         })
       } else {
         // 创建新题目
-        const response = await fetch('/api/questions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...data,
-            examId,
-          }),
-        })
+        const response = await api.examManagement.createQuestion({
+          ...data,
+          examId
+        } as Omit<Question, 'id' | 'createdAt' | 'updatedAt'>)
         
-        if (!response.ok) {
-          // 尝试详细记录错误响应
-          const responseText = await response.text();
-          console.error('错误响应原始内容:', responseText);
-          
-          let errorMessage = '创建题目失败';
-          try {
-            const errorData = JSON.parse(responseText);
-            if (errorData && errorData.message) {
-              errorMessage = errorData.message;
-            }
-          } catch (parseError) {
-            console.error('解析错误响应失败:', parseError);
-          }
-          
-          throw new Error(errorMessage);
-        }
-        
-        updatedQuestion = await response.json()
-        
-        // 更新本地题目列表
-        onQuestionsUpdate([...questions, updatedQuestion])
+        // 更新本地状态
+        onQuestionsUpdate([...questions, response.data])
         toast({
           title: '题目已添加',
           description: '新题目已成功添加到考试中',
@@ -187,42 +135,25 @@ export function QuestionManagement({
       // 关闭对话框
       setDialogOpen(false)
     } catch (error) {
-      console.error('保存题目出错:', error);
-      
-      // 确保错误消息正确显示
-      let errorMessage = '保存题目时出现错误，请稍后再试';
-      if (error instanceof Error && error.message) {
-        errorMessage = error.message;
-      }
-      
-      // 使用具体的错误消息
+      console.error('保存题目时出错:', error)
       toast({
-        title: '操作失败',
-        description: errorMessage,
+        title: '保存失败',
+        description: error instanceof Error ? error.message : '保存题目时出现错误',
         variant: 'destructive',
       })
     } finally {
-      setIsLoading(false)
+      setIsSaving(false)
     }
   }
 
   // 删除题目
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm('确定要删除这个题目吗？此操作无法撤销。')) {
-      return
-    }
-    
-    setIsLoading(true)
     try {
-      const response = await fetch(`/api/questions/${questionId}`, {
-        method: 'DELETE',
-      })
+      setIsDeleting(true)
       
-      if (!response.ok) {
-        throw new Error('删除题目失败')
-      }
+      await api.examManagement.deleteQuestion(questionId)
       
-      // 更新本地题目列表
+      // 更新本地状态
       const updatedQuestions = questions.filter(q => q.id !== questionId)
       onQuestionsUpdate(updatedQuestions)
       
@@ -231,14 +162,14 @@ export function QuestionManagement({
         description: '题目已成功从考试中移除',
       })
     } catch (error) {
-      console.error('删除题目出错:', error)
+      console.error('删除题目时出错:', error)
       toast({
         title: '删除失败',
         description: '删除题目时出现错误，请稍后再试',
         variant: 'destructive',
       })
     } finally {
-      setIsLoading(false)
+      setIsDeleting(false)
     }
   }
 

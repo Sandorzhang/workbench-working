@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { MentorHub } from "@/components/mentor-hub/mentor-hub";
+import { MentorSystem } from "@/components/mentor-system/mentor-system";
 import { Users, UserCircle, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/ui/hero-section";
-import TeacherView from "@/components/mentor-hub/teacher-view";
+import TeacherView from "@/components/mentor-system/teacher-view";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -13,7 +13,7 @@ import Link from "next/link";
 // 用户角色类型
 type UserRole = 'admin' | 'teacher' | 'student';
 
-export default function MentorHubPage() {
+export default function MentorSystemPage() {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -116,7 +116,7 @@ export default function MentorHubPage() {
       
       {/* 主要内容区域 */}
       <div className="flex-1">
-        <MentorHub />
+        <MentorSystem />
       </div>
     </div>
   );

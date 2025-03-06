@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw';
 import { db } from '../db';
-import { IndicatorItem, EvaluationLevel } from '@/components/mentor-hub/student-evaluation';
+import { IndicatorItem, EvaluationLevel } from '@/components/mentor-system/student-evaluation';
 
 // 模拟三级指标评价数据
 const evaluationIndicators: IndicatorItem[] = [
