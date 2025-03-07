@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { SuperAdminHero } from '@/components/superadmin/hero-section';
 import { 
   Search, 
   Filter, 
@@ -26,7 +27,8 @@ import {
   CheckCircle2, 
   XCircle, 
   RefreshCw,
-  User
+  User,
+  Key
 } from 'lucide-react';
 
 // 资源权限类型
@@ -306,23 +308,36 @@ export default function PermissionsPage() {
   );
   
   return (
-    <PageContainer loading={isLoading || authLoading}>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">应用权限管理</h1>
-            <p className="text-muted-foreground mt-1">
-              管理系统应用的访问权限
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" size="sm" onClick={refreshData}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              刷新数据
-            </Button>
-          </div>
-        </div>
-        
+    <div className="container py-6">
+      <SuperAdminHero
+        title="权限管理"
+        description="管理系统用户的角色和权限，控制用户对不同应用和功能的访问权限。"
+        icon={Key}
+        actions={
+          <Button 
+            onClick={refreshData} 
+            variant="outline" 
+            className="gap-1"
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            刷新数据
+          </Button>
+        }
+      />
+
+      <Tabs defaultValue="applications" className="w-full space-y-6">
+        <TabsList className="w-full grid grid-cols-2 lg:w-auto">
+          <TabsTrigger value="applications" className="gap-2">
+            <AppWindow className="h-4 w-4" />
+            应用权限
+          </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2">
+            <UserCog className="h-4 w-4" />
+            用户权限
+          </TabsTrigger>
+        </TabsList>
+
         {/* 主要内容 */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* 左侧面板 - 用户选择 */}
@@ -651,7 +666,7 @@ export default function PermissionsPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </PageContainer>
+      </Tabs>
+    </div>
   );
 } 

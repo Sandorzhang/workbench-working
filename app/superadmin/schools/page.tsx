@@ -9,9 +9,10 @@ import { toast } from 'sonner';
 import { School, Region, SchoolType, ApiResponseDetail } from '@/features/superadmin/types';
 import { SchoolForm, SchoolFormValues } from '@/components/superadmin/school-form';
 import { superadminApi } from '@/shared/api';
+import { SuperAdminHero } from '@/components/superadmin/hero-section';
+import { School as SchoolIcon, Plus } from 'lucide-react';
 
 // UI 组件导入
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -44,9 +45,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Loader2, Search, Plus, Pencil, Trash2, 
-  School as SchoolIcon
+import {
+  Loader2, Search, Pencil, Trash2,
 } from 'lucide-react';
 
 // UI Components
@@ -64,6 +64,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 
 export default function SchoolsPage() {
   const { isAuthenticated, user } = useAuth();
@@ -386,164 +387,34 @@ export default function SchoolsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 pt-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">学校管理</h2>
-          <p className="text-muted-foreground text-sm">管理系统中的所有学校数据与配置</p>
-        </div>
-        <Button onClick={openAddDialog} className="shadow-md transition-all hover:shadow-lg">
-          <Plus className="mr-2 h-4 w-4" />
-          添加学校
-        </Button>
-      </div>
+    <div className="container py-6">
+      <SuperAdminHero
+        title="学校管理"
+        description="管理系统中所有学校信息。您可以添加、编辑和删除学校，并关联到相应的区域。"
+        icon={SchoolIcon}
+        actions={
+          <Button onClick={openAddDialog} className="gap-1">
+            <Plus className="h-4 w-4" />
+            添加学校
+          </Button>
+        }
+      />
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">总学校数</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{schools.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">启用学校</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{schools.filter(s => s.status).length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">禁用学校</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{schools.filter(s => !s.status).length}</div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* 筛选工具栏 */}
-      <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
-        <CardHeader className="bg-muted/20 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">筛选条件</CardTitle>
-            <CardDescription className="text-xs mt-0.5">筛选学校数据</CardDescription>
-          </div>
-          
-          {/* 搜索框 */}
-          <div className="relative w-full sm:w-[280px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="搜索学校、代码或区域..."
-              className="pl-9 h-9 w-full text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </CardHeader>
-
-        <CardContent className="px-6 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium block mb-2">区域</label>
-              <Select value={filterRegion} onValueChange={setFilterRegion}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="选择区域" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部区域</SelectItem>
-                  {regions.map(region => (
-                    <SelectItem key={region.id} value={region.id}>
-                      {region.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-2">学校类型</label>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="选择学校类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部类型</SelectItem>
-                  {schoolTypes.map(type => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-2">状态</label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="选择状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="true">启用</SelectItem>
-                  <SelectItem value="false">禁用</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex flex-col justify-end">
-              <div className="flex gap-2">
-                <Button onClick={applyFilters} className="flex-1">
-                  应用筛选
-                </Button>
-                <Button variant="outline" onClick={clearFilters}>
-                  清除
-                </Button>
-              </div>
-              
-              {/* 活跃筛选条件标签 */}
-              {(filterRegion !== 'all' || filterType !== 'all' || filterStatus !== 'all') && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  <div className="text-xs text-muted-foreground">筛选中:</div>
-                  {filterRegion !== 'all' && (
-                    <Badge variant="outline" className="text-xs">
-                      区域: {regions.find(r => r.id === filterRegion)?.name || filterRegion}
-                    </Badge>
-                  )}
-                  {filterType !== 'all' && (
-                    <Badge variant="outline" className="text-xs">
-                      类型: {filterType}
-                    </Badge>
-                  )}
-                  {filterStatus !== 'all' && (
-                    <Badge variant="outline" className="text-xs">
-                      状态: {filterStatus === 'true' ? '启用' : '禁用'}
-                    </Badge>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* 学校列表 */}
-      <Card className="overflow-hidden shadow-md border-0 rounded-xl">
-        <CardHeader className="bg-muted/20 px-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div>
-              <CardTitle>学校列表</CardTitle>
-              <CardDescription>管理系统中的所有学校</CardDescription>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold">学校列表</CardTitle>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="搜索学校..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
+                className="w-[250px]"
+              />
             </div>
           </div>
         </CardHeader>
+        
         <CardContent className="px-0 py-0">
           {isLoading ? (
             <div className="flex justify-center py-12">

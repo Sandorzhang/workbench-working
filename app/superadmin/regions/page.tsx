@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/auth';
 import { Metadata } from 'next';
 import { Region, ApiResponseDetail } from '@/features/superadmin/types';
 import { superadminApi } from '@/shared/api';
+import { SuperAdminHero } from '@/components/superadmin/hero-section';
+import { MapPin, Plus } from 'lucide-react';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -26,7 +28,7 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Search, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Pagination } from '@/components/ui/pagination';
 
@@ -288,35 +290,32 @@ export default function RegionsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 pt-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">区域管理</h2>
-          <p className="text-muted-foreground text-sm">管理系统中的所有区域数据与配置</p>
-        </div>
-        <Button onClick={openAddDialog} className="shadow-md transition-all hover:shadow-lg">
-          <Plus className="mr-2 h-4 w-4" />
-          添加区域
-        </Button>
-      </div>
+    <div className="container py-6">
+      <SuperAdminHero
+        title="区域管理"
+        description="管理学校所属的区域、县市和城市。每个区域可以包含多个学校，便于按地理位置组织和管理教育资源。"
+        icon={MapPin}
+        actions={
+          <Button onClick={openAddDialog} className="gap-1">
+            <Plus className="h-4 w-4" />
+            添加区域
+          </Button>
+        }
+      />
       
-      <Card className="shadow-md">
+      <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle>区域列表</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-lg font-semibold">区域列表</CardTitle>
+            <div className="flex items-center gap-2">
               <Input
-                placeholder="搜索区域ID或名称..."
-                className="pl-8"
+                placeholder="搜索区域..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-[250px]"
               />
             </div>
           </div>
-          <CardDescription>
-            系统中所有区域的详细信息，共 {regions.length} 个区域
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (

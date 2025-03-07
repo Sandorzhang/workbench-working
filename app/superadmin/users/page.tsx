@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { SuperAdminHero } from '@/components/superadmin/hero-section';
 import { 
   Search, 
   Plus, 
@@ -90,19 +91,18 @@ const roleIconMap: Record<string, React.ReactNode> = {
 
 export default function SuperAdminUsersPage() {
   const router = useRouter();
-  const { user: currentUser, isAuthenticated } = useAuth();
-  
+  const { isAuthenticated, user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<string>('all');
-
-  // 用户表单模态窗口状态
+  
+  // 模态窗口状态
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
+  const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
   
   // 检查认证状态并加载数据
   useEffect(() => {
@@ -112,14 +112,15 @@ export default function SuperAdminUsersPage() {
       return;
     }
     
-    if (currentUser?.role !== 'superadmin') {
+    if (user?.role !== 'superadmin') {
       toast.error('您没有权限访问此页面');
       router.push('/workbench');
       return;
     }
     
+    // 加载用户数据
     fetchUsers();
-  }, [isAuthenticated, currentUser, router]);
+  }, [isAuthenticated, user, router]);
   
   // 获取用户列表
   const fetchUsers = async () => {
@@ -127,11 +128,20 @@ export default function SuperAdminUsersPage() {
       setIsLoading(true);
       
       // 使用superadminApi获取用户列表
-      const data = await superadminApi.getUsers();
+      const response = await superadminApi.getUsers();
       
       // 模拟延迟
       setTimeout(() => {
-        setUsers(data as User[]);
+        // 检查API响应结构并正确提取用户数据
+        if (response && response.data) {
+          setUsers(response.data as User[]);
+        } else if (Array.isArray(response)) {
+          // 如果直接返回数组
+          setUsers(response as User[]);
+        } else {
+          console.warn('API返回的用户数据格式不符合预期:', response);
+          setUsers([]);
+        }
         setIsLoading(false);
       }, 500);
     } catch (error) {
@@ -142,28 +152,33 @@ export default function SuperAdminUsersPage() {
   };
   
   // 过滤用户
-  const filteredUsers = users.filter(user => {
-    // 搜索过滤
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.schoolName && user.schoolName.toLowerCase().includes(searchQuery.toLowerCase()));
+  useEffect(() => {
+    // 应用搜索和过滤器
+    let result = users;
     
-    // 角色过滤
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    // 搜索过滤
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(user => 
+        user.name?.toLowerCase().includes(query) || 
+        user.username?.toLowerCase().includes(query) || 
+        user.email?.toLowerCase().includes(query) ||
+        user.schoolName?.toLowerCase().includes(query)
+      );
+    }
     
     // 状态过滤
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+    if (statusFilter !== 'all') {
+      result = result.filter(user => user.status === statusFilter);
+    }
     
-    // 标签页过滤
-    const matchesTab = activeTab === 'all' || 
-      (activeTab === 'admin' && (user.role === 'admin' || user.role === 'superadmin')) ||
-      (activeTab === 'teacher' && user.role === 'teacher') ||
-      (activeTab === 'student' && user.role === 'student');
+    // 角色过滤
+    if (roleFilter !== 'all') {
+      result = result.filter(user => user.role === roleFilter);
+    }
     
-    return matchesSearch && matchesRole && matchesStatus && matchesTab;
-  });
+    setFilteredUsers(result);
+  }, [users, searchQuery, roleFilter, statusFilter]);
   
   // 删除用户处理函数
   const handleDeleteUser = async (userId: string, userName: string) => {
@@ -207,11 +222,6 @@ export default function SuperAdminUsersPage() {
     }
   };
   
-  // 更改标签页
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
   // 打开添加用户模态窗口
   const handleOpenAddUserModal = () => {
     setIsAddUserModalOpen(true);
@@ -219,7 +229,7 @@ export default function SuperAdminUsersPage() {
 
   // 打开编辑用户模态窗口
   const handleOpenEditUserModal = (user: User) => {
-    setSelectedUser(user);
+    setCurrentUser(user);
     setIsEditUserModalOpen(true);
   };
 
@@ -231,7 +241,7 @@ export default function SuperAdminUsersPage() {
   // 关闭编辑用户模态窗口
   const handleCloseEditUserModal = () => {
     setIsEditUserModalOpen(false);
-    setSelectedUser(undefined);
+    setCurrentUser(undefined);
   };
 
   // 用户操作成功后的回调
@@ -240,299 +250,252 @@ export default function SuperAdminUsersPage() {
   };
   
   return (
-    <PageContainer
-      loading={isLoading}
-    >
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">用户管理</h1>
-            <p className="text-muted-foreground mt-1">
-              管理系统用户、角色和权限设置
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" size="sm">
-              <Upload className="mr-2 h-4 w-4" />
-              导入用户
-            </Button>
-            <Button variant="outline" size="sm">
-              <DownloadCloud className="mr-2 h-4 w-4" />
-              导出数据
-            </Button>
-            <Button 
-              className="sm:w-auto bg-primary hover:bg-primary/90"
+    <div className="container py-6">
+      <SuperAdminHero
+        title="用户管理"
+        description="管理平台所有用户，包括系统管理员、教师和学生账号，控制用户访问权限和状态。"
+        icon={Users}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
               onClick={handleOpenAddUserModal}
+              className="gap-1"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4" />
               添加用户
             </Button>
+            <Button
+              onClick={fetchUsers}
+              variant="outline"
+              className="gap-1"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              刷新数据
+            </Button>
           </div>
-        </div>
-        
-        {/* 用户管理卡片 */}
-        <Card className="overflow-hidden border-border/40 shadow-sm">
-          <CardHeader className="px-6 pb-3">
-            <CardTitle>用户列表</CardTitle>
-            <CardDescription>
-              系统中的所有用户账户
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-6">
-            {/* 过滤栏 */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        }
+      />
+
+      {/* 用户管理卡片 */}
+      <Card className="overflow-hidden border-border/40 shadow-sm">
+        <CardHeader className="bg-muted/50 px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+            <div>
+              <CardTitle>用户列表</CardTitle>
+              <CardDescription>管理系统中的所有用户</CardDescription>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              {/* 搜索框 */}
+              <div className="relative w-full sm:w-[280px]">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="搜索用户名、邮箱或学校..."
-                  className="w-full pl-8 bg-background"
+                  placeholder="搜索姓名、用户名或邮箱..."
+                  className="pl-9 h-9 text-sm w-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex">
-                  <Select 
-                    value={roleFilter} 
-                    onValueChange={setRoleFilter}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="按角色筛选" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">所有角色</SelectItem>
-                      <SelectItem value="superadmin">超级管理员</SelectItem>
-                      <SelectItem value="admin">管理员</SelectItem>
-                      <SelectItem value="teacher">教师</SelectItem>
-                      <SelectItem value="student">学生</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex">
-                  <Select 
-                    value={statusFilter} 
-                    onValueChange={setStatusFilter}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="按状态筛选" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">所有状态</SelectItem>
-                      <SelectItem value="active">已激活</SelectItem>
-                      <SelectItem value="inactive">未激活</SelectItem>
-                      <SelectItem value="locked">已锁定</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Button variant="outline" size="icon" onClick={fetchUsers} title="刷新数据">
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => {
-                  setSearchQuery('');
-                  setRoleFilter('all');
-                  setStatusFilter('all');
-                }} title="清除筛选">
-                  <XCircle className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* 状态下拉框 */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 text-sm w-[130px]">
+                  <SelectValue placeholder="状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有状态</SelectItem>
+                  <SelectItem value="active">正常</SelectItem>
+                  <SelectItem value="inactive">停用</SelectItem>
+                  <SelectItem value="locked">锁定</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* 角色下拉框 */}
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="h-9 text-sm w-[130px]">
+                  <SelectValue placeholder="角色" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有角色</SelectItem>
+                  <SelectItem value="superadmin">超级管理员</SelectItem>
+                  <SelectItem value="admin">管理员</SelectItem>
+                  <SelectItem value="teacher">教师</SelectItem>
+                  <SelectItem value="student">学生</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            {/* 标签页 */}
-            <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="mb-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all" className="flex items-center">
-                  <Users className="mr-2 h-4 w-4" />
-                  全部用户
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="flex items-center">
-                  <Shield className="mr-2 h-4 w-4" />
-                  管理员
-                </TabsTrigger>
-                <TabsTrigger value="teacher" className="flex items-center">
-                  <School className="mr-2 h-4 w-4" />
-                  教师
-                </TabsTrigger>
-                <TabsTrigger value="student" className="flex items-center">
-                  <User className="mr-2 h-4 w-4" />
-                  学生
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            {/* 用户列表 */}
-            <div className="rounded-md border shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead>用户名</TableHead>
-                    <TableHead>联系方式</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>学校</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+          </div>
+        </CardHeader>
+              
+        {/* 用户列表 */}
+        <CardContent className="px-6">
+          <div className="rounded-md border shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead>用户名</TableHead>
+                  <TableHead>联系方式</TableHead>
+                  <TableHead>角色</TableHead>
+                  <TableHead>学校</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <div className="flex flex-col items-center justify-center gap-1 py-4">
+                        <Users className="h-10 w-10 text-muted-foreground/40" />
+                        <p className="text-sm text-muted-foreground">无匹配用户</p>
+                        {(searchQuery || roleFilter !== 'all' || statusFilter !== 'all') && (
+                          <Button 
+                            variant="link" 
+                            size="sm"
+                            onClick={() => {
+                              setSearchQuery('');
+                              setRoleFilter('all');
+                              setStatusFilter('all');
+                            }}
+                          >
+                            清除所有筛选条件
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
-                        <div className="flex flex-col items-center justify-center gap-1 py-4">
-                          <Users className="h-10 w-10 text-muted-foreground/40" />
-                          <p className="text-sm text-muted-foreground">无匹配用户</p>
-                          {(searchQuery || roleFilter !== 'all' || statusFilter !== 'all' || activeTab !== 'all') && (
-                            <Button 
-                              variant="link" 
-                              size="sm"
-                              onClick={() => {
-                                setSearchQuery('');
-                                setRoleFilter('all');
-                                setStatusFilter('all');
-                                setActiveTab('all');
-                              }}
-                            >
-                              清除所有筛选条件
-                            </Button>
-                          )}
+                ) : (
+                  filteredUsers.map(user => (
+                    <TableRow key={user.id} className="hover:bg-muted/30">
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="rounded-full bg-primary/10 p-1.5">
+                            {roleIconMap[user.role]}
+                          </div>
+                          <div>
+                            <div className="font-medium">{user.name}</div>
+                            <div className="text-sm text-muted-foreground">{user.username}</div>
+                          </div>
                         </div>
                       </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredUsers.map(user => (
-                      <TableRow key={user.id} className="hover:bg-muted/30">
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="rounded-full bg-primary/10 p-1.5">
-                              {roleIconMap[user.role]}
-                            </div>
-                            <div>
-                              <div className="font-medium">{user.name}</div>
-                              <div className="text-sm text-muted-foreground">{user.username}</div>
-                            </div>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{user.email}</div>
+                          <div className="text-muted-foreground">{user.phone || '未设置'}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          className={user.role === 'superadmin' ? 'bg-red-100 text-red-700 hover:bg-red-200' : ''}
+                          variant={user.role === 'superadmin' ? 'outline' : 'secondary'}
+                        >
+                          {roleMap[user.role] || user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.schoolName || '—'}
+                      </TableCell>
+                      <TableCell>
+                        {user.status === 'active' ? (
+                          <div className="flex items-center gap-1">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <span className="text-sm text-green-700">{statusMap[user.status].label}</span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{user.email}</div>
-                            <div className="text-muted-foreground">{user.phone || '未设置'}</div>
+                        ) : user.status === 'locked' ? (
+                          <div className="flex items-center gap-1">
+                            <Lock className="h-4 w-4 text-red-500" />
+                            <span className="text-sm text-red-700">{statusMap[user.status].label}</span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            className={user.role === 'superadmin' ? 'bg-red-100 text-red-700 hover:bg-red-200' : ''}
-                            variant={user.role === 'superadmin' ? 'outline' : 'secondary'}
-                          >
-                            {roleMap[user.role] || user.role}
+                        ) : (
+                          <Badge variant={statusMap[user.status].variant}>
+                            {statusMap[user.status].label}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {user.schoolName || '—'}
-                        </TableCell>
-                        <TableCell>
-                          {user.status === 'active' ? (
-                            <div className="flex items-center gap-1">
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              <span className="text-sm text-green-700">{statusMap[user.status].label}</span>
-                            </div>
-                          ) : user.status === 'locked' ? (
-                            <div className="flex items-center gap-1">
-                              <Lock className="h-4 w-4 text-red-500" />
-                              <span className="text-sm text-red-700">{statusMap[user.status].label}</span>
-                            </div>
-                          ) : (
-                            <Badge variant={statusMap[user.status].variant}>
-                              {statusMap[user.status].label}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">打开菜单</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[160px]">
-                              <DropdownMenuItem 
-                                onClick={() => handleOpenEditUserModal(user)}
-                                className="cursor-pointer"
-                              >
-                                <FileEdit className="h-4 w-4 mr-2" />
-                                编辑用户
-                              </DropdownMenuItem>
-                              
-                              <DropdownMenuItem 
-                                onClick={() => handleToggleUserStatus(user.id, user.status)}
-                                className={`cursor-pointer ${user.status === 'locked' ? 'text-green-600' : 'text-amber-600'}`}
-                              >
-                                {user.status === 'locked' ? (
-                                  <>
-                                    <Unlock className="h-4 w-4 mr-2" />
-                                    解锁用户
-                                  </>
-                                ) : (
-                                  <>
-                                    <Lock className="h-4 w-4 mr-2" />
-                                    锁定用户
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              
-                              <DropdownMenuSeparator />
-                              
-                              <DropdownMenuItem 
-                                className="cursor-pointer text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  toast.custom((t) => (
-                                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border max-w-md mx-auto">
-                                      <h2 className="text-xl font-semibold mb-2">确认删除用户</h2>
-                                      <p className="text-gray-500 dark:text-gray-400 mb-4">
-                                        您确定要删除用户 "{user.name}" 吗？此操作不可撤销。
-                                      </p>
-                                      <div className="flex justify-end gap-2">
-                                        <Button 
-                                          variant="outline" 
-                                          onClick={() => toast.dismiss(t)}
-                                        >
-                                          取消
-                                        </Button>
-                                        <Button
-                                          variant="destructive"
-                                          onClick={() => {
-                                            handleDeleteUser(user.id, user.name);
-                                            toast.dismiss(t);
-                                          }}
-                                        >
-                                          删除
-                                        </Button>
-                                      </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">打开菜单</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[160px]">
+                            <DropdownMenuItem 
+                              onClick={() => handleOpenEditUserModal(user)}
+                              className="cursor-pointer"
+                            >
+                              <FileEdit className="h-4 w-4 mr-2" />
+                              编辑用户
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem 
+                              onClick={() => handleToggleUserStatus(user.id, user.status)}
+                              className={`cursor-pointer ${user.status === 'locked' ? 'text-green-600' : 'text-amber-600'}`}
+                            >
+                              {user.status === 'locked' ? (
+                                <>
+                                  <Unlock className="h-4 w-4 mr-2" />
+                                  解锁用户
+                                </>
+                              ) : (
+                                <>
+                                  <Lock className="h-4 w-4 mr-2" />
+                                  锁定用户
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            <DropdownMenuItem 
+                              className="cursor-pointer text-destructive focus:text-destructive"
+                              onClick={() => {
+                                toast.custom((t) => (
+                                  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border max-w-md mx-auto">
+                                    <h2 className="text-xl font-semibold mb-2">确认删除用户</h2>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                      您确定要删除用户 "{user.name}" 吗？此操作不可撤销。
+                                    </p>
+                                    <div className="flex justify-end gap-2">
+                                      <Button 
+                                        variant="outline" 
+                                        onClick={() => toast.dismiss(t)}
+                                      >
+                                        取消
+                                      </Button>
+                                      <Button
+                                        variant="destructive"
+                                        onClick={() => {
+                                          handleDeleteUser(user.id, user.name);
+                                          toast.dismiss(t);
+                                        }}
+                                      >
+                                        删除
+                                      </Button>
                                     </div>
-                                  ), {
-                                    duration: Infinity,
-                                  });
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                删除用户
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                                  </div>
+                                ), {
+                                  duration: Infinity,
+                                });
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              删除用户
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 添加用户模态窗口 */}
       <UserFormModal
@@ -545,9 +508,9 @@ export default function SuperAdminUsersPage() {
       <UserFormModal
         isOpen={isEditUserModalOpen}
         onClose={handleCloseEditUserModal}
-        user={selectedUser}
+        user={currentUser}
         onSuccess={handleUserFormSuccess}
       />
-    </PageContainer>
+    </div>
   );
 } 
