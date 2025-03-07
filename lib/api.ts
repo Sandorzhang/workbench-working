@@ -271,7 +271,11 @@ export const api = {
       try {
         return await handleRequest(`/auth/login`, {
           method: 'POST',
-          body: JSON.stringify({ identity: username, verify: password, type: 'ACCOUNT' })
+          body: JSON.stringify({ 
+            identity: username, 
+            verify: password, 
+            type: 'ACCOUNT' 
+          })
         });
       } catch (error) {
         console.error('登录失败:', error);

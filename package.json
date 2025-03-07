@@ -5,11 +5,11 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:msw": "cross-env NEXT_PUBLIC_API_MOCKING=enabled next dev --turbopack",
-    "dev:test": "powershell -Command \"Copy-Item .env.test .env.local\" && next dev --turbopack",
-    "dev:prod": "powershell -Command \"Copy-Item .env.production .env.local\" && next dev --turbopack",
+    "dev:test": "cross-env NEXT_PUBLIC_API_MOCKING=disabled NEXT_PUBLIC_API_BASE_URL=http://192.168.10.75/server NEXT_PUBLIC_ENV=test next dev --turbopack",
+    "dev:prod": "cp .env.production .env.local && next dev --turbopack",
     "build": "next build",
-    "build:test": "powershell -Command \"Copy-Item .env.test .env\" && next build",
-    "build:prod": "powershell -Command \"Copy-Item .env.production .env\" && next build",
+    "build:test": "cp .env.test .env && next build",
+    "build:prod": "cp .env.production .env && next build",
     "start": "next start",
     "lint": "next lint",
     "msw:init": "msw init public/ --no-save"
@@ -46,6 +46,7 @@
     "lucide-react": "^0.476.0",
     "next": "15.2.0-canary.76",
     "next-themes": "^0.4.4",
+    "node-fetch": "^3.3.2",
     "react": "^19.0.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.0.0",

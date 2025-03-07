@@ -41,20 +41,22 @@ const nextConfig = {
   },
   // API重写配置
   async rewrites() {
-    // MSW模式下不使用重写
     if (API_MOCKING) {
-      console.log('API模拟已启用，不使用API路径重写');
+      console.log('使用MSW模拟API，跳过路径重写');
       return [];
     }
-
+    
     // 非MSW模式下重写API请求路径
-    const apiBaseUrl = 'http://192.168.124.75'; // 实际API服务器地址
+    const apiBaseUrl = 'http://192.168.10.75/server'; // 实际API服务器地址
     console.log(`使用实际API地址: ${apiBaseUrl}`);
+    console.log('配置API重写规则:');
+    console.log(`- /api/auth/login -> ${apiBaseUrl}/auth/login`);
+    console.log(`- /api/:path* -> ${apiBaseUrl}/:path*`);
 
     return [
       {
         source: '/api/auth/login',
-        destination: `${apiBaseUrl}/common/login/login-by-username`
+        destination: `${apiBaseUrl}/auth/login`
       },
       {
         source: '/api/:path*',
