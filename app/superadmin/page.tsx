@@ -274,50 +274,74 @@ export default function SuperAdminPage() {
         
         {/* 系统摘要统计卡片 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow">
+          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow duration-300 rounded-xl bg-white border border-gray-100/80">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500">活跃用户</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.users.total}</h3>
+                <div className="flex items-center mt-2">
+                  <h3 className="text-2xl font-bold text-gray-800">{stats.users.total}</h3>
+                  <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-600 border-blue-100">用户</Badge>
+                </div>
+                <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '65%' }}></div>
+                </div>
               </div>
-              <div className="p-3 bg-blue-50 rounded-full">
-                <Users className="h-6 w-6 text-blue-500" />
+              <div className="p-2.5 bg-blue-50 rounded-full">
+                <Users className="h-5 w-5 text-blue-500" />
               </div>
             </div>
           </CardContainer>
           
-          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow">
+          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow duration-300 rounded-xl bg-white border border-gray-100/80">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500">区域总数</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.regions.total}</h3>
+                <div className="flex items-center mt-2">
+                  <h3 className="text-2xl font-bold text-gray-800">{stats.regions.total}</h3>
+                  <Badge variant="outline" className="ml-2 bg-indigo-50 text-indigo-600 border-indigo-100">区域</Badge>
+                </div>
+                <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="bg-indigo-500 h-full rounded-full" style={{ width: stats.regions.total > 0 ? `${(stats.regions.active / stats.regions.total) * 100}%` : '0%' }}></div>
+                </div>
               </div>
-              <div className="p-3 bg-indigo-50 rounded-full">
-                <MapPin className="h-6 w-6 text-indigo-500" />
+              <div className="p-2.5 bg-indigo-50 rounded-full">
+                <MapPin className="h-5 w-5 text-indigo-500" />
               </div>
             </div>
           </CardContainer>
           
-          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow">
+          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow duration-300 rounded-xl bg-white border border-gray-100/80">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500">学校总数</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.schools.total}</h3>
+                <div className="flex items-center mt-2">
+                  <h3 className="text-2xl font-bold text-gray-800">{stats.schools.total}</h3>
+                  <Badge variant="outline" className="ml-2 bg-emerald-50 text-emerald-600 border-emerald-100">学校</Badge>
+                </div>
+                <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: stats.schools.total > 0 ? `${(stats.schools.active / stats.schools.total) * 100}%` : '0%' }}></div>
+                </div>
               </div>
-              <div className="p-3 bg-emerald-50 rounded-full">
-                <School className="h-6 w-6 text-emerald-500" />
+              <div className="p-2.5 bg-emerald-50 rounded-full">
+                <School className="h-5 w-5 text-emerald-500" />
               </div>
             </div>
           </CardContainer>
           
-          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow">
+          <CardContainer elevated className="p-4 hover:shadow-md transition-shadow duration-300 rounded-xl bg-white border border-gray-100/80">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500">活跃学校</p>
-                <h3 className="text-2xl font-bold mt-1">{stats.schools.active}</h3>
+                <div className="flex items-center mt-2">
+                  <h3 className="text-2xl font-bold text-gray-800">{stats.schools.active}</h3>
+                  <Badge variant="outline" className="ml-2 bg-green-50 text-green-600 border-green-100">活跃</Badge>
+                </div>
+                <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="bg-green-500 h-full rounded-full" style={{ width: stats.schools.total > 0 ? `${(stats.schools.active / stats.schools.total) * 100}%` : '0%' }}></div>
+                </div>
               </div>
-              <div className="p-3 bg-green-50 rounded-full">
-                <CheckCircle className="h-6 w-6 text-green-500" />
+              <div className="p-2.5 bg-green-50 rounded-full">
+                <CheckCircle className="h-5 w-5 text-green-500" />
               </div>
             </div>
           </CardContainer>
@@ -327,142 +351,39 @@ export default function SuperAdminPage() {
       {/* 功能快捷入口 */}
       <SectionContainer className="mt-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">功能快捷入口</h2>
-          <Badge variant="outline" className="px-2">管理员专用</Badge>
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1 bg-primary rounded-full"></div>
+            <h2 className="text-xl font-semibold text-gray-900">功能快捷入口</h2>
+          </div>
+          <Badge variant="outline" className="px-2 py-1 border-primary/30 bg-primary/5 text-primary">管理员专用</Badge>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {adminModules.map((module, index) => (
-            <Link href={module.href} key={index}>
-              <Card className="h-full hover:shadow-md transition-all hover:border-primary/20 cursor-pointer">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-md bg-primary/10 text-primary">
+            <Link href={module.href} key={index} className="block h-full group">
+              <Card className="h-full border border-gray-200 hover:border-primary/40 transition-all duration-300 hover:shadow-md hover:shadow-primary/5 overflow-hidden group-hover:scale-[1.02] hover:bg-gradient-to-br from-white to-primary/5">
+                <CardHeader className="pb-0 relative">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className="p-2 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors duration-300">
                       {module.icon}
                     </div>
-                    <CardTitle className="text-lg">{module.title}</CardTitle>
+                    <CardTitle className="text-lg group-hover:text-primary transition-colors">{module.title}</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription className="min-h-[40px]">{module.description}</CardDescription>
+                <CardContent className="pt-2">
+                  <CardDescription className="min-h-[40px] text-gray-500 group-hover:text-gray-700 transition-colors">{module.description}</CardDescription>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="w-full justify-between mt-2">
+                  <Button variant="ghost" size="sm" className="w-full justify-between group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
                     <span>进入管理</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </CardFooter>
               </Card>
             </Link>
           ))}
         </div>
-      </SectionContainer>
-      
-      {/* 系统概览 */}
-      <SectionContainer className="mt-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">系统概览</h2>
-        <Card className="overflow-hidden border-gray-200">
-          <CardHeader className="bg-gray-50 border-b">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">系统数据概览</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-4">用户分布</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>超级管理员</span>
-                      <span className="font-medium">1</span>
-                    </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="bg-red-500 h-full rounded-full" style={{ width: '5%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>管理员</span>
-                      <span className="font-medium">{stats.users.admin}</span>
-                    </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="bg-blue-500 h-full rounded-full" style={{ width: stats.users.total > 0 ? `${(stats.users.admin / stats.users.total) * 100}%` : '0%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>教师</span>
-                      <span className="font-medium">{stats.users.teacher}</span>
-                    </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="bg-green-500 h-full rounded-full" style={{ width: stats.users.total > 0 ? `${(stats.users.teacher / stats.users.total) * 100}%` : '0%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>学生</span>
-                      <span className="font-medium">{stats.users.student}</span>
-                    </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="bg-purple-500 h-full rounded-full" style={{ width: stats.users.total > 0 ? `${(stats.users.student / stats.users.total) * 100}%` : '0%' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-4">状态统计</h3>
-                
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-medium uppercase text-gray-500">区域状态</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-white border rounded-lg">
-                        <div className="flex items-center text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-gray-600">启用区域</span>
-                        </div>
-                        <p className="text-lg font-semibold mt-1">{stats.regions.active}</p>
-                      </div>
-                      <div className="p-3 bg-white border rounded-lg">
-                        <div className="flex items-center text-sm">
-                          <XCircle className="h-4 w-4 text-red-500 mr-2" />
-                          <span className="text-gray-600">禁用区域</span>
-                        </div>
-                        <p className="text-lg font-semibold mt-1">{stats.regions.inactive}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-medium uppercase text-gray-500">学校状态</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-white border rounded-lg">
-                        <div className="flex items-center text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-gray-600">启用学校</span>
-                        </div>
-                        <p className="text-lg font-semibold mt-1">{stats.schools.active}</p>
-                      </div>
-                      <div className="p-3 bg-white border rounded-lg">
-                        <div className="flex items-center text-sm">
-                          <XCircle className="h-4 w-4 text-red-500 mr-2" />
-                          <span className="text-gray-600">禁用学校</span>
-                        </div>
-                        <p className="text-lg font-semibold mt-1">{stats.schools.inactive}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </SectionContainer>
     </PageContainer>
   );

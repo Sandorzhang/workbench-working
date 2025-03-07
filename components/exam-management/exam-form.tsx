@@ -28,7 +28,7 @@ import { Exam } from '@/features/exam-management/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { CalendarIcon, CheckCircle2, ClockIcon, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/shared/lib/utils'
+import { cn } from '@/lib/utils'
 
 const examSchema = z.object({
   name: z.string().min(1, '考试名称不能为空'),

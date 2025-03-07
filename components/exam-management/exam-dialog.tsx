@@ -34,7 +34,7 @@ import {
 import { Exam } from '@/features/exam-management/types'
 import { AlertCircle, CalendarIcon, CheckCircle2, ClockIcon, Loader2, Lock, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/shared/lib/utils'
+import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const examSchema = z.object({

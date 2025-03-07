@@ -14,7 +14,7 @@ import { toast } from '@/components/ui/use-toast'
 import { Progress } from '@/components/ui/progress'
 import { FileUp, File, Loader2, CheckCircle2 } from 'lucide-react'
 import { Question } from '@/features/exam-management/question-types'
-import { cn } from '@/shared/lib/utils'
+import { cn } from '@/lib/utils'
 import { api } from '@/shared/api'
 
 interface PdfImportDialogProps {

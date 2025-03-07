@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { Skeleton } from "@/components/ui/skeleton";
 
 // 移除对HTMLAttributes的继承，改为明确指定需要的属性

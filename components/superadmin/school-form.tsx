@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { School, Region } from '@/lib/api-types';
+import { School, Region } from '@/features/superadmin/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -39,13 +39,8 @@ import {
 // 学校表单验证模式
 const schoolFormSchema = z.object({
   name: z.string().min(1, '学校名称不能为空'),
-  code: z.string()
-    .min(3, '学校代码必须是3位数字')
-    .max(3, '学校代码必须是3位数字')
-    .regex(/^\d+$/, '学校代码必须是数字'),
   regionId: z.string().min(1, '必须选择所属区域'),
-  type: z.string().min(1, '必须选择学校类型'),
-  grades: z.array(z.string()).min(1, '至少选择一个年级'),
+  periodId: z.string().min(1, '必须选择学校类型'),
   status: z.boolean().default(true),
 });
 
@@ -54,11 +49,9 @@ export type SchoolFormValues = z.infer<typeof schoolFormSchema>;
 // 默认表单值
 const defaultValues: Partial<SchoolFormValues> = {
   name: '',
-  code: '',
   regionId: '',
-  type: '',
+  periodId: '',
   status: true,
-  grades: [],
 };
 
 interface SchoolFormProps {
@@ -87,46 +80,44 @@ export function SchoolForm({
   // 创建表单
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolFormSchema),
-    defaultValues: isEditMode && currentSchool ? {
-      name: currentSchool.name || '',
-      code: currentSchool.code || '',
-      regionId: currentSchool.regionId || '',
-      type: currentSchool.type || '',
-      grades: currentSchool.grades || [],
-      status: currentSchool.status ?? true,
-    } : defaultValues,
-    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      regionId: '',
+      periodId: '',
+      status: true
+    }
   });
 
   // 监听学校类型变化，加载对应的年级选项
   useEffect(() => {
-    const schoolType = form.watch('type');
+    const schoolType = form.watch('periodId');
     if (schoolType) {
       loadGradesForType(schoolType);
     }
-  }, [form.watch('type')]);
+  }, [form.watch('periodId')]);
 
   // 重置表单
   useEffect(() => {
     if (!open) return; // 如果对话框未打开，不重置表单
     
     if (isEditMode && currentSchool) {
-      // 确保所有字段都有有效的默认值
-      const formValues = {
-        name: currentSchool.name || '',
-        code: currentSchool.code || '',
-        regionId: currentSchool.regionId || '',
-        type: currentSchool.type || '',
-        grades: currentSchool.grades || [],
-        status: currentSchool.status ?? true,
-      };
-      form.reset(formValues);
+      form.reset({
+        name: currentSchool.name,
+        regionId: currentSchool.regionId,
+        periodId: currentSchool.periodId || '',
+        status: currentSchool.status
+      });
       
-      if (currentSchool.type) {
-        loadGradesForType(currentSchool.type);
+      if (currentSchool.periodId) {
+        loadGradesForType(currentSchool.periodId);
       }
     } else {
-      form.reset(defaultValues);
+      form.reset({
+        name: '',
+        regionId: '',
+        periodId: '',
+        status: true
+      });
       setAllGrades([]);
     }
   }, [open, isEditMode, currentSchool, form]);
@@ -135,37 +126,36 @@ export function SchoolForm({
   const loadGradesForType = async (type: string) => {
     try {
       setIsLoadingGrades(true);
-      console.log('获取年级列表，学校类型:', type);
-      const response = await fetch(`/api/school-grades?type=${encodeURIComponent(type)}`, {
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin',
-        cache: 'no-store'
-      });
+      console.log(`加载学校类型 ${type} 的年级选项`);
       
-      if (response.status === 307) {
-        console.error('年级请求被重定向:', response.headers.get('Location'));
-        throw new Error('请求被重定向，这可能是由于没有权限或会话已过期');
-      }
+      // 这里可以根据学校类型从API获取对应的年级选项
+      // 目前使用模拟数据
+      const gradesMap: Record<string, string[]> = {
+        'PRIMARY_FIVE': ['一年级', '二年级', '三年级', '四年级', '五年级'],
+        'PRIMARY_SIX': ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
+        'MIDDLE_THREE': ['初一', '初二', '初三'],
+        'MIDDLE_FOUR': ['初一', '初二', '初三', '初四'],
+        'HIGH_THREE': ['高一', '高二', '高三'],
+        'NINE_YEAR': ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三'],
+        'COMPLETE_SIX': ['初一', '初二', '初三', '高一', '高二', '高三'],
+        'COMPLETE_SEVEN': ['初一', '初二', '初三', '初四', '高一', '高二', '高三'],
+        'TWELVE_YEAR': ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三', '高一', '高二', '高三'],
+      };
       
-      if (!response.ok) {
-        throw new Error(`获取年级列表失败: ${response.status} ${response.statusText}`);
-      }
+      // 延迟模拟API请求
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      const grades = await response.json();
-      console.log('获取年级列表成功:', grades);
+      const grades = gradesMap[type] || [];
       setAllGrades(grades);
       
-      // 自动选择所有年级，不需要用户手动选择
-      form.setValue('grades', grades);
+      // 如果当前没有选择年级，默认选择全部
+      // const currentGrades = form.getValues('grades');
+      // if (currentGrades.length === 0 && grades.length > 0) {
+      //   form.setValue('grades', grades);
+      // }
     } catch (error) {
-      console.error('Error loading grades:', error);
-      toast.error('获取年级列表失败，请稍后再试');
-      setAllGrades([]);
+      console.error('加载年级选项失败:', error);
+      toast.error('加载年级选项失败');
     } finally {
       setIsLoadingGrades(false);
     }
@@ -228,36 +218,6 @@ export function SchoolForm({
                   
                   <FormField
                     control={form.control}
-                    name="code"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>学校代码</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="请输入3位数字代码" 
-                            {...field} 
-                            disabled={isEditMode} 
-                            maxLength={3}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          学校代码必须是3位数字
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              {/* 所属与分类 */}
-              <div>
-                <h3 className="text-sm font-medium mb-3 flex items-center gap-1.5">
-                  • 所属与分类
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
                     name="regionId"
                     render={({ field }) => (
                       <FormItem>
@@ -283,10 +243,18 @@ export function SchoolForm({
                       </FormItem>
                     )}
                   />
-                  
+                </div>
+              </div>
+              
+              {/* 所属与分类 */}
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center gap-1.5">
+                  • 所属与分类
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="type"
+                    name="periodId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>学校类型</FormLabel>
@@ -356,31 +324,28 @@ export function SchoolForm({
                 <h3 className="text-sm font-medium mb-3 flex items-center gap-1.5">
                   • 状态设置
                 </h3>
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem className="flex justify-between items-center space-y-0 border rounded p-4">
-                      <div>
-                        <FormLabel>学校状态</FormLabel>
-                        <FormDescription>
-                          启用后该学校将可正常使用，禁用后学校将不可用
-                        </FormDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={field.value ? "text-sm text-green-600" : "text-sm text-red-600"}>
-                          {field.value ? "启用" : "禁用"}
-                        </span>
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>启用状态</FormLabel>
+                          <FormDescription>
+                            启用后学校将在系统中可见并可使用
+                          </FormDescription>
+                        </div>
                         <FormControl>
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
                           />
                         </FormControl>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
               
               <DialogFooter className="flex gap-2 pt-4 border-t mt-4">

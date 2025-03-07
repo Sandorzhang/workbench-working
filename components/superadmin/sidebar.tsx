@@ -65,8 +65,6 @@ export default function SuperAdminSidebar() {
           title: "学校管理",
           href: "/superadmin/schools",
           icon: <School className="h-5 w-5" />,
-          badge: "3",
-          variant: "default",
         },
         {
           title: "用户管理",
@@ -82,8 +80,6 @@ export default function SuperAdminSidebar() {
           title: "权限管理",
           href: "/superadmin/permissions",
           icon: <Key className="h-5 w-5" />,
-          badge: "新",
-          variant: "destructive",
         }
       ]
     }

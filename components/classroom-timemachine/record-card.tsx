@@ -3,7 +3,7 @@ import { Clock, Calendar, Heart, Award, User, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { ClassRecord } from '@/mocks/handlers/classroom-timemachine';
 import { motion } from 'framer-motion';
 

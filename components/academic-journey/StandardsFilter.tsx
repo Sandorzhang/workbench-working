@@ -5,7 +5,7 @@ import { Check, ChevronsUpDown, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { LearningStandard } from '@/features/academic-journey/types';
 import { api } from '@/shared/api';
 

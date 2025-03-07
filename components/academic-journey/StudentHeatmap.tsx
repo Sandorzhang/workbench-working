@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MasteryLevel, HeatmapData } from '@/features/academic-journey/types';
 import { api } from '@/shared/api';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { MasteryLegend } from './MasteryLegend';
 import { InfoIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

@@ -21,7 +21,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from 'next/navigation';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { Pencil } from 'lucide-react';
 
 interface AppLayoutProps {

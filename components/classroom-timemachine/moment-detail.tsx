@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TeachingMoment } from '@/mocks/handlers/classroom-timemachine';
 import { Calendar, Clock, Download, Heart, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 // 学科颜色映射

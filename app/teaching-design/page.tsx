@@ -38,7 +38,7 @@ import {
   FileText, Book, Pencil, Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { 
   TitleSkeleton, 
   CardSkeleton, 

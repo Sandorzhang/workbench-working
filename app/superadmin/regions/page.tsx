@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { Metadata } from 'next';
-import { Region } from '@/lib/api-types';
+import { Region, ApiResponseDetail } from '@/features/superadmin/types';
+import { superadminApi } from '@/shared/api';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Pagination } from '@/components/ui/pagination';
 
 // 对话框组件
 import {
@@ -75,6 +77,7 @@ export default function RegionsPage() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [totalItems, setTotalItems] = useState(0);
   
   // 对话框状态
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -85,6 +88,10 @@ export default function RegionsPage() {
   const [regionToDelete, setRegionToDelete] = useState<Region | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // 创建表单
   const form = useForm<RegionFormValues>({
     resolver: zodResolver(regionFormSchema),
@@ -92,20 +99,52 @@ export default function RegionsPage() {
   });
 
   // 获取区域数据
-  const fetchRegions = async () => {
+  const fetchRegions = async (page = currentPage) => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/regions');
+      console.log(`正在获取区域数据，页码: ${page}, 每页数量: ${pageSize}`);
       
-      if (!response.ok) {
-        throw new Error('获取区域数据失败');
+      const response = await superadminApi.getRegions(page, pageSize);
+      console.log('区域数据API响应:', response);
+      
+      if (!response) {
+        throw new Error('获取区域数据失败: 服务器返回空响应');
       }
       
-      const data = await response.json();
-      setRegions(data.regions);
-    } catch (error) {
-      console.error('Error fetching regions:', error);
-      toast.error('获取区域数据失败');
+      // 后端API返回格式: { code: 0, msg: "成功", data: { list: [], pageNumber, pageSize, totalPage, totalCount } }
+      if (response.code === 0) {
+        // 这里的响应不是标准的ApiResponse，而是后端直接返回的格式
+        if (response.data && response.data.list) {
+          // API返回数据中，id和name是反的，需要交换
+          const mappedRegions = response.data.list.map((region: any) => ({
+            id: region.name, // API返回中id和name是反的，需要交换
+            name: region.id, // API返回中id和name是反的，需要交换
+            status: region.status
+          }));
+          
+          setRegions(mappedRegions);
+          setTotalItems(response.data.totalCount || 0);
+          setCurrentPage(page);
+          console.log(`成功加载 ${mappedRegions.length} 个区域，总计 ${response.data.totalCount} 个`);
+        } else {
+          console.warn('区域API返回的数据格式不符合预期:', response.data);
+          setRegions([]);
+          setTotalItems(0);
+        }
+      } else {
+        const errorMsg = response.msg || '获取区域数据失败: 服务器返回错误代码';
+        console.error(errorMsg);
+        toast.error(errorMsg);
+        setRegions([]);
+      }
+    } catch (error: any) {
+      console.error('获取区域数据出错:', error);
+      let errorMessage = '获取区域数据失败';
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      toast.error(errorMessage);
+      setRegions([]);
     } finally {
       setIsLoading(false);
     }
@@ -144,39 +183,41 @@ export default function RegionsPage() {
       
       if (isEditMode && currentRegion) {
         // 更新区域
-        const response = await fetch(`/api/regions/${currentRegion.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        });
+        console.log('更新区域:', currentRegion.id, values);
+        const { id, status, name } = values;
+        const response = await superadminApi.updateRegion(currentRegion.id, { status, name });
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || '更新区域失败');
+        if (response && response.code === 0) {
+          toast.success('区域更新成功');
+          setIsDialogOpen(false);
+          fetchRegions(currentPage); // 重新获取当前页数据
+        } else {
+          const errorMsg = response?.msg || '更新区域失败: 服务器返回错误';
+          console.error(errorMsg);
+          toast.error(errorMsg);
         }
-        
-        toast.success('区域更新成功');
       } else {
         // 创建区域
-        const response = await fetch('/api/regions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        });
+        console.log('创建区域:', values);
+        const response = await superadminApi.createRegion(values);
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || '创建区域失败');
+        if (response && response.code === 0) {
+          toast.success('区域创建成功');
+          setIsDialogOpen(false);
+          fetchRegions(1); // 重新获取第一页数据
+        } else {
+          const errorMsg = response?.msg || '创建区域失败: 服务器返回错误';
+          console.error(errorMsg);
+          toast.error(errorMsg);
         }
-        
-        toast.success('区域创建成功');
       }
-      
-      setIsDialogOpen(false);
-      fetchRegions(); // 重新获取数据
     } catch (error: any) {
-      console.error('Error submitting region:', error);
-      toast.error(error.message || '操作失败');
+      console.error('提交区域数据出错:', error);
+      let errorMessage = isEditMode ? '更新区域失败' : '创建区域失败';
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -194,24 +235,34 @@ export default function RegionsPage() {
     
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/regions/${regionToDelete.id}`, {
-        method: 'DELETE',
-      });
+      console.log('删除区域:', regionToDelete.id);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '删除区域失败');
+      const response = await superadminApi.deleteRegion(regionToDelete.id);
+      
+      if (response && response.code === 0) {
+        toast.success('区域删除成功');
+        setIsDeleteDialogOpen(false);
+        fetchRegions(currentPage); // 重新获取当前页数据
+      } else {
+        const errorMsg = response?.msg || '删除区域失败: 服务器返回错误';
+        console.error(errorMsg);
+        toast.error(errorMsg);
       }
-      
-      toast.success('区域删除成功');
-      setIsDeleteDialogOpen(false);
-      fetchRegions(); // 重新获取数据
     } catch (error: any) {
-      console.error('Error deleting region:', error);
-      toast.error(error.message || '删除区域失败');
+      console.error('删除区域出错:', error);
+      let errorMessage = '删除区域失败';
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  // 处理分页变化
+  const handlePageChange = (page: number) => {
+    fetchRegions(page);
   };
 
   // 检查权限并加载数据
@@ -228,7 +279,7 @@ export default function RegionsPage() {
       return;
     }
 
-    fetchRegions();
+    fetchRegions(1);
   }, [isAuthenticated, user, router]);
 
   // 显示加载状态
@@ -249,198 +300,163 @@ export default function RegionsPage() {
         </Button>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">总区域数</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{regions.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">启用区域</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{regions.filter(r => r.status).length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">禁用区域</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{regions.filter(r => !r.status).length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm hover:shadow transition-all bg-muted/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">上次更新</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-medium">{new Date().toLocaleDateString()}</div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 gap-4">
-        <div className="relative max-w-sm w-full sm:w-auto">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="搜索区域..."
-            className="pl-8 md:w-[300px] lg:w-[400px] rounded-md shadow-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <span>总计: {filteredRegions.length} 个区域</span>
-          {searchQuery && (
-            <Badge variant="outline" className="ml-2">
-              筛选中: {searchQuery}
-            </Badge>
-          )}
-        </div>
-      </div>
-      
-      <Card className="overflow-hidden shadow-md border-0 rounded-xl">
-        <CardHeader className="bg-muted/20 px-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div>
-              <CardTitle>区域列表</CardTitle>
-              <CardDescription>管理系统中的所有区域</CardDescription>
+      <Card className="shadow-md">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle>区域列表</CardTitle>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索区域ID或名称..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
+          <CardDescription>
+            系统中所有区域的详细信息，共 {regions.length} 个区域
+          </CardDescription>
         </CardHeader>
-        <CardContent className="px-0 py-0">
+        <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
+            <div className="flex justify-center items-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">加载中...</span>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/5">
-                  <TableRow>
-                    <TableHead className="font-semibold px-6 py-4">区域ID</TableHead>
-                    <TableHead className="font-semibold px-6">区域名称</TableHead>
-                    <TableHead className="font-semibold px-6">状态</TableHead>
-                    <TableHead className="text-right font-semibold px-6">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRegions.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-16 text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <Search className="h-10 w-10 text-muted-foreground/60" />
-                          没有找到区域数据
-                        </div>
-                      </TableCell>
+            <>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="w-[100px]">区域ID</TableHead>
+                      <TableHead>区域名称</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
                     </TableRow>
-                  ) : (
-                    filteredRegions.map((region) => (
-                      <TableRow key={region.id} className="hover:bg-muted/10 transition-colors">
-                        <TableCell className="font-medium px-6 py-4">{region.id}</TableCell>
-                        <TableCell className="px-6">{region.name}</TableCell>
-                        <TableCell className="px-6">
-                          {region.status ? (
-                            <Badge className="bg-green-50 text-green-800 hover:bg-green-100 border-green-200 font-medium">
-                              启用
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-red-50 text-red-800 hover:bg-red-50 border-red-200 font-medium">
-                              禁用
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right px-6">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => openEditDialog(region)} className="h-8 px-3 rounded-md hover:bg-primary/10 transition-colors">
-                              <Edit className="h-3.5 w-3.5 mr-1" />
-                              编辑
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 h-8 px-3 rounded-md hover:bg-red-50 transition-colors" onClick={() => openDeleteDialog(region)}>
-                              <Trash2 className="h-3.5 w-3.5 mr-1" />
-                              删除
-                            </Button>
-                          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRegions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">
+                          {searchQuery ? '没有找到匹配的区域数据' : '没有区域数据'}
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ) : (
+                      filteredRegions.map((region) => (
+                        <TableRow key={region.id}>
+                          <TableCell className="font-medium">{region.id}</TableCell>
+                          <TableCell>{region.name}</TableCell>
+                          <TableCell>
+                            {region.status ? (
+                              <Badge className="bg-green-500">启用</Badge>
+                            ) : (
+                              <Badge variant="destructive">停用</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" size="sm" onClick={() => openEditDialog(region)}>
+                                <Edit className="h-3.5 w-3.5 mr-1" />
+                                编辑
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(region)}>
+                                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                删除
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {totalItems > 0 && (
+                <div className="flex items-center justify-center mt-6">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      上一页
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {currentPage} / {Math.ceil(totalItems / pageSize)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= Math.ceil(totalItems / pageSize)}
+                    >
+                      下一页
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
-      
+
       {/* 添加/编辑区域对话框 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] rounded-xl shadow-lg border-0">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-xl">{isEditMode ? '编辑区域' : '添加区域'}</DialogTitle>
+            <DialogTitle>{isEditMode ? '编辑区域' : '添加区域'}</DialogTitle>
             <DialogDescription>
-              {isEditMode ? '修改区域信息' : '添加一个新的区域到系统中'}
+              {isEditMode ? '修改区域信息' : '创建一个新的区域并添加到系统中'}
             </DialogDescription>
           </DialogHeader>
-          
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-medium">区域ID</FormLabel>
+                    <FormLabel>区域ID</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="请输入6位数字ID"
-                        className="rounded-md"
                         {...field}
                         disabled={isEditMode} // 编辑模式下不允许修改ID
                       />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      区域ID必须是6位数字
+                    <FormDescription>
+                      请输入6位数字作为区域唯一标识
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-medium">区域名称</FormLabel>
+                    <FormLabel>区域名称</FormLabel>
                     <FormControl>
-                      <Input placeholder="请输入区域名称" className="rounded-md" {...field} />
+                      <Input placeholder="请输入区域名称" {...field} />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      区域的名称，如"海淀区"、"朝阳区"等
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="status"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
-                      <FormLabel className="font-medium">状态</FormLabel>
-                      <FormDescription className="text-xs">
-                        启用或禁用该区域
+                      <FormLabel>状态</FormLabel>
+                      <FormDescription>
+                        设置区域是否启用
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -452,13 +468,14 @@ export default function RegionsPage() {
                   </FormItem>
                 )}
               />
-              
-              <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDialogOpen(false)}>
-                  取消
-                </Button>
-                <Button type="submit" disabled={isSubmitting} className="rounded-md shadow-sm">
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <DialogFooter>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   {isEditMode ? '保存更改' : '创建区域'}
                 </Button>
               </DialogFooter>
@@ -466,28 +483,39 @@ export default function RegionsPage() {
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       {/* 删除确认对话框 */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-xl shadow-lg border-0">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-xl">确认删除</DialogTitle>
-            <DialogDescription className="pt-2">
-              您确定要删除区域 <span className="font-semibold">"{regionToDelete?.name}"</span> 吗？此操作不可撤销。
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>
+              您确定要删除区域 "{regionToDelete?.name}" 吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-red-50 p-4 rounded-lg my-2 text-sm text-red-700">
-            <p>删除后将无法恢复，请确认此操作。</p>
+          <div className="space-y-4 pt-4">
+            <p className="text-destructive text-sm">
+              删除区域可能会影响到与该区域相关联的所有数据，请谨慎操作。
+            </p>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={deleteRegion}
+                disabled={isDeleting}
+              >
+                {isDeleting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                确认删除
+              </Button>
+            </DialogFooter>
           </div>
-          <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDeleteDialogOpen(false)}>
-              取消
-            </Button>
-            <Button type="button" variant="destructive" className="rounded-md shadow-sm" onClick={deleteRegion} disabled={isDeleting}>
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              确认删除
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

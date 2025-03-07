@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { 
   Calendar, ChevronDown, ChevronUp, 
   Clock, Video, Music, FileText, Book, 
