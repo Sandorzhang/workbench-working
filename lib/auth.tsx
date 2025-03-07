@@ -190,6 +190,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 提取角色信息
         const roleInfo = extractRoleInfo(userData);
         console.log('提取的角色信息:', roleInfo);
+        console.log('角色ID类型:', typeof roleInfo.id, '值:', roleInfo.id);
+        console.log('判断是否为超级管理员:', roleInfo.id === 'superadmin' ? '是' : '否');
+        
+        // 手动检查和修正角色ID
+        let roleId = roleInfo.id;
+        if (userData.user && userData.user.account === 'superadmin') {
+          console.log('检测到超级管理员账号，确保角色ID正确');
+          roleId = 'superadmin';
+        }
         
         // 构建用户信息
         const user: User = {
@@ -197,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: userData.name,
           email: userData.email || null,
           avatar: userData.avatar || null,
-          role: roleInfo.id,
+          role: roleId, // 使用可能修正过的角色ID
           roleName: roleInfo.name,
           school: userData.school?.name,
           schoolId: userData.schoolId || userData.school?.id,
@@ -370,6 +379,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // 提取角色信息
       const roleInfo = extractRoleInfo(data);
       console.log('提取的角色信息:', roleInfo);
+      console.log('角色ID类型:', typeof roleInfo.id, '值:', roleInfo.id);
+      console.log('判断是否为超级管理员:', roleInfo.id === 'superadmin' ? '是' : '否');
+      
+      // 手动检查和修正角色ID
+      let roleId = roleInfo.id;
+      if (data.user && data.user.account === 'superadmin') {
+        console.log('检测到超级管理员账号，确保角色ID正确');
+        roleId = 'superadmin';
+      }
       
       // 构建用户信息
       const user: User = {
@@ -377,13 +395,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         name: data.user.name,
         email: data.user.email,
         avatar: data.user.avatar,
-        role: roleInfo.id,
+        role: roleId, // 使用可能修正过的角色ID
         roleName: roleInfo.name,
         school: data.school?.name,
         schoolId: data.user.schoolId || data.school?.id,
         schoolName: data.user.schoolName || data.school?.name,
         permissions: data.permissions,
       };
+      
+      console.log('构建的用户信息:', user);
+      console.log('用户角色:', user.role);
       
       // 保存用户信息到localStorage，作为备份
       try {
@@ -497,13 +518,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const roleInfo = extractRoleInfo(data);
       console.log('验证码登录 - 提取的角色信息:', roleInfo);
       
+      // 手动检查和修正角色ID
+      let roleId = roleInfo.id;
+      if (data.user && data.user.account === 'superadmin') {
+        console.log('检测到超级管理员账号，确保角色ID正确');
+        roleId = 'superadmin';
+      }
+      
       // 构建用户信息
       const user: User = {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
         avatar: data.user.avatar,
-        role: roleInfo.id,
+        role: roleId, // 使用可能修正过的角色ID
         roleName: roleInfo.name,
         school: data.school?.name,
         schoolId: data.user.schoolId || data.school?.id,

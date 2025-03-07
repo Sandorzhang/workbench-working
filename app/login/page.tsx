@@ -33,6 +33,14 @@ export default function LoginPage() {
 
   // 处理认证后的重定向
   useEffect(() => {
+    console.log('登录页重定向检查 - 认证状态:', {
+      isAuthenticated,
+      hasUser: !!user,
+      userRole: user?.role,
+      isLoading: authContextLoading,
+      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+    });
+    
     // 检查全局变量，避免多次跳转
     if (typeof window !== 'undefined') {
       // @ts-ignore 添加全局变量跟踪登录跳转
@@ -57,13 +65,44 @@ export default function LoginPage() {
         }, 5000);
       }
       
-      const targetPath = user.role === 'superadmin' ? '/superadmin' : '/workbench';
+      // 详细记录用户信息和角色
+      console.log('用户登录信息:', {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        roleName: user.roleName
+      });
       
-      console.log(`登录页面：用户已登录，角色 [${user.role}]，准备跳转到 ${targetPath}`);
-      toast.success(`登录成功，欢迎 ${user.name || ''}！`);
+      console.log('用户角色类型:', typeof user.role);
+      console.log('角色值:', user.role);
+      console.log('是否为superadmin:', user.role === 'superadmin');
       
-      // 直接跳转，不使用 setTimeout
-      router.push(targetPath);
+      // 确保角色字符串进行精确比较，使用全等比较
+      const isSuperAdmin = String(user.role).toLowerCase() === 'superadmin';
+      const targetPath = isSuperAdmin ? '/superadmin' : '/workbench';
+      
+      console.log(`登录页面：用户已登录，角色 [${user.role}]，是否超管: ${isSuperAdmin}，准备跳转到 ${targetPath}`);
+      
+      try {
+        // 使用replace而不是push，避免浏览器历史记录问题
+        console.log(`开始执行路由跳转到: ${targetPath}`);
+        router.replace(targetPath);
+        console.log('路由跳转已触发');
+        
+        // 添加后备跳转机制，以防router.replace失败
+        setTimeout(() => {
+          if (window.location.pathname === '/login') {
+            console.log('检测到5秒后仍在登录页，尝试使用window.location跳转');
+            window.location.href = targetPath;
+          }
+        }, 5000);
+        
+        toast.success(`登录成功，欢迎 ${user.name || ''}！`);
+      } catch (error) {
+        console.error('路由跳转出错:', error);
+        // 尝试使用window.location作为后备
+        window.location.href = targetPath;
+      }
     }
   }, [isAuthenticated, user, router, authContextLoading]);
 

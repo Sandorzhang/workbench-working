@@ -86,6 +86,14 @@ export default function SuperAdminPage() {
   
   // 检查认证状态
   useEffect(() => {
+    console.log('超管页面初始化 - 认证状态:', {
+      isAuthenticated,
+      hasUser: !!user,
+      userRole: user?.role,
+      isLoading: authLoading,
+      authChecked
+    });
+    
     if (!authLoading) {
       // 认证检查完成
       setAuthChecked(true);
@@ -97,29 +105,29 @@ export default function SuperAdminPage() {
         return;
       }
       
-      if (user?.role !== 'superadmin') {
-        console.log('非超级管理员，重定向到工作台');
-        toast.error('您没有权限访问超级管理员区域');
+      // 确保角色字符串进行精确比较
+      console.log('超管页面 - 用户角色:', user?.role);
+      console.log('角色类型:', typeof user?.role);
+      
+      const isSuperAdmin = user?.role && String(user.role).toLowerCase() === 'superadmin';
+      console.log('是否为超级管理员:', isSuperAdmin);
+      
+      if (!isSuperAdmin) {
+        console.log(`非超级管理员角色 [${user?.role}]，重定向到工作台`);
+        toast.error('您没有权限访问超级管理员页面');
         router.push('/workbench');
         return;
       }
       
-      console.log('超级管理员已登录:', user?.name, user?.id);
+      // 超级管理员认证通过
+      console.log('超级管理员认证通过');
       
-      // 验证token是否存在，确保用户真的登录了
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.warn('登录状态异常：用户已认证但没有token');
-        toast.error('登录状态异常，请重新登录');
-        router.push('/login');
-      }
-      
-      // 模拟加载时间为了展示动画效果
+      // 模拟加载数据
       setTimeout(() => {
         setIsLoading(false);
-      }, 300);
+      }, 1000);
     }
-  }, [authLoading, isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router, authChecked]);
   
   // 管理应用数据
   const adminApplications: AdminApplication[] = [
