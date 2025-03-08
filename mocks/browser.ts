@@ -18,6 +18,8 @@ const validateHandlers = () => {
   // 验证关键的认证处理程序是否存在
   const criticalEndpoints = [
     { pattern: '/api/auth/login', method: 'POST' },
+    { pattern: 'http://localhost:3000/api/auth/login', method: 'POST' },
+    { pattern: '*/api/auth/login', method: 'POST' },
     { pattern: '/api/auth/me', method: 'GET' },
     { pattern: '/api/auth/logout', method: 'POST' }
   ];
@@ -44,11 +46,12 @@ const validateHandlers = () => {
             pathMatches = 
               pathStr === endpoint.pattern || 
               pathStr.includes(endpoint.pattern) ||
-              (pathStr.includes('*') && endpoint.pattern.includes(pathStr.replace('*', '')));
+              (pathStr.includes('*') && endpoint.pattern.includes(pathStr.replace('*', ''))) ||
+              (endpoint.pattern.includes('*') && pathStr.includes(endpoint.pattern.replace('*', '')));
               
             if (pathMatches) {
               hasHandler = true;
-              console.log(`✓ ${endpoint.method} ${endpoint.pattern}`);
+              console.log(`✓ ${endpoint.method} ${endpoint.pattern} -> 匹配: ${pathStr}`);
               break;
             }
           }
@@ -98,6 +101,15 @@ export const startMSW = async () => {
         try {
           const url = new URL(request.url);
           
+          // 登录相关请求，发出更明显的警告
+          if (url.pathname.includes('/api/auth/login')) {
+            console.error(`⚠️⚠️⚠️ [MSW] 登录请求未被拦截! ${request.method} ${url.pathname}`);
+            console.log(`请求URL: ${request.url}`);
+            console.log(`当前处理程序路径:`, handlers.map(h => h.info?.path || 'unknown'));
+            error();
+            return;
+          }
+          
           // 忽略非API请求
           if (!url.pathname.includes('/api/')) {
             return;
@@ -120,6 +132,17 @@ export const startMSW = async () => {
     });
     
     console.log('✅ MSW worker已启动');
+    
+    // 添加调试信息到全局变量
+    if (typeof window !== 'undefined') {
+      (window as any).__MSW_DEBUG__ = {
+        handlers: handlers.map(h => ({
+          method: h.info?.method,
+          path: h.info?.path,
+        })),
+        timestamp: new Date().toISOString()
+      };
+    }
     
     return true;
   } catch (error) {

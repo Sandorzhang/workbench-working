@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw';
 import { db, saveDb } from '../db';
+import { logRequest, logResponse, logHandlerError } from '../debug-logger';
 
 // 生成随机令牌
 const generateToken = () => {
@@ -33,8 +34,11 @@ interface CodeLoginRequest {
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
 export const authHandlers = [
-  // 账号密码登录 - 使用明确路径以确保正确匹配
-  http.post('/api/auth/login', async ({ request }) => {
+  // 账号密码登录 - 使用多个路径模式以确保正确匹配
+  http.post('*/api/auth/login', async ({ request }) => {
+    const handlerName = 'auth.login (通配路径)';
+    const requestInfo = logRequest(request, handlerName);
+    
     try {
       await delay(500);
       
@@ -51,12 +55,15 @@ export const authHandlers = [
       // 检查必要字段
       if (!identity || !verify) {
         console.log('登录失败: 缺少必要字段');
-        return HttpResponse.json({
+        const response = HttpResponse.json({
           code: 400,
           message: '用户名和密码不能为空',
           success: false,
           data: null
         }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
       }
       
       // 其他账号 - 动态测试
@@ -74,10 +81,10 @@ export const authHandlers = [
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
         });
         
-        console.log('已创建管理员session记录');
+        console.log('已创建管理员session记录, accessToken:', accessToken);
         
         // 返回登录成功响应
-        return HttpResponse.json({
+        const response = HttpResponse.json({
           code: 0,
           message: '登录成功',
           success: true,
@@ -96,6 +103,9 @@ export const authHandlers = [
             }
           }
         }, { status: 200 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
       } 
       // 教师账号
       else if (identity === 'teacher' && verify === 'teacher') {
@@ -282,13 +292,291 @@ export const authHandlers = [
         }, { status: 200 });
       }
     } catch (error) {
-      console.error('登录处理发生错误:', error);
-      return HttpResponse.json({
+      console.error('登录处理程序出错:', error);
+      logHandlerError(error, request, handlerName);
+      
+      const response = HttpResponse.json({
         code: 500,
         message: '服务器内部错误',
         success: false,
         data: null
       }, { status: 500 });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
+    }
+  }),
+  
+  // 添加准确的绝对路径匹配
+  http.post('http://localhost:3000/api/auth/login', async ({ request }) => {
+    const handlerName = 'auth.login (绝对路径-localhost)';
+    const requestInfo = logRequest(request, handlerName);
+    
+    try {
+      await delay(500);
+      
+      // 记录请求详细信息，帮助调试
+      const requestUrl = request.url;
+      console.log(`收到登录请求 - URL: ${requestUrl}`);
+      
+      // 解析请求体
+      const body = await request.json() as LoginRequest;
+      const { identity, verify, type } = body;
+      
+      console.log(`尝试账号登录: ${identity}, 类型: ${type}`);
+      
+      // 检查必要字段
+      if (!identity || !verify) {
+        console.log('登录失败: 缺少必要字段');
+        const response = HttpResponse.json({
+          code: 400,
+          message: '用户名和密码不能为空',
+          success: false,
+          data: null
+        }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
+      
+      // 其他账号 - 动态测试
+      if (identity === 'admin' && verify === 'admin') {
+        console.log('管理员登录成功');
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        // 在db中创建session记录
+        db.session.create({
+          id: generateToken(),
+          userId: '1',
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
+        });
+        
+        console.log('已创建管理员session记录, accessToken:', accessToken);
+        
+        // 返回登录成功响应
+        const response = HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: '1',
+              username: 'admin',
+              email: 'admin@example.com',
+              name: '系统管理员',
+              fullName: '系统管理员',
+              avatar: '/avatars/admin.png',
+              role: 'admin',
+              permissions: ['*']
+            }
+          }
+        }, { status: 200 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      } 
+      // 教师账号
+      else if (identity === 'teacher' && verify === 'teacher') {
+        console.log('教师登录成功');
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        // 在db中创建session记录
+        db.session.create({
+          id: generateToken(),
+          userId: '2',
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
+        });
+        
+        console.log('已创建教师session记录');
+        
+        return HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: '2',
+              username: 'teacher',
+              email: 'teacher@example.com',
+              name: '张老师',
+              fullName: '张老师',
+              avatar: '/avatars/teacher.png',
+              role: 'teacher',
+              permissions: ['classroom:read', 'classroom:write', 'student:read']
+            }
+          }
+        }, { status: 200 });
+      }
+      // 学生账号
+      else if (identity === 'student' && verify === 'student') {
+        console.log('学生登录成功');
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        // 在db中创建session记录
+        db.session.create({
+          id: generateToken(),
+          userId: '3',
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
+        });
+        
+        console.log('已创建学生session记录');
+        
+        return HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: '3',
+              username: 'student',
+              email: 'student@example.com',
+              name: '李同学',
+              fullName: '李同学',
+              avatar: '/avatars/student.png',
+              role: 'student',
+              permissions: ['course:read']
+            }
+          }
+        }, { status: 200 });
+      } 
+      // 其他账号 - 动态测试
+      else {
+        // 尝试找到匹配的用户
+        let user = db.user.findFirst({
+          where: { username: { equals: identity } }
+        });
+        
+        // 如果没找到，尝试用邮箱查找
+        if (!user) {
+          user = db.user.findFirst({
+            where: { email: { equals: identity } }
+          });
+        }
+        
+        // 如果没找到，尝试用电话查找
+        if (!user) {
+          user = db.user.findFirst({
+            where: { phone: { equals: identity } }
+          });
+        }
+
+        // 如果找到用户并且密码正确
+        if (user && user.password === verify) {
+          console.log(`用户 ${user.username || identity} 登录成功`);
+          
+          const accessToken = generateToken();
+          const refreshToken = generateToken();
+          
+          // 在db中创建session记录
+          db.session.create({
+            id: generateToken(),
+            userId: user.id,
+            token: accessToken,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
+          });
+          
+          console.log(`已创建用户 ${user.username || identity} 的session记录`);
+          
+          // 确保用户有名称，如果name未设置但username存在，则使用username
+          const userName = user.name || user.username || identity;
+          
+          return HttpResponse.json({
+            code: 0,
+            message: '登录成功',
+            success: true,
+            data: {
+              accessToken,
+              refreshToken,
+              user: {
+                id: user.id,
+                username: user.username || identity,
+                email: user.email || `${identity}@example.com`,
+                name: userName,
+                fullName: userName,
+                avatar: user.avatar || '/avatars/default.png',
+                role: user.role || 'user',
+                permissions: ['basic:read']
+              }
+            }
+          }, { status: 200 });
+        }
+        
+        // 用户不存在
+        if (!user) {
+          console.log(`用户不存在: ${identity}`);
+          return HttpResponse.json({
+            code: 401,
+            message: '用户名或密码错误',
+            success: false,
+            data: null
+          }, { status: 401 });
+        }
+        
+        // 密码不正确 (模拟环境下简化为固定密码验证)
+        if (verify !== 'password' && verify !== '123456') {
+          console.log(`密码不正确: ${identity}`);
+          return HttpResponse.json({
+            code: 401,
+            message: '用户名或密码错误',
+            success: false,
+            data: null
+          }, { status: 401 });
+        }
+        
+        console.log(`用户 ${identity} 登录成功`);
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        // 构建用户信息
+        const userInfo = {
+          id: user.id || '123',
+          username: user.username || identity,
+          email: user.email || `${identity}@example.com`,
+          name: user.name || identity,
+          avatar: user.avatar || `/avatars/default.png`,
+          role: user.role || 'user'
+        };
+        
+        return HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: userInfo
+          }
+        }, { status: 200 });
+      }
+    } catch (error) {
+      console.error('登录处理程序出错:', error);
+      logHandlerError(error, request, handlerName);
+      
+      const response = HttpResponse.json({
+        code: 500,
+        message: '服务器内部错误',
+        success: false,
+        data: null
+      }, { status: 500 });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
     }
   }),
   

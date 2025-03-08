@@ -116,29 +116,59 @@ const originalHandlers = [
 // 添加关键认证处理程序 - 确保始终有这些路径的处理程序
 const criticalAuthHandlers = [
   // 登录处理程序 - 保底实现，如果原处理程序不起作用
-  http.post('/api/auth/login', async ({ request }) => {
-    console.log('使用保底登录处理程序 - 如果看到此消息，表明原处理程序未命中');
+  http.post('http://localhost:3000/api/auth/login', async ({ request }) => {
+    console.log('⚠️ 使用保底登录处理程序(localhost) - 如果看到此消息，表明原处理程序未命中');
     
     try {
       await delay(500);
       const body = await request.json();
-      const { username, password } = body as { username: string; password: string };
+      const { identity, password, username, verify } = body as { identity?: string; password?: string; username?: string; verify?: string };
       
-      console.log(`保底登录处理程序接收到请求: 用户名=${username}`);
+      // 提取用户名（支持多种字段名称）
+      const actualUsername = username || identity || '';
+      const actualPassword = password || verify || '';
+      
+      console.log(`保底登录处理程序接收到请求: 用户名=${actualUsername}`);
       
       // 简单验证
-      if (username === 'admin' && password === 'admin') {
+      if (actualUsername === 'admin' && actualPassword === 'admin') {
+        console.log('保底处理程序: 管理员登录成功');
+        
+        const accessToken = 'mock-token-' + Math.random().toString(36).substring(2, 15);
+        const refreshToken = 'mock-refresh-' + Math.random().toString(36).substring(2, 15);
+        
+        // 将令牌直接保存到localStorage
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+            console.log('保底处理程序: 令牌已保存到localStorage');
+            
+            // 设置全局变量
+            window.__AUTH_TOKEN__ = accessToken;
+          } catch (e) {
+            console.error('保存令牌到localStorage失败:', e);
+          }
+        }
+        
         return new HttpResponse(
           JSON.stringify({
-            user: {
-              id: '1',
-              name: '管理员',
-              email: 'admin@example.com',
-              avatar: '/avatars/admin.png',
-              role: 'admin',
-              username: 'admin'
-            },
-            token: 'mock-token-backup-handler'
+            code: 0,
+            message: '登录成功',
+            success: true,
+            data: {
+              accessToken,
+              refreshToken,
+              user: {
+                id: '1',
+                name: '管理员',
+                email: 'admin@example.com',
+                avatar: '/avatars/admin.png',
+                role: 'admin',
+                username: 'admin',
+                permissions: ['*']
+              }
+            }
           }),
           { 
             status: 200,
@@ -152,7 +182,9 @@ const criticalAuthHandlers = [
       return new HttpResponse(
         JSON.stringify({
           message: '用户名或密码错误',
-          code: '401',
+          code: 401,
+          success: false,
+          data: null,
           details: { reason: 'invalid_credentials' }
         }),
         { 
@@ -167,7 +199,108 @@ const criticalAuthHandlers = [
       return new HttpResponse(
         JSON.stringify({
           message: '服务器错误',
-          code: '500',
+          code: 500,
+          success: false,
+          data: null,
+          details: { reason: 'server_error' }
+        }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+  }),
+  
+  // 再添加一个通配路径的保底登录处理程序
+  http.post('*/api/auth/login', async ({ request }) => {
+    console.log('⚠️ 使用保底登录处理程序(通配) - 如果看到此消息，表明原处理程序未命中');
+    
+    try {
+      await delay(500);
+      const body = await request.json();
+      const { identity, password, username, verify } = body as { identity?: string; password?: string; username?: string; verify?: string };
+      
+      // 提取用户名（支持多种字段名称）
+      const actualUsername = username || identity || '';
+      const actualPassword = password || verify || '';
+      
+      console.log(`保底登录处理程序接收到请求: 用户名=${actualUsername}`);
+      
+      // 简单验证
+      if (actualUsername === 'admin' && actualPassword === 'admin') {
+        console.log('保底处理程序: 管理员登录成功');
+        
+        const accessToken = 'mock-token-' + Math.random().toString(36).substring(2, 15);
+        const refreshToken = 'mock-refresh-' + Math.random().toString(36).substring(2, 15);
+        
+        // 将令牌直接保存到localStorage
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+            console.log('保底处理程序: 令牌已保存到localStorage');
+            
+            // 设置全局变量
+            window.__AUTH_TOKEN__ = accessToken;
+          } catch (e) {
+            console.error('保存令牌到localStorage失败:', e);
+          }
+        }
+        
+        return new HttpResponse(
+          JSON.stringify({
+            code: 0,
+            message: '登录成功',
+            success: true,
+            data: {
+              accessToken,
+              refreshToken,
+              user: {
+                id: '1',
+                name: '管理员',
+                email: 'admin@example.com',
+                avatar: '/avatars/admin.png',
+                role: 'admin',
+                username: 'admin',
+                permissions: ['*']
+              }
+            }
+          }),
+          { 
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      return new HttpResponse(
+        JSON.stringify({
+          message: '用户名或密码错误',
+          code: 401,
+          success: false,
+          data: null,
+          details: { reason: 'invalid_credentials' }
+        }),
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (err) {
+      console.error('保底登录处理程序出错:', err);
+      return new HttpResponse(
+        JSON.stringify({
+          message: '服务器错误',
+          code: 500,
+          success: false,
+          data: null,
           details: { reason: 'server_error' }
         }),
         { 

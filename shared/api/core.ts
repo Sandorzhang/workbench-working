@@ -64,6 +64,42 @@ export async function handleRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   try {
+    // MSW预处理：在开发环境中，确保MSW已就绪
+    if (API_MOCKING === true && typeof window !== 'undefined') {
+      // 如果MSW初始化仍在进行中，等待初始化完成
+      if (window.__MSW_READY__ === undefined) {
+        console.log('等待MSW初始化...');
+        await new Promise<void>((resolve) => {
+          const checkMswReady = () => {
+            if (window.__MSW_READY__ === true) {
+              resolve();
+            } else if (window.__MSW_READY__ === false) {
+              // MSW初始化失败，继续执行
+              console.warn('MSW初始化失败，将直接发送请求');
+              resolve();
+            } else {
+              // 继续等待，每100ms检查一次
+              setTimeout(checkMswReady, 100);
+            }
+          };
+          
+          // 设置超时
+          const timeoutId = setTimeout(() => {
+            console.warn('MSW初始化超时，将直接发送请求');
+            resolve();
+          }, 3000); // 3秒超时
+          
+          // 开始检查
+          checkMswReady();
+          
+          // 清除超时
+          return () => clearTimeout(timeoutId);
+        });
+      }
+      
+      console.log(`准备API请求: ${url}, MSW状态: ${window.__MSW_READY__}`);
+    }
+
     // 设置默认的请求头（如果没有提供）
     const headers = {
       'Content-Type': 'application/json',
@@ -149,6 +185,8 @@ export async function handleRequest<T>(
  * @returns 完整格式化的API路径
  */
 export const buildApiPath = (feature: string, path: string): string => {
+  console.log(`构建API路径: feature=${feature}, path=${path}`);
+
   // 确保feature没有前导或尾随斜杠
   const normalizedFeature = feature.replace(/^\/|\/$/g, '');
   
@@ -162,8 +200,18 @@ export const buildApiPath = (feature: string, path: string): string => {
     ? API_BASE_URL.slice(0, -1) 
     : API_BASE_URL;
   
-  // 格式: [baseUrl]/[feature]/[path]
-  return `${baseUrl}/${normalizedFeature}${normalizedPath}`;
+  // 检查是否在开发环境且MSW已启用 - 使用固定路径格式方便MSW拦截
+  if (API_MOCKING === true && ENVIRONMENT === 'development') {
+    // 格式: /api/[feature][path]
+    const mswPath = `/api/${normalizedFeature}${normalizedPath}`;
+    console.log(`MSW模式API路径: ${mswPath}`);
+    return mswPath;
+  }
+  
+  // 格式: [baseUrl]/[feature][path]
+  const productionPath = `${baseUrl}/${normalizedFeature}${normalizedPath}`;
+  console.log(`标准API路径: ${productionPath}`);
+  return productionPath;
 };
 
 // 声明全局窗口接口扩展

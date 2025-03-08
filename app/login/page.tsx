@@ -143,21 +143,70 @@ export default function LoginPage() {
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       
+      // 检查MSW是否已就绪
+      if (process.env.NEXT_PUBLIC_API_MOCKING === 'enabled' && typeof window !== 'undefined') {
+        console.log('MSW状态检查:', {
+          '已定义': window.__MSW_READY__ !== undefined,
+          '就绪状态': window.__MSW_READY__
+        });
+        
+        if (window.__MSW_READY__ !== true) {
+          console.warn('MSW尚未就绪，等待MSW初始化...');
+          
+          // 等待MSW就绪
+          await new Promise<void>((resolve) => {
+            const checkMswReady = () => {
+              if (window.__MSW_READY__ === true) {
+                console.log('MSW已就绪，继续执行登录');
+                resolve();
+              } else {
+                // 继续等待，每100ms检查一次
+                setTimeout(checkMswReady, 100);
+              }
+            };
+            
+            // 设置超时
+            const timeoutId = setTimeout(() => {
+              console.warn('等待MSW超时，将继续尝试登录');
+              resolve();
+            }, 3000); // 3秒超时
+            
+            // 开始检查
+            checkMswReady();
+            
+            // 清除超时
+            return () => clearTimeout(timeoutId);
+          });
+        }
+      }
+      
       // 执行登录
+      console.log('调用login函数...');
       await login(username, password);
+      console.log('login函数调用完成');
       
       // 立即从localStorage获取新token，验证设置成功
       const accessToken = localStorage.getItem('accessToken');
       const userInfo = localStorage.getItem('user');
       
+      console.log('登录后检查令牌状态:', {
+        '存在访问令牌': !!accessToken,
+        '访问令牌长度': accessToken ? accessToken.length : 0,
+        '存在用户信息': !!userInfo
+      });
+      
       // 确保全局内存中也有token备份
       if (typeof window !== 'undefined' && accessToken) {
         window.__AUTH_TOKEN__ = accessToken;
+        console.log('已将token设置到全局变量中');
       }
       
       // 验证登录成功
       if (!accessToken) {
-        throw new Error('登录后未能获取到有效的访问令牌');
+        console.error('登录后未能获取到有效的访问令牌');
+        const tokenError = new Error('登录后未能获取到有效的访问令牌');
+        tokenError.name = 'MissingTokenError';
+        throw tokenError;
       }
       
       console.log('登录成功，准备跳转...', {
@@ -179,11 +228,19 @@ export default function LoginPage() {
     } catch (error) {
       console.error('登录失败:', error);
       
-      // 设置错误信息
-      let errorMessage = '登录失败，请检查账号和密码';
+      // 增强错误处理
+      let errorMessage = '登录失败，请稍后重试';
       
       if (error instanceof Error) {
-        errorMessage = error.message;
+        if (error.name === 'MissingTokenError') {
+          errorMessage = '登录认证失败，请检查网络或联系管理员';
+        } else if (error.message.includes('网络')) {
+          errorMessage = '网络连接异常，请检查网络设置';
+        } else if (error.message.includes('超时')) {
+          errorMessage = '请求超时，请稍后重试';
+        } else if (error.message.includes('用户名') || error.message.includes('密码')) {
+          errorMessage = error.message;
+        }
       }
       
       toast.error(errorMessage);

@@ -11,6 +11,18 @@ let inMemoryToken: string | null = null;
 // 检查是否在浏览器环境
 const isBrowser = typeof window !== 'undefined';
 
+// 调试日志开关
+const DEBUG = true;
+
+// 调试日志函数
+const debugLog = (...args: any[]) => {
+  if (DEBUG) {
+    console.group('🔑 [令牌服务]');
+    console.log(...args);
+    console.groupEnd();
+  }
+};
+
 /**
  * 令牌服务对象
  */
@@ -23,6 +35,8 @@ const tokenService = {
    * @param refreshToken 刷新令牌
    */
   setTokens: (accessToken: string, refreshToken: string): void => {
+    debugLog(`设置令牌 - 访问令牌长度: ${accessToken?.length || 0}, 刷新令牌长度: ${refreshToken?.length || 0}`);
+    
     // 保存访问令牌到内存中
     inMemoryToken = accessToken;
     
@@ -44,6 +58,7 @@ const tokenService = {
       try {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
+        debugLog('令牌已保存到 localStorage');
       } catch (error) {
         console.error('备份令牌到 localStorage 失败:', error);
       }
@@ -52,7 +67,39 @@ const tokenService = {
     // 设置全局变量 (用于兼容性)
     if (isBrowser && window) {
       (window as any).__AUTH_TOKEN__ = accessToken;
+      debugLog('令牌已设置到全局变量 __AUTH_TOKEN__');
     }
+    
+    // 验证令牌是否正确保存
+    setTimeout(() => {
+      if (isBrowser) {
+        const storedToken = localStorage.getItem('accessToken');
+        const globalToken = (window as any).__AUTH_TOKEN__;
+        
+        debugLog('令牌保存验证:', {
+          '内存中': !!inMemoryToken && inMemoryToken.length > 0,
+          'localStorage中': !!storedToken && storedToken.length > 0,
+          '全局变量中': !!globalToken && globalToken.length > 0,
+          '三者匹配': inMemoryToken === storedToken && storedToken === globalToken
+        });
+        
+        if (!storedToken || !globalToken || inMemoryToken !== storedToken || storedToken !== globalToken) {
+          console.warn('令牌保存不一致，尝试重新同步');
+          
+          // 重新同步
+          if (inMemoryToken) {
+            localStorage.setItem('accessToken', inMemoryToken);
+            (window as any).__AUTH_TOKEN__ = inMemoryToken;
+          } else if (storedToken) {
+            inMemoryToken = storedToken;
+            (window as any).__AUTH_TOKEN__ = storedToken;
+          } else if (globalToken) {
+            inMemoryToken = globalToken;
+            localStorage.setItem('accessToken', globalToken);
+          }
+        }
+      }
+    }, 100);
   },
   
   /**
