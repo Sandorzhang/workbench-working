@@ -17,9 +17,9 @@ const ROLES = {
 // 定义角色对应的起始页面
 const ROLE_ROUTES = {
   [ROLES.SUPERADMIN]: '/superadmin/dashboard',
-  [ROLES.ADMIN]: '/school/dashboard',
-  [ROLES.TEACHER]: '/school/classroom',
-  [ROLES.STUDENT]: '/school/learning'
+  [ROLES.ADMIN]: '/workbench',
+  [ROLES.TEACHER]: '/workbench',
+  [ROLES.STUDENT]: '/workbench'
 };
 
 // 定义角色分组
@@ -29,6 +29,15 @@ const SCHOOL_ROLES = [ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT];
 const UI_TYPE = {
   SUPERADMIN: 'superadmin', // 超管端
   SCHOOL: 'school'          // 校端
+};
+
+/**
+ * 获取角色对应的默认路由
+ * @param roleId 角色ID
+ * @returns 默认路由路径
+ */
+export const getDefaultRoute = (roleId: string): string => {
+  return ROLE_ROUTES[roleId] || '/workbench';
 };
 
 declare global {
@@ -152,15 +161,6 @@ const getUiType = (roleId: string): string => {
   }
   // 默认返回校端
   return UI_TYPE.SCHOOL;
-};
-
-/**
- * 获取角色对应的默认路由
- * @param roleId 角色ID
- * @returns 默认路由路径
- */
-const getDefaultRoute = (roleId: string): string => {
-  return ROLE_ROUTES[roleId] || '/login';
 };
 
 /**

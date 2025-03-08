@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
+import { getDefaultRoute } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -97,9 +98,10 @@ export default function LoginPage() {
       // 设置重定向状态
       setRedirectInProgress(true);
       
-      // 确定跳转目标
-      const isSuperAdmin = String(user.role).toLowerCase() === 'superadmin';
-      const targetPath = isSuperAdmin ? '/superadmin' : '/workbench';
+      // 使用getDefaultRoute函数获取角色对应的路由
+      const targetPath = user.role ? getDefaultRoute(user.role) : '/workbench';
+      
+      console.log(`用户 ${user.name} 角色为 ${user.role}，重定向到: ${targetPath}`);
       
       try {
         // 使用路由跳转
