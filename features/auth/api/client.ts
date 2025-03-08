@@ -8,7 +8,9 @@ import {
   LoginResponse, 
   VerificationCodeRequest,
   CodeLoginCredentials,
-  ProfileUpdateRequest
+  ProfileUpdateRequest,
+  PasswordChangeRequest,
+  TokenValidationResponse
 } from '../types';
 // Uncomment and adapt as needed:
 // import { Type1, Type2 } from '../types';
@@ -18,27 +20,36 @@ const FEATURE = 'auth';
 
 /**
  * 认证API客户端
+ * 
+ * 这个模块提供了与认证相关的API方法，包括登录、登出和用户信息获取等。
+ * 在开发环境中，这些请求会被MSW拦截并返回模拟数据。
  */
 export const authApi = {
   /**
    * 用户名密码登录
-   * @param credentials 登录凭证（用户名和密码）
-   * @returns API响应，包含登录结果和用户信息
+   * @param credentials 登录凭证
    */
   login: async (credentials: LoginCredentials): Promise<ApiResponse<LoginResponse>> => {
+    // 转换为MSW期望的格式
+    const payload = {
+      identity: credentials.username,
+      verify: credentials.password,
+      type: 'ACCOUNT',
+      rememberMe: credentials.rememberMe
+    };
+    
     return handleRequest(
       buildApiPath(FEATURE, '/login'),
       {
         method: 'POST',
-        body: JSON.stringify(credentials)
+        body: JSON.stringify(payload)
       }
     );
   },
 
   /**
    * 发送手机验证码
-   * @param data 手机号
-   * @returns API响应，包含发送结果
+   * @param data 手机号请求
    */
   sendVerificationCode: async (data: VerificationCodeRequest): Promise<ApiResponse<{ success: boolean }>> => {
     return handleRequest(
@@ -52,22 +63,28 @@ export const authApi = {
 
   /**
    * 验证码登录
-   * @param credentials 手机号和验证码
-   * @returns API响应，包含登录结果和用户信息
+   * @param credentials 验证码登录凭证
    */
   loginWithCode: async (credentials: CodeLoginCredentials): Promise<ApiResponse<LoginResponse>> => {
+    // 转换为MSW期望的格式
+    const payload = {
+      identity: credentials.phone,
+      verify: credentials.code,
+      type: 'PHONE',
+      rememberMe: credentials.rememberMe
+    };
+    
     return handleRequest(
       buildApiPath(FEATURE, '/login-with-code'),
       {
         method: 'POST',
-        body: JSON.stringify(credentials)
+        body: JSON.stringify(payload)
       }
     );
   },
 
   /**
    * 获取当前登录用户信息
-   * @returns API响应，包含用户信息
    */
   getCurrentUser: async (): Promise<ApiResponse<IUser>> => {
     return handleRequest(buildApiPath(FEATURE, '/me'));
@@ -75,7 +92,6 @@ export const authApi = {
 
   /**
    * 退出登录
-   * @returns API响应，包含退出结果
    */
   logout: async (): Promise<ApiResponse<{ success: boolean }>> => {
     return handleRequest(
@@ -87,7 +103,6 @@ export const authApi = {
   /**
    * 刷新令牌
    * @param refreshToken 刷新令牌
-   * @returns API响应，包含新的访问令牌和刷新令牌
    */
   refreshToken: async (refreshToken: string): Promise<ApiResponse<{ accessToken: string; refreshToken: string }>> => {
     return handleRequest(
@@ -102,7 +117,6 @@ export const authApi = {
   /**
    * 更新用户资料
    * @param data 要更新的资料
-   * @returns API响应，包含更新后的用户信息
    */
   updateProfile: async (data: ProfileUpdateRequest): Promise<ApiResponse<IUser>> => {
     return handleRequest(
@@ -116,10 +130,9 @@ export const authApi = {
 
   /**
    * 修改密码
-   * @param data 包含旧密码和新密码的数据
-   * @returns API响应，包含修改结果
+   * @param data 密码修改请求
    */
-  changePassword: async (data: { oldPassword: string; newPassword: string }): Promise<ApiResponse<{ success: boolean }>> => {
+  changePassword: async (data: PasswordChangeRequest): Promise<ApiResponse<{ success: boolean }>> => {
     return handleRequest(
       buildApiPath(FEATURE, '/change-password'),
       {
@@ -132,9 +145,8 @@ export const authApi = {
   /**
    * 验证令牌是否有效
    * @param token 访问令牌
-   * @returns API响应，包含验证结果
    */
-  validateToken: async (token: string): Promise<ApiResponse<{ valid: boolean }>> => {
+  validateToken: async (token: string): Promise<ApiResponse<TokenValidationResponse>> => {
     return handleRequest(
       buildApiPath(FEATURE, '/validate-token'),
       {

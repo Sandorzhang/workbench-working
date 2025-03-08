@@ -14,6 +14,82 @@ const TEST_VERIFICATION_CODE = '123456';
 // 验证码存储 (模拟)
 const verificationCodes = new Map();
 
+// 登录尝试记录
+interface LoginAttempt {
+  count: number;        // 尝试次数
+  lastAttempt: number;  // 最后尝试时间戳
+  blocked: boolean;     // 是否被阻止
+  blockExpires?: number; // 阻止到期时间
+}
+
+// 存储IP地址的登录尝试 - 在实际环境中应使用Redis等持久化存储
+const loginAttempts = new Map<string, LoginAttempt>();
+
+// 登录尝试限制配置
+const MAX_LOGIN_ATTEMPTS = 5;        // 最大尝试次数
+const BLOCK_DURATION = 15 * 60 * 1000; // 阻止时长(15分钟)
+const ATTEMPT_RESET = 60 * 60 * 1000;  // 尝试重置时间(1小时)
+
+// 检查和更新登录尝试
+const checkLoginAttempt = (ipAddress: string): { allowed: boolean; message?: string } => {
+  // 测试模式跳过检查
+  if (TEST_MODE && ipAddress === 'test-ip') {
+    return { allowed: true };
+  }
+  
+  // 获取IP的尝试记录，如不存在则初始化
+  const now = Date.now();
+  const attempt = loginAttempts.get(ipAddress) || { count: 0, lastAttempt: 0, blocked: false };
+  
+  // 检查是否被阻止
+  if (attempt.blocked) {
+    // 检查阻止是否过期
+    if (attempt.blockExpires && now > attempt.blockExpires) {
+      // 阻止已过期，重置尝试记录
+      loginAttempts.set(ipAddress, { count: 1, lastAttempt: now, blocked: false });
+      return { allowed: true };
+    }
+    
+    // 仍处于阻止期
+    const remainingMinutes = Math.ceil(((attempt.blockExpires || 0) - now) / (60 * 1000));
+    return { 
+      allowed: false, 
+      message: `登录尝试次数过多，请等待 ${remainingMinutes} 分钟后再试`
+    };
+  }
+  
+  // 检查是否应重置尝试计数 (超过1小时)
+  if (now - attempt.lastAttempt > ATTEMPT_RESET) {
+    loginAttempts.set(ipAddress, { count: 1, lastAttempt: now, blocked: false });
+    return { allowed: true };
+  }
+  
+  // 更新尝试次数
+  attempt.count += 1;
+  attempt.lastAttempt = now;
+  
+  // 检查是否超过最大尝试次数
+  if (attempt.count >= MAX_LOGIN_ATTEMPTS) {
+    attempt.blocked = true;
+    attempt.blockExpires = now + BLOCK_DURATION;
+    loginAttempts.set(ipAddress, attempt);
+    
+    return { 
+      allowed: false, 
+      message: `登录尝试次数过多，请等待 15 分钟后再试`
+    };
+  }
+  
+  // 更新尝试记录
+  loginAttempts.set(ipAddress, attempt);
+  
+  // 允许尝试，但返回剩余尝试次数
+  const remainingAttempts = MAX_LOGIN_ATTEMPTS - attempt.count;
+  console.log(`IP ${ipAddress} 登录尝试 ${attempt.count}/${MAX_LOGIN_ATTEMPTS}, 剩余 ${remainingAttempts} 次尝试`);
+  
+  return { allowed: true };
+};
+
 // 定义请求类型
 interface LoginRequest {
   identity: string;
@@ -28,6 +104,27 @@ interface PhoneRequest {
 interface CodeLoginRequest {
   phone: string;
   code: string;
+}
+
+interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+interface ValidateTokenRequest {
+  token: string;
+}
+
+interface PasswordChangeRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+interface ProfileUpdateRequest {
+  email?: string;
+  fullName?: string;
+  avatar?: string;
+  [key: string]: any;
 }
 
 // 适配URL模式
@@ -45,6 +142,27 @@ export const authHandlers = [
       // 记录请求详细信息，帮助调试
       const requestUrl = request.url;
       console.log(`收到登录请求 - URL: ${requestUrl}`);
+      
+      // 获取IP地址 (在MSW中模拟)
+      const ipAddress = request.headers.get('x-forwarded-for') || 
+                         request.headers.get('x-real-ip') || 
+                         'unknown-ip';
+      
+      // 检查登录尝试限制
+      const attemptCheck = checkLoginAttempt(ipAddress);
+      if (!attemptCheck.allowed) {
+        console.log(`登录尝试受限: IP ${ipAddress} - ${attemptCheck.message}`);
+        
+        const response = HttpResponse.json({
+          code: 429,
+          message: attemptCheck.message || '登录尝试次数过多，请稍后再试',
+          success: false,
+          data: null
+        }, { status: 429 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
       
       // 解析请求体
       const body = await request.json() as LoginRequest;
@@ -318,6 +436,27 @@ export const authHandlers = [
       // 记录请求详细信息，帮助调试
       const requestUrl = request.url;
       console.log(`收到登录请求 - URL: ${requestUrl}`);
+      
+      // 获取IP地址 (在MSW中模拟)
+      const ipAddress = request.headers.get('x-forwarded-for') || 
+                         request.headers.get('x-real-ip') || 
+                         'unknown-ip';
+      
+      // 检查登录尝试限制
+      const attemptCheck = checkLoginAttempt(ipAddress);
+      if (!attemptCheck.allowed) {
+        console.log(`登录尝试受限: IP ${ipAddress} - ${attemptCheck.message}`);
+        
+        const response = HttpResponse.json({
+          code: 429,
+          message: attemptCheck.message || '登录尝试次数过多，请稍后再试',
+          success: false,
+          data: null
+        }, { status: 429 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
       
       // 解析请求体
       const body = await request.json() as LoginRequest;
@@ -926,4 +1065,225 @@ export const authHandlers = [
       data: null
     });
   }),
+  
+  // 新增: 刷新令牌
+  http.post('*/api/auth/refresh-token', async ({ request }) => {
+    const handlerName = 'auth.refreshToken';
+    const requestInfo = logRequest(request, handlerName);
+    
+    try {
+      await delay(300);
+      const body = await request.json() as RefreshTokenRequest;
+      const { refreshToken } = body;
+      
+      if (!refreshToken) {
+        const response = HttpResponse.json({
+          code: 400,
+          message: '刷新令牌不能为空',
+          success: false,
+          data: null
+        }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
+      
+      // 在实际应用中，会验证刷新令牌是否有效
+      // 这里简单返回新的令牌
+      const accessToken = generateToken();
+      const newRefreshToken = generateToken();
+      
+      const response = HttpResponse.json({
+        code: 0,
+        message: '令牌刷新成功',
+        success: true,
+        data: {
+          accessToken,
+          refreshToken: newRefreshToken
+        }
+      });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
+    } catch (error) {
+      logHandlerError(error, request, handlerName);
+      return HttpResponse.json({
+        code: 500,
+        message: '服务器错误',
+        success: false,
+        data: null
+      }, { status: 500 });
+    }
+  }),
+  
+  // 新增: 验证令牌
+  http.post('*/api/auth/validate-token', async ({ request }) => {
+    const handlerName = 'auth.validateToken';
+    const requestInfo = logRequest(request, handlerName);
+    
+    try {
+      await delay(200);
+      const body = await request.json() as ValidateTokenRequest;
+      const { token } = body;
+      
+      if (!token) {
+        const response = HttpResponse.json({
+          code: 400,
+          message: '令牌不能为空',
+          success: false,
+          data: {
+            valid: false,
+            expired: false,
+            message: '令牌不能为空'
+          }
+        }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
+      
+      // 在实际应用中，会真正验证令牌
+      // 这里模拟有效的令牌
+      const isValid = token.length > 10;
+      
+      const response = HttpResponse.json({
+        code: 0,
+        message: isValid ? '令牌有效' : '令牌无效',
+        success: true,
+        data: {
+          valid: isValid,
+          expired: false,
+          message: isValid ? '令牌有效' : '令牌无效'
+        }
+      });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
+    } catch (error) {
+      logHandlerError(error, request, handlerName);
+      return HttpResponse.json({
+        code: 500,
+        message: '服务器错误',
+        success: false,
+        data: {
+          valid: false,
+          expired: false,
+          message: '服务器错误'
+        }
+      }, { status: 500 });
+    }
+  }),
+  
+  // 新增: 修改密码
+  http.post('*/api/auth/change-password', async ({ request }) => {
+    const handlerName = 'auth.changePassword';
+    const requestInfo = logRequest(request, handlerName);
+    
+    try {
+      await delay(500);
+      const body = await request.json() as PasswordChangeRequest;
+      const { oldPassword, newPassword, confirmPassword } = body;
+      
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        const response = HttpResponse.json({
+          code: 400,
+          message: '所有密码字段都不能为空',
+          success: false,
+          data: null
+        }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        const response = HttpResponse.json({
+          code: 400,
+          message: '新密码和确认密码不匹配',
+          success: false,
+          data: null
+        }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
+      
+      // 在实际应用中，会验证旧密码并更新新密码
+      // 这里简单返回成功
+      const response = HttpResponse.json({
+        code: 0,
+        message: '密码修改成功',
+        success: true,
+        data: {
+          success: true
+        }
+      });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
+    } catch (error) {
+      logHandlerError(error, request, handlerName);
+      return HttpResponse.json({
+        code: 500,
+        message: '服务器错误',
+        success: false,
+        data: null
+      }, { status: 500 });
+    }
+  }),
+  
+  // 新增: 更新用户资料
+  http.put('*/api/auth/profile', async ({ request }) => {
+    const handlerName = 'auth.updateProfile';
+    const requestInfo = logRequest(request, handlerName);
+    
+    try {
+      await delay(500);
+      const body = await request.json() as ProfileUpdateRequest;
+      
+      // 获取当前用户的授权令牌 (从请求头中)
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        const response = HttpResponse.json({
+          code: 401,
+          message: '未授权',
+          success: false,
+          data: null
+        }, { status: 401 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
+      
+      // 模拟更新用户资料
+      // 在实际应用中，会将数据保存到数据库
+      const updatedUser = {
+        id: '1',
+        username: 'admin',
+        email: body.email || 'admin@example.com',
+        fullName: body.fullName || '系统管理员',
+        avatar: body.avatar || '/avatars/admin.png',
+        role: 'admin',
+        permissions: ['*']
+      };
+      
+      const response = HttpResponse.json({
+        code: 0,
+        message: '资料更新成功',
+        success: true,
+        data: updatedUser
+      });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
+    } catch (error) {
+      logHandlerError(error, request, handlerName);
+      return HttpResponse.json({
+        code: 500,
+        message: '服务器错误',
+        success: false,
+        data: null
+      }, { status: 500 });
+    }
+  })
 ]; 

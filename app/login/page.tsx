@@ -18,100 +18,115 @@ import {
 } from "@/components/ui/input-otp";
 import { toast } from "sonner";
 
+// 定义错误类型和消息映射
+interface ErrorMapping {
+  [key: string]: string;
+}
+
+// 错误映射表
+const ERROR_MESSAGES: ErrorMapping = {
+  'MissingTokenError': '登录认证失败，请检查网络或联系管理员',
+  'TokenExpiredError': '登录已过期，请重新登录',
+  'InvalidCredentialsError': '用户名或密码错误',
+  'NetworkError': '网络连接异常，请检查网络设置',
+  'ServerError': '服务器错误，请稍后重试',
+  'TimeoutError': '请求超时，请稍后重试',
+  'default': '登录失败，请稍后重试'
+};
+
+// 处理错误并返回友好消息
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    // 检查错误名称
+    if (ERROR_MESSAGES[error.name]) {
+      return ERROR_MESSAGES[error.name];
+    }
+    
+    // 检查错误消息内容关键词
+    if (error.message.includes('网络')) {
+      return ERROR_MESSAGES.NetworkError;
+    } else if (error.message.includes('超时')) {
+      return ERROR_MESSAGES.TimeoutError;
+    } else if (error.message.includes('用户名') || error.message.includes('密码')) {
+      return error.message; // 使用原始消息
+    }
+  }
+  
+  // 默认错误消息
+  return ERROR_MESSAGES.default;
+};
+
 export default function LoginPage() {
+  // 表单状态
   const [activeTab, setActiveTab] = useState<string>('password');
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [verificationCode, setVerificationCode] = useState<string>('');
+  
+  // 验证码状态
   const [codeSent, setCodeSent] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
+  // 防止重定向循环的标记
+  const [redirectInProgress, setRedirectInProgress] = useState<boolean>(false);
+  
+  // Hooks
   const router = useRouter();
-  const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading: authContextLoading, error, user } = useAuth();
+  const { 
+    login, 
+    loginWithCode, 
+    sendVerificationCode, 
+    isAuthenticated, 
+    isLoading: authLoading, 
+    error: authError, 
+    user 
+  } = useAuth();
 
   // 处理认证后的重定向
   useEffect(() => {
-    console.log('登录页重定向检查 - 认证状态:', {
-      isAuthenticated,
-      hasUser: !!user,
-      userRole: user?.role,
-      isLoading: authContextLoading,
-      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
+    // 避免在非客户端环境执行
+    if (typeof window === 'undefined') return;
     
-    // 检查全局变量，避免多次跳转
-    if (typeof window !== 'undefined') {
-      // @ts-ignore 添加全局变量跟踪登录跳转
-      if (window.__LOGIN_REDIRECT_IN_PROGRESS__) {
-        console.log('登录页面：跳转已在进行中，忽略');
-        return;
-      }
-    }
+    // 如果重定向已在进行中，避免重复处理
+    if (redirectInProgress) return;
     
-    // 只在满足所有条件时执行跳转：已登录、有用户信息、当前在登录页
-    if (!authContextLoading && isAuthenticated && user && 
-        window.location.pathname === '/login') {
+    // 只在已登录、有用户信息、当前在登录页时执行跳转
+    if (!authLoading && isAuthenticated && user && window.location.pathname === '/login') {
+      // 设置重定向状态
+      setRedirectInProgress(true);
       
-      // 设置全局标记，避免重复跳转
-      if (typeof window !== 'undefined') {
-        // @ts-ignore
-        window.__LOGIN_REDIRECT_IN_PROGRESS__ = true;
-        // 5秒后清除标记，以防万一
-        setTimeout(() => {
-          // @ts-ignore
-          window.__LOGIN_REDIRECT_IN_PROGRESS__ = false;
-        }, 5000);
-      }
-      
-      // 详细记录用户信息和角色
-      console.log('用户登录信息:', {
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        roleName: user.roleName
-      });
-      
-      console.log('用户角色类型:', typeof user.role);
-      console.log('角色值:', user.role);
-      console.log('是否为superadmin:', user.role === 'superadmin');
-      
-      // 确保角色字符串进行精确比较，使用全等比较
+      // 确定跳转目标
       const isSuperAdmin = String(user.role).toLowerCase() === 'superadmin';
       const targetPath = isSuperAdmin ? '/superadmin' : '/workbench';
       
-      console.log(`登录页面：用户已登录，角色 [${user.role}]，是否超管: ${isSuperAdmin}，准备跳转到 ${targetPath}`);
-      
       try {
-        // 使用replace而不是push，避免浏览器历史记录问题
-        console.log(`开始执行路由跳转到: ${targetPath}`);
+        // 使用路由跳转
         router.replace(targetPath);
-        console.log('路由跳转已触发');
         
-        // 添加后备跳转机制，以防router.replace失败
+        // 显示成功消息
+        toast.success(`登录成功，欢迎 ${user.name || ''}！`);
+        
+        // 添加后备跳转机制
         setTimeout(() => {
           if (window.location.pathname === '/login') {
-            console.log('检测到5秒后仍在登录页，尝试使用window.location跳转');
             window.location.href = targetPath;
           }
-        }, 5000);
-        
-        toast.success(`登录成功，欢迎 ${user.name || ''}！`);
+        }, 3000);
       } catch (error) {
-        console.error('路由跳转出错:', error);
-        // 尝试使用window.location作为后备
+        // 路由跳转失败，使用 window.location
         window.location.href = targetPath;
       }
     }
-  }, [isAuthenticated, user, router, authContextLoading]);
+  }, [isAuthenticated, user, router, authLoading, redirectInProgress]);
 
   // 显示错误提示
   useEffect(() => {
-    if (error) {
-      toast.error(error);
+    if (authError) {
+      toast.error(authError);
     }
-  }, [error]);
+  }, [authError]);
 
   // 倒计时逻辑
   useEffect(() => {
@@ -120,14 +135,14 @@ export default function LoginPage() {
         setCountdown(countdown - 1);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (countdown === 0 && codeSent) {
-      // 倒计时结束
     }
-  }, [countdown, codeSent]);
+  }, [countdown]);
 
+  // 用户名密码登录
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // 表单验证
     if (!username || !password) {
       toast.error('请输入账号和密码');
       return;
@@ -136,119 +151,30 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      console.log('开始登录请求, 用户名:', username);
-      
       // 清除可能存在的旧token
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      
-      // 检查MSW是否已就绪
-      if (process.env.NEXT_PUBLIC_API_MOCKING === 'enabled' && typeof window !== 'undefined') {
-        console.log('MSW状态检查:', {
-          '已定义': window.__MSW_READY__ !== undefined,
-          '就绪状态': window.__MSW_READY__
-        });
-        
-        if (window.__MSW_READY__ !== true) {
-          console.warn('MSW尚未就绪，等待MSW初始化...');
-          
-          // 等待MSW就绪
-          await new Promise<void>((resolve) => {
-            const checkMswReady = () => {
-              if (window.__MSW_READY__ === true) {
-                console.log('MSW已就绪，继续执行登录');
-                resolve();
-              } else {
-                // 继续等待，每100ms检查一次
-                setTimeout(checkMswReady, 100);
-              }
-            };
-            
-            // 设置超时
-            const timeoutId = setTimeout(() => {
-              console.warn('等待MSW超时，将继续尝试登录');
-              resolve();
-            }, 3000); // 3秒超时
-            
-            // 开始检查
-            checkMswReady();
-            
-            // 清除超时
-            return () => clearTimeout(timeoutId);
-          });
-        }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
       }
       
       // 执行登录
-      console.log('调用login函数...');
       await login(username, password);
-      console.log('login函数调用完成');
       
-      // 立即从localStorage获取新token，验证设置成功
-      const accessToken = localStorage.getItem('accessToken');
-      const userInfo = localStorage.getItem('user');
-      
-      console.log('登录后检查令牌状态:', {
-        '存在访问令牌': !!accessToken,
-        '访问令牌长度': accessToken ? accessToken.length : 0,
-        '存在用户信息': !!userInfo
-      });
-      
-      // 确保全局内存中也有token备份
-      if (typeof window !== 'undefined' && accessToken) {
-        window.__AUTH_TOKEN__ = accessToken;
-        console.log('已将token设置到全局变量中');
-      }
-      
-      // 验证登录成功
-      if (!accessToken) {
-        console.error('登录后未能获取到有效的访问令牌');
-        const tokenError = new Error('登录后未能获取到有效的访问令牌');
-        tokenError.name = 'MissingTokenError';
-        throw tokenError;
-      }
-      
-      console.log('登录成功，准备跳转...', {
-        hasToken: !!accessToken,
-        tokenLength: accessToken ? accessToken.length : 0,
-        hasUserInfo: !!userInfo
-      });
-      
-      // 显示成功消息
+      // 登录成功提示 (重定向由上面的useEffect处理)
       toast.success('登录成功，正在跳转...');
-      
-      // 不在这里执行跳转，由 useEffect 监听认证状态变化后统一处理跳转
-      // 登录成功后 isAuthenticated 会变为 true，触发 useEffect 执行跳转
-      // setTimeout(() => {
-      //   // 重定向到工作台
-      //   router.push('/workbench');
-      // }, 800); // 短暂延迟确保token已保存
-      
     } catch (error) {
-      console.error('登录失败:', error);
-      
-      // 增强错误处理
-      let errorMessage = '登录失败，请稍后重试';
-      
-      if (error instanceof Error) {
-        if (error.name === 'MissingTokenError') {
-          errorMessage = '登录认证失败，请检查网络或联系管理员';
-        } else if (error.message.includes('网络')) {
-          errorMessage = '网络连接异常，请检查网络设置';
-        } else if (error.message.includes('超时')) {
-          errorMessage = '请求超时，请稍后重试';
-        } else if (error.message.includes('用户名') || error.message.includes('密码')) {
-          errorMessage = error.message;
-        }
-      }
-      
+      // 统一错误处理
+      const errorMessage = getErrorMessage(error);
       toast.error(errorMessage);
+    } finally {
       setIsLoading(false);
     }
   };
 
+  // 发送验证码
   const handleSendCode = async () => {
+    // 表单验证
     if (!phone) {
       toast.error('请输入手机号码');
       return;
@@ -261,16 +187,23 @@ export default function LoginPage() {
     
     if (isLoading || countdown > 0) return;
     
+    setIsLoading(true);
+    
     try {
       await sendVerificationCode(phone);
       setCodeSent(true);
       setCountdown(60); // 60秒倒计时
       toast.success('验证码已发送，请注意查收');
     } catch (error) {
-      // 错误已在 auth context 中处理
+      // 统一错误处理
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // 验证码登录提交
   const handleCodeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -291,12 +224,23 @@ export default function LoginPage() {
     }
     
     // 调用验证码登录
-    await loginWithCode(phone, verificationCode);
+    setIsLoading(true);
+    try {
+      await loginWithCode(phone, verificationCode);
+      // 登录成功提示 (重定向由上面的useEffect处理)
+      toast.success('登录成功，正在跳转...');
+    } catch (error) {
+      // 统一错误处理
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col sm:flex-row overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* 左侧大图 */}
+      {/* 左侧大图 - 桌面端显示 */}
       <div className="hidden lg:block lg:w-1/2 relative">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 to-indigo-800/90" />
         <Image
@@ -319,11 +263,13 @@ export default function LoginPage() {
       {/* 右侧登录面板 */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8">
         <div className="w-full max-w-md">
+          {/* 移动端标题 */}
           <div className="mb-8 text-center lg:hidden">
             <h1 className="text-3xl font-bold text-gray-900">教育管理平台</h1>
             <p className="mt-2 text-gray-600">登录以访问系统</p>
           </div>
           
+          {/* 登录卡片 */}
           <Card className="w-full border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
             <CardHeader className="space-y-1 pb-6">
               <div className="flex justify-between items-center">
@@ -340,6 +286,7 @@ export default function LoginPage() {
             </CardHeader>
             
             <CardContent>
+              {/* 登录方式选项卡 */}
               <Tabs defaultValue="password" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6 p-1 bg-gray-100 rounded-xl h-14">
                   <TabsTrigger 
@@ -358,8 +305,10 @@ export default function LoginPage() {
                   </TabsTrigger>
                 </TabsList>
                 
+                {/* 用户名密码登录表单 */}
                 <TabsContent value="password">
                   <form onSubmit={handleLogin} className="space-y-5">
+                    {/* 用户名输入 */}
                     <div className="space-y-2">
                       <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
                         <User className="h-4 w-4 text-gray-500" />
@@ -368,13 +317,14 @@ export default function LoginPage() {
                       <Input
                         id="username"
                         value={username}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                        onChange={(e) => setUsername(e.target.value)}
                         placeholder="请输入用户名"
                         className="h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                         required
                       />
                     </div>
                     
+                    {/* 密码输入 */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
@@ -389,13 +339,14 @@ export default function LoginPage() {
                         id="password"
                         type="password"
                         value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                        onChange={(e) => setPassword(e.target.value)}
                         placeholder="请输入密码"
                         className="h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                         required
                       />
                     </div>
                     
+                    {/* 登录按钮 */}
                     <Button 
                       type="submit" 
                       className="w-full h-12 mt-4 font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg shadow-md hover:shadow-lg" 
@@ -416,8 +367,10 @@ export default function LoginPage() {
                   </form>
                 </TabsContent>
                 
+                {/* 验证码登录表单 */}
                 <TabsContent value="code">
                   <form onSubmit={handleCodeSubmit} className="space-y-5">
+                    {/* 手机号输入 */}
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-1.5">
                         <Smartphone className="h-4 w-4 text-gray-500" />
@@ -427,7 +380,7 @@ export default function LoginPage() {
                         <Input
                           id="phone"
                           value={phone}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+                          onChange={(e) => setPhone(e.target.value)}
                           placeholder="请输入手机号"
                           maxLength={11}
                           required
@@ -445,6 +398,7 @@ export default function LoginPage() {
                       </div>
                     </div>
                     
+                    {/* 验证码输入 */}
                     {codeSent && (
                       <div className="space-y-2 animate-fadeIn">
                         <Label htmlFor="code" className="text-sm font-medium flex items-center gap-1.5">
@@ -472,6 +426,7 @@ export default function LoginPage() {
                       </div>
                     )}
                     
+                    {/* 登录/下一步按钮 */}
                     <Button 
                       type="submit" 
                       className="w-full h-12 mt-4 font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg shadow-md hover:shadow-lg"
@@ -493,6 +448,7 @@ export default function LoginPage() {
                 </TabsContent>
               </Tabs>
               
+              {/* 底部链接 */}
               <div className="mt-8 pt-6 border-t border-gray-200 text-center">
                 <span className="text-sm text-gray-500">没有账号? </span>
                 <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors">
@@ -505,4 +461,11 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+// 全局类型扩展
+declare global {
+  interface Window {
+    __LOGIN_REDIRECT_IN_PROGRESS__?: boolean;
+  }
 } 
