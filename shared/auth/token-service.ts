@@ -22,7 +22,7 @@ const tokenService = {
    * @param accessToken 访问令牌
    * @param refreshToken 刷新令牌
    */
-  setTokens: (accessToken: string, refreshToken: string) => {
+  setTokens: (accessToken: string, refreshToken: string): void => {
     // 保存访问令牌到内存中
     inMemoryToken = accessToken;
     
@@ -40,7 +40,6 @@ const tokenService = {
     }
     
     // 备份 - 为了兼容现有代码，仍然保存到 localStorage
-    // 后续可以移除这部分代码
     if (isBrowser) {
       try {
         localStorage.setItem('accessToken', accessToken);
@@ -50,7 +49,7 @@ const tokenService = {
       }
     }
     
-    // 设置全局变量
+    // 设置全局变量 (用于兼容性)
     if (isBrowser && window) {
       (window as any).__AUTH_TOKEN__ = accessToken;
     }
@@ -95,17 +94,19 @@ const tokenService = {
   /**
    * 清除所有令牌
    */
-  clearTokens: async () => {
+  clearTokens: async (): Promise<void> => {
     // 清除内存中的令牌
     inMemoryToken = null;
     
     // 清除 HTTP-only Cookie 中的刷新令牌
-    await fetch('/api/auth/clear-refresh-token', {
-      method: 'POST',
-      credentials: 'include'
-    }).catch(err => {
+    try {
+      await fetch('/api/auth/clear-refresh-token', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (err) {
       console.error('清除 Cookie 中的刷新令牌失败:', err);
-    });
+    }
     
     // 清除兼容层中的令牌
     if (isBrowser) {
@@ -130,17 +131,14 @@ const tokenService = {
    */
   refreshAccessToken: async (): Promise<string | null> => {
     try {
-      // 调用刷新令牌 API
-      const response = await fetch('/api/auth/refresh-token', {
-        method: 'POST',
-        credentials: 'include' // 确保发送 Cookie
-      });
+      // 尝试使用API刷新令牌
+      const response = await authApi.refreshToken(localStorage.getItem('refreshToken') || '');
       
-      if (!response.ok) {
-        throw new Error('刷新令牌请求失败');
+      if (!response.success) {
+        throw new Error('刷新令牌失败');
       }
       
-      const data = await response.json();
+      const data = response.data;
       
       if (data && data.accessToken) {
         // 更新内存中的访问令牌
@@ -150,8 +148,11 @@ const tokenService = {
         if (isBrowser) {
           try {
             localStorage.setItem('accessToken', data.accessToken);
+            if (data.refreshToken) {
+              localStorage.setItem('refreshToken', data.refreshToken);
+            }
           } catch (error) {
-            console.error('更新 localStorage 中的访问令牌失败:', error);
+            console.error('更新 localStorage 中的令牌失败:', error);
           }
           
           // 更新全局变量
@@ -166,7 +167,65 @@ const tokenService = {
       return null;
     } catch (error) {
       console.error('刷新访问令牌失败:', error);
+      
+      // 尝试使用后端API刷新（通过HTTP-only Cookie实现）
+      try {
+        const response = await fetch('/api/auth/refresh-token', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('刷新令牌请求失败');
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.accessToken) {
+          // 更新内存中的访问令牌
+          inMemoryToken = data.accessToken;
+          
+          // 更新兼容层
+          if (isBrowser) {
+            try {
+              localStorage.setItem('accessToken', data.accessToken);
+            } catch (error) {
+              console.error('更新 localStorage 中的访问令牌失败:', error);
+            }
+            
+            // 更新全局变量
+            if (window) {
+              (window as any).__AUTH_TOKEN__ = data.accessToken;
+            }
+          }
+          
+          return data.accessToken;
+        }
+      } catch (backendError) {
+        console.error('通过后端API刷新令牌失败:', backendError);
+      }
+      
       return null;
+    }
+  },
+  
+  /**
+   * 验证令牌有效性
+   * @param token 要验证的令牌
+   * @returns 令牌是否有效
+   */
+  validateToken: async (token: string): Promise<boolean> => {
+    if (!token) {
+      return false;
+    }
+    
+    try {
+      const response = await authApi.validateToken(token);
+      
+      return response.success && response.data?.valid === true;
+    } catch (error) {
+      console.error('验证令牌有效性失败:', error);
+      return false;
     }
   }
 };
