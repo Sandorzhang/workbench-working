@@ -67,13 +67,13 @@ export async function handleRequest<T>(
     // MSW预处理：在开发环境中，确保MSW已就绪
     if (API_MOCKING === true && typeof window !== 'undefined') {
       // 如果MSW初始化仍在进行中，等待初始化完成
-      if (window.__MSW_READY__ === undefined) {
+      if ((window as any).__MSW_READY__ === undefined) {
         console.log('等待MSW初始化...');
         await new Promise<void>((resolve) => {
           const checkMswReady = () => {
-            if (window.__MSW_READY__ === true) {
+            if ((window as any).__MSW_READY__ === true) {
               resolve();
-            } else if (window.__MSW_READY__ === false) {
+            } else if ((window as any).__MSW_READY__ === false) {
               // MSW初始化失败，继续执行
               console.warn('MSW初始化失败，将直接发送请求');
               resolve();
@@ -97,7 +97,7 @@ export async function handleRequest<T>(
         });
       }
       
-      console.log(`准备API请求: ${url}, MSW状态: ${window.__MSW_READY__}`);
+      console.log(`准备API请求: ${url}, MSW状态: ${(window as any).__MSW_READY__}`);
     }
 
     // 设置默认的请求头（如果没有提供）
@@ -219,5 +219,6 @@ declare global {
   interface Window {
     __AUTH_TOKEN__?: string;
     __MSW_READY__?: boolean;
+    __MSW_DEBUG__?: any;
   }
 } 

@@ -183,6 +183,67 @@ export const authHandlers = [
         logResponse(response, requestInfo, handlerName);
         return response;
       }
+
+      // 添加开发环境中的默认账号
+      // 这确保即使在无法连接实际后端时也能进行测试
+      const devAccounts = [
+        { username: 'admin', password: 'admin', role: 'admin', name: '系统管理员' },
+        { username: 'teacher', password: 'teacher', role: 'teacher', name: '张老师' },
+        { username: 'student', password: 'student', role: 'student', name: '李同学' },
+        { username: 'superadmin', password: 'superadmin', role: 'superadmin', name: '超级管理员' }
+      ];
+
+      // 检查是否是开发账号
+      const devAccount = devAccounts.find(account => 
+        identity === account.username && verify === account.password
+      );
+
+      if (devAccount) {
+        console.log(`开发账号 ${devAccount.username} 登录成功`);
+        
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        // 在db中创建session记录
+        db.session.create({
+          id: generateToken(),
+          userId: devAccount.username === 'admin' ? '1' : 
+                  devAccount.username === 'teacher' ? '2' : 
+                  devAccount.username === 'student' ? '3' : '4',
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
+        });
+        
+        console.log(`已创建${devAccount.name}session记录, accessToken:`, accessToken);
+        
+        // 返回登录成功响应
+        const response = HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: devAccount.username === 'admin' ? '1' : 
+                  devAccount.username === 'teacher' ? '2' : 
+                  devAccount.username === 'student' ? '3' : '4',
+              username: devAccount.username,
+              email: `${devAccount.username}@example.com`,
+              name: devAccount.name,
+              fullName: devAccount.name,
+              avatar: `/avatars/${devAccount.username}.png`,
+              role: devAccount.role,
+              permissions: devAccount.role === 'admin' || devAccount.role === 'superadmin' ? ['*'] : 
+                         devAccount.role === 'teacher' ? ['classroom:read', 'classroom:write', 'student:read'] :
+                         ['course:read']
+            }
+          }
+        }, { status: 200 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
       
       // 其他账号 - 动态测试
       if (identity === 'admin' && verify === 'admin') {
@@ -800,242 +861,251 @@ export const authHandlers = [
   
   // 发送验证码
   http.post('*/api/auth/send-code', async ({ request }) => {
-    await delay(500);
+    const handlerName = 'auth.sendCode (通配路径)';
+    const requestInfo = logRequest(request, handlerName);
     
     try {
-      const { phone } = await request.json() as PhoneRequest;
+      await delay(500);
       
-      // 验证手机号格式（简单示例）
-      if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
-        return HttpResponse.json(
-          {
-            message: '手机号格式不正确',
-            code: '400',
-            details: { reason: 'invalid_phone' }
-          },
-          { status: 400 }
-        );
+      // 解析请求体
+      const body = await request.json() as PhoneRequest;
+      const { phone } = body;
+      
+      if (!phone) {
+        console.log('发送验证码失败: 缺少手机号');
+        const response = HttpResponse.json({
+          code: 400,
+          message: '手机号不能为空',
+          success: false,
+          data: null
+        }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
       }
       
-      // 生成随机验证码 或 使用测试验证码
-      const code = TEST_MODE ? TEST_VERIFICATION_CODE : Math.floor(100000 + Math.random() * 900000).toString();
+      console.log(`发送验证码到: ${phone}`);
       
-      // 存储验证码（实际应用中应该有过期时间）
-      verificationCodes.set(phone, {
-        code,
-        createdAt: new Date().toISOString()
-      });
+      // 生成验证码 - 在测试模式下使用TEST_VERIFICATION_CODE
+      const verificationCode = TEST_MODE ? TEST_VERIFICATION_CODE : Math.floor(100000 + Math.random() * 900000).toString();
       
-      console.log(`为手机号 ${phone} 生成验证码: ${code}`);
+      // 保存验证码，实际应用中应该设置过期时间
+      verificationCodes.set(phone, verificationCode);
       
-      // 模拟发送过程
-      return HttpResponse.json({
+      console.log(`验证码已发送: ${phone} -> ${verificationCode}`);
+      
+      // 返回成功响应
+      const response = HttpResponse.json({
+        code: 0,
         message: '验证码已发送',
-        expireIn: 300, // 5分钟过期
-        testMode: TEST_MODE,
-        // 仅在测试模式下返回验证码
-        ...(TEST_MODE && { testCode: code })
-      });
+        success: true,
+        data: { 
+          success: true,
+          // TEST_MODE下返回验证码，方便测试
+          code: TEST_MODE ? verificationCode : undefined
+        }
+      }, { status: 200 });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
     } catch (error) {
-      console.error('发送验证码失败:', error);
-      return HttpResponse.json(
-        {
-          message: '发送验证码失败',
-          code: '500',
-          details: { reason: 'server_error' }
-        },
-        { status: 500 }
-      );
+      console.error('发送验证码处理程序出错:', error);
+      logHandlerError(error, request, handlerName);
+      
+      const response = HttpResponse.json({
+        code: 500,
+        message: '服务器内部错误',
+        success: false,
+        data: null
+      }, { status: 500 });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
     }
   }),
   
   // 验证码登录
   http.post('*/api/auth/login-with-code', async ({ request }) => {
-    await delay(500);
+    const handlerName = 'auth.loginWithCode (通配路径)';
+    const requestInfo = logRequest(request, handlerName);
     
     try {
-      const { phone, code } = await request.json() as CodeLoginRequest;
+      await delay(500);
       
-      console.log(`尝试验证码登录: 手机号 ${phone}, 验证码 ${code}`);
+      // 解析请求体
+      const body = await request.json() as CodeLoginRequest;
+      const { phone, code } = body;
       
-      // 验证手机号格式
-      if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
-        console.log('手机号格式不正确');
-        return HttpResponse.json(
-          {
-            message: '手机号格式不正确',
-            code: '400',
-            details: { reason: 'invalid_phone' }
-          },
-          { status: 400 }
-        );
+      console.log(`尝试验证码登录: ${phone}, 验证码: ${code}`);
+      
+      // 检查必要字段
+      if (!phone || !code) {
+        console.log('登录失败: 缺少必要字段');
+        const response = HttpResponse.json({
+          code: 400,
+          message: '手机号和验证码不能为空',
+          success: false,
+          data: null
+        }, { status: 400 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
       }
       
-      // 获取存储的验证码
-      const storedData = verificationCodes.get(phone);
+      // 获取保存的验证码
+      const savedCode = verificationCodes.get(phone);
       
-      // 测试模式下跳过验证码检查
-      if (!TEST_MODE) {
-        if (!storedData) {
-          console.log('验证码不存在');
-          return HttpResponse.json(
-            {
-              message: '验证码不存在或已过期',
-              code: '400',
-              details: { reason: 'code_expired' }
-            },
-            { status: 400 }
-          );
-        }
+      // 测试模式 - 特定验证码始终成功
+      if (TEST_MODE && code === TEST_VERIFICATION_CODE) {
+        console.log(`测试模式: 验证码 ${code} 被接受`);
         
-        // 验证码不匹配
-        if (storedData.code !== code) {
-          console.log('验证码不正确');
-          return HttpResponse.json(
-            {
-              message: '验证码不正确',
-              code: '400',
-              details: { reason: 'invalid_code' }
-            },
-            { status: 400 }
-          );
-        }
+        // 生成访问令牌和刷新令牌
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
         
-        // 验证码过期检查 (5分钟)
-        const codeTime = new Date(storedData.createdAt).getTime();
-        const currentTime = new Date().getTime();
-        if (currentTime - codeTime > 5 * 60 * 1000) {
-          console.log('验证码已过期');
-          return HttpResponse.json(
-            {
-              message: '验证码已过期',
-              code: '400',
-              details: { reason: 'code_expired' }
-            },
-            { status: 400 }
-          );
-        }
-      } else {
-        // 测试模式下，验证测试验证码
-        if (code !== TEST_VERIFICATION_CODE) {
-          console.log('测试验证码不正确');
-          return HttpResponse.json(
-            {
-              message: '验证码不正确',
-              code: '400',
-              details: { reason: 'invalid_code' }
-            },
-            { status: 400 }
-          );
-        }
-      }
-      
-      // 验证通过后，清除验证码
-      verificationCodes.delete(phone);
-      
-      // 查找与手机号关联的用户
-      let user = db.user.findFirst({
-        where: {
-          phone: {
-            equals: phone,
-          },
-        },
-      });
-      
-      // 如果用户不存在，创建新用户（自动注册）
-      if (!user) {
-        console.log(`用户不存在，创建新用户，手机号: ${phone}`);
-        
-        // 自动生成用户信息
-        const userId = `user_${Date.now()}`;
-        const userName = `用户${phone.substring(7)}`;
-        
-        user = db.user.create({
-          id: userId,
-          name: userName,
-          email: `${phone}@example.com`,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${phone}`,
-          phone: phone,
-          username: phone,
-          password: '', // 验证码登录的用户没有密码
-          role: 'user', // 默认角色
-          createdAt: new Date().toISOString(),
+        // 查找或创建用户
+        let user = db.user.findFirst({
+          where: { phone: { equals: phone } }
         });
         
-        console.log('自动创建用户成功:', user);
+        if (!user) {
+          // 创建新用户
+          const userId = generateToken();
+          user = db.user.create({
+            id: userId,
+            phone,
+            username: `user_${phone.substring(phone.length - 4)}`,
+            name: `用户${phone.substring(phone.length - 4)}`,
+            role: 'user',
+            createdAt: new Date().toISOString()
+          });
+          
+          console.log(`为手机号 ${phone} 创建新用户: ${user.username}`);
+        }
+        
+        // 创建会话
+        db.session.create({
+          id: generateToken(),
+          userId: user.id,
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
+        });
+        
+        // 返回成功响应
+        const response = HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: user.id,
+              username: user.username,
+              name: user.name || user.username,
+              fullName: user.name || user.username,
+              email: user.email || `${user.username}@example.com`,
+              phone: user.phone,
+              avatar: user.avatar || '/avatars/default.png',
+              role: user.role || 'user',
+              permissions: ['basic:read']
+            }
+          }
+        }, { status: 200 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
       }
       
-      // 创建会话
-      const token = generateToken();
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
-      
-      db.session.create({
-        id: String(Date.now()),
-        userId: user.id,
-        token,
-        expiresAt: expiresAt.toISOString(),
-      });
-      
-      // 保存数据库状态
-      saveDb();
-      
-      const { password: _, ...userWithoutPassword } = user;
-      
-      console.log(`验证码登录成功，返回用户信息: ${userWithoutPassword.name}`);
-      
-      // 生成访问令牌和刷新令牌
-      const accessToken = generateToken();
-      const refreshToken = generateToken();
-      
-      // 返回标准格式的登录响应
-      return HttpResponse.json({
-        code: 0,
-        msg: "成功",
-        data: {
-          accessToken,
-          refreshToken,
-          user: userWithoutPassword,
-          school: {
-            id: "school-default",
-            name: "示范学校",
-            logo: "/images/school-logo.png",
-            period: "九年一贯制"
-          },
-          terminal: "web",
-          terminalList: ["web", "mobile"],
-          permissions: ["read", "write"],
-          role: {
-            id: user.role || "user",
-            name: user.role === "admin" ? "管理员" : "普通用户",
-            weight: null,
-            description: null,
-            userId: null,
-            isBuiltIn: true,
-            terminal: "web"
-          },
-          roleList: [{
-            id: user.role || "user",
-            name: user.role === "admin" ? "管理员" : "普通用户",
-            weight: null,
-            description: null,
-            userId: null,
-            isBuiltIn: true,
-            terminal: "web"
-          }],
-          schoolList: null
+      // 验证码存在且匹配
+      if (savedCode && savedCode === code) {
+        console.log(`验证码验证成功: ${phone}`);
+        
+        // 验证成功后删除验证码，防止重复使用
+        verificationCodes.delete(phone);
+        
+        // 生成访问令牌和刷新令牌
+        const accessToken = generateToken();
+        const refreshToken = generateToken();
+        
+        // 查找用户
+        let user = db.user.findFirst({
+          where: { phone: { equals: phone } }
+        });
+        
+        if (!user) {
+          // 创建新用户
+          const userId = generateToken();
+          user = db.user.create({
+            id: userId,
+            phone,
+            username: `user_${phone.substring(phone.length - 4)}`,
+            name: `用户${phone.substring(phone.length - 4)}`,
+            role: 'user',
+            createdAt: new Date().toISOString()
+          });
+          
+          console.log(`为手机号 ${phone} 创建新用户: ${user.username}`);
         }
-      });
+        
+        // 创建会话
+        db.session.create({
+          id: generateToken(),
+          userId: user.id,
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24小时后过期
+        });
+        
+        // 返回成功响应
+        const response = HttpResponse.json({
+          code: 0,
+          message: '登录成功',
+          success: true,
+          data: {
+            accessToken,
+            refreshToken,
+            user: {
+              id: user.id,
+              username: user.username,
+              name: user.name || user.username,
+              fullName: user.name || user.username,
+              email: user.email || `${user.username}@example.com`,
+              phone: user.phone,
+              avatar: user.avatar || '/avatars/default.png',
+              role: user.role || 'user',
+              permissions: ['basic:read']
+            }
+          }
+        }, { status: 200 });
+        
+        logResponse(response, requestInfo, handlerName);
+        return response;
+      }
+      
+      // 验证码不匹配
+      console.log(`验证码验证失败: ${phone}, 期望: ${savedCode}, 实际: ${code}`);
+      const response = HttpResponse.json({
+        code: 401,
+        message: '验证码错误',
+        success: false,
+        data: null
+      }, { status: 401 });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
     } catch (error) {
-      console.error('验证码登录失败:', error);
-      return HttpResponse.json(
-        {
-          message: '验证码登录失败',
-          code: '500',
-          details: { reason: 'server_error' }
-        },
-        { status: 500 }
-      );
+      console.error('验证码登录处理程序出错:', error);
+      logHandlerError(error, request, handlerName);
+      
+      const response = HttpResponse.json({
+        code: 500,
+        message: '服务器内部错误',
+        success: false,
+        data: null
+      }, { status: 500 });
+      
+      logResponse(response, requestInfo, handlerName);
+      return response;
     }
   }),
   

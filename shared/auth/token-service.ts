@@ -145,15 +145,27 @@ const tokenService = {
     
     // 保存刷新令牌到 HTTP-only Cookie (通过后端 API)
     if (refreshToken) {
-      // 调用后端 API 设置 HTTP-only Cookie
-      fetch('/api/auth/set-refresh-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: refreshToken }),
-        credentials: 'include' // 确保发送和接收 Cookie
-      }).catch(err => {
-        console.error('保存刷新令牌到 Cookie 失败:', err);
-      });
+      // 在开发环境中，直接保存到localStorage
+      if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ENV === 'development') {
+        if (isBrowser) {
+          try {
+            localStorage.setItem('refreshToken', refreshToken);
+            debugLog('开发环境: 刷新令牌已保存到localStorage');
+          } catch (error) {
+            console.error('保存刷新令牌到localStorage失败:', error);
+          }
+        }
+      } else {
+        // 生产环境使用HTTP-only Cookie
+        fetch('/api/auth/set-refresh-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: refreshToken }),
+          credentials: 'include' // 确保发送和接收 Cookie
+        }).catch(err => {
+          console.error('保存刷新令牌到 Cookie 失败:', err);
+        });
+      }
     }
     
     // 备份 - 为了兼容现有代码，但不建议使用

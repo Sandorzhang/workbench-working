@@ -1,4 +1,3 @@
-import { MswInitializer } from '@/components/MswInitializer';
 import { AuthProvider } from '@/lib/auth';
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -7,6 +6,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppLayout } from "@/components/app-layout";
 import "./globals.css";
+import React from 'react';
+import { MSWInitializer } from '@/components/msw-initializer';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
   description: "基于Next.js和Shadcn UI构建的教育管理平台",
 };
 
+// 服务器组件
 export default function RootLayout({
   children,
 }: {
@@ -33,16 +35,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <MswInitializer>
+        <AuthProvider>
+          {process.env.NEXT_PUBLIC_API_MOCKING === 'enabled' && <MSWInitializer />}
           <ErrorBoundary>
-            <AuthProvider>
-              <AppLayout>
-                {children}
-              </AppLayout>
-            </AuthProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
           </ErrorBoundary>
           {process.env.NODE_ENV === 'development' && <DebugPanel />}
-        </MswInitializer>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

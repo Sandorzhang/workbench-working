@@ -135,6 +135,9 @@ export const startMSW = async () => {
     
     // 添加调试信息到全局变量
     if (typeof window !== 'undefined') {
+      // 设置MSW就绪标志，通知API层MSW已准备好拦截请求
+      (window as any).__MSW_READY__ = true;
+      
       (window as any).__MSW_DEBUG__ = {
         handlers: handlers.map(h => ({
           method: h.info?.method,
@@ -147,6 +150,12 @@ export const startMSW = async () => {
     return true;
   } catch (error) {
     console.error('❌ 启动MSW时出错:', error);
+    
+    // 设置MSW初始化失败标志
+    if (typeof window !== 'undefined') {
+      (window as any).__MSW_READY__ = false;
+    }
+    
     return false;
   }
 };
