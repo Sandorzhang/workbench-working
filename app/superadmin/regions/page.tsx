@@ -137,6 +137,10 @@ export default function RegionsPage() {
   useEffect(() => {
     if (isAuthenticated && user?.role === 'superadmin') {
       fetchRegions();
+      toast.success('区域管理模块已加载', {
+        description: '您可以管理区域信息、添加、编辑或删除区域数据',
+        duration: 3000,
+      });
     }
   }, [isAuthenticated, user, pageNumber, pageSize]);
 
@@ -171,28 +175,64 @@ export default function RegionsPage() {
         params.status = statusFilter;
       }
       
-      console.log('获取区域数据参数:', params);
-      // 使用更新后的API调用，已经整合了request模块
-      const response = await getRegionsByPage(params);
-      console.log('获取区域数据响应:', response);
+      console.log('【区域页面】获取区域数据参数:', params);
       
-      // Request模块会自动解析并提取响应数据，处理错误情况
+      // 使用API调用从db.ts中获取数据
+      const response = await getRegionsByPage(params);
+      console.log('【区域页面】获取区域数据响应:', response);
+      
+      // 处理API响应
       if (response && response.code === "0" && response.data) {
-        // 正确获取数据
-        setRegions(response.data.list || []);
+        // 获取列表数据
+        const regionList = response.data.list || [];
+        console.log(`【区域页面】成功获取 ${regionList.length} 条区域数据，总记录数: ${response.data.totalCount}, 总页数: ${response.data.totalPage}`);
+        
+        // 记录部分数据详情以便调试
+        if (regionList.length > 0) {
+          console.log('【区域页面】数据样例:', regionList.slice(0, 3));
+        }
+        
+        // 确保数据格式一致性
+        const validatedRegions = regionList.map(region => ({
+          id: String(region.id || ''),
+          name: String(region.name || ''),
+          status: Boolean(region.status),
+          createdAt: String(region.createdAt || new Date().toISOString()),
+          modifiedAt: String(region.modifiedAt || new Date().toISOString())
+        }));
+        
+        setRegions(validatedRegions);
         setTotalCount(response.data.totalCount || 0);
         setTotalPage(response.data.totalPage || 1);
+        
+        // 显示筛选结果提示
+        if (searchQuery || statusFilter !== undefined) {
+          if (regionList.length === 0) {
+            toast.info('未找到符合条件的区域', {
+              description: '请尝试调整筛选条件',
+              duration: 3000,
+            });
+          } else {
+            toast.success(`找到 ${regionList.length} 条记录`, {
+              description: `共 ${response.data.totalCount} 条记录，当前是第 ${response.data.pageNumber} 页`,
+              duration: 2000,
+            });
+          }
+        }
       } else {
         // 处理错误响应
         setRegions([]);
         setTotalCount(0);
         setTotalPage(0);
-        console.error('获取区域数据失败:', response?.msg || '未知错误');
-        toast.error(response?.msg || '获取区域数据失败');
+        console.error('【区域页面】获取区域数据失败:', response?.msg || '未知错误');
+        toast.error('获取区域数据失败', {
+          description: response?.msg || '服务器返回了错误响应',
+          duration: 5000,
+        });
       }
     } catch (error: unknown) {
       // 处理请求异常
-      console.error('获取区域数据异常:', error);
+      console.error('【区域页面】获取区域数据异常:', error);
       setRegions([]);
       setTotalCount(0);
       setTotalPage(0);
@@ -205,7 +245,10 @@ export default function RegionsPage() {
         errorMessage = String((error as { message: unknown }).message);
       }
       
-      toast.error(errorMessage);
+      toast.error('获取区域数据失败', {
+        description: errorMessage,
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -217,6 +260,10 @@ export default function RegionsPage() {
     setCurrentRegion(null);
     form.reset(defaultValues);
     setIsDialogOpen(true);
+    toast.info('添加新区域', {
+      description: '请填写完整的区域信息',
+      duration: 2000,
+    });
   };
 
   // 打开编辑区域对话框
@@ -229,6 +276,10 @@ export default function RegionsPage() {
       status: region.status,
     });
     setIsDialogOpen(true);
+    toast.info(`正在编辑: ${region.name}`, {
+      description: '修改区域信息后点击保存',
+      duration: 2000,
+    });
   };
 
   // 提交表单
@@ -240,15 +291,24 @@ export default function RegionsPage() {
         // 更新区域
         const { name, status } = values;
         await updateRegion(currentRegion.id, { name, status });
-        toast.success('区域更新成功');
+        toast.success('区域更新成功', {
+          description: `区域 "${name}" 已成功更新`,
+          duration: 3000,
+        });
       } else {
         // 创建区域
         const response = await createRegion(values);
         
         if (response.code === "0") {
-          toast.success('区域创建成功');
+          toast.success('区域创建成功', {
+            description: `区域 "${values.name}" 已成功创建`,
+            duration: 3000,
+          });
         } else {
-          toast.error(response.msg || '创建区域失败');
+          toast.error('创建区域失败', {
+            description: response.msg || '请检查填写的信息并重试',
+            duration: 5000,
+          });
           // 创建失败时不关闭对话框，让用户有机会修改
           setIsSubmitting(false);
           return;
@@ -259,7 +319,11 @@ export default function RegionsPage() {
       fetchRegions(); // 重新获取数据
     } catch (error: unknown) {
       console.error('Error submitting region:', error);
-      toast.error(error instanceof Error ? error.message : '操作失败');
+      const errorMessage = error instanceof Error ? error.message : '操作失败';
+      toast.error('操作失败', {
+        description: errorMessage,
+        duration: 5000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -278,12 +342,19 @@ export default function RegionsPage() {
     try {
       setIsDeleting(true);
       await deleteRegionApi(regionToDelete.id);
-      toast.success('区域删除成功');
+      toast.success('区域删除成功', {
+        description: `区域 "${regionToDelete.name}" 已成功删除`,
+        duration: 3000,
+      });
       setIsDeleteDialogOpen(false);
       fetchRegions(); // 重新获取数据
     } catch (error) {
       console.error('Error deleting region:', error);
-      toast.error(error instanceof Error ? error.message : '删除失败');
+      const errorMessage = error instanceof Error ? error.message : '删除失败';
+      toast.error('删除失败', {
+        description: errorMessage,
+        duration: 5000,
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -293,19 +364,36 @@ export default function RegionsPage() {
   const handlePageChange = (newPageNumber: number) => {
     if (newPageNumber >= 1 && newPageNumber <= totalPage) {
       setPageNumber(newPageNumber);
+      toast.info(`跳转到第 ${newPageNumber} 页`, {
+        duration: 1500,
+      });
     }
   };
 
   // 改变每页显示条数
   const handlePageSizeChange = (newSize: string) => {
-    setPageSize(Number(newSize));
+    const size = Number(newSize);
+    setPageSize(size);
     setPageNumber(1); // 重置到第一页
+    toast.info(`每页显示 ${size} 条记录`, {
+      duration: 1500,
+    });
   };
 
   // 设置状态过滤
   const handleStatusFilterChange = (status: boolean | undefined) => {
     setStatusFilter(status);
     setIsFilterMenuOpen(false);
+    
+    if (status === undefined) {
+      toast.info('已清除状态筛选', {
+        duration: 1500,
+      });
+    } else {
+      toast.info(`筛选${status ? '启用' : '禁用'}状态的区域`, {
+        duration: 1500,
+      });
+    }
   };
 
   // 清除所有筛选
@@ -313,18 +401,146 @@ export default function RegionsPage() {
     setSearchQuery('');
     setStatusFilter(undefined);
     setIsFilterMenuOpen(false);
+    toast.success('已清除所有筛选条件', {
+      duration: 1500,
+    });
   };
+
+  // 添加一个帮助提示函数
+  const showHelpToast = () => {
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border max-w-md">
+        <h2 className="text-xl font-bold mb-2">区域管理帮助</h2>
+        <ul className="list-disc pl-5 space-y-2 my-3 text-sm">
+          <li>您可以添加、编辑或删除教育区域信息</li>
+          <li>区域状态可以设置为启用或禁用</li>
+          <li>区域ID必须是6位数字</li>
+          <li>区域名称必须唯一</li>
+          <li>已停用的区域将不会显示在学校选择列表中</li>
+        </ul>
+        <div className="flex justify-end mt-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => toast.dismiss(t)}
+          >
+            关闭
+          </Button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity, // 不自动关闭
+      position: 'top-right',
+    });
+  };
+
+  // 如果没有数据，显示欢迎提示
+  useEffect(() => {
+    if (!isLoading && regions.length === 0 && !searchQuery && statusFilter === undefined) {
+      // 没有数据且没有筛选条件时，显示欢迎提示
+      toast.info(
+        '欢迎使用区域管理',
+        {
+          description: '当前没有区域数据，请点击"添加区域"按钮创建第一个区域',
+          action: {
+            label: '添加',
+            onClick: () => openAddDialog()
+          },
+          duration: 5000,
+        }
+      );
+    }
+  }, [isLoading, regions, searchQuery, statusFilter]);
 
   // 格式化日期时间
   const formatDateTime = (dateTimeStr: string) => {
-    return dateTimeStr ? new Date(dateTimeStr).toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    }) : '-';
+    try {
+      if (!dateTimeStr) return '-';
+      
+      // 移除字符串中潜在的特殊字符
+      const cleanedDateStr = dateTimeStr.replace(/[^\d\s:-]/g, '-');
+      
+      // 创建日期对象并验证
+      const date = new Date(cleanedDateStr);
+      if (isNaN(date.getTime())) {
+        // 尝试替代方案：解析 YYYY-MM-DD HH:MM:SS 格式
+        const parts = cleanedDateStr.split(/[\s-:]/g).filter(Boolean);
+        if (parts.length >= 6) {
+          const [year, month, day, hour, minute, second] = parts.map(Number);
+          const newDate = new Date(year, month - 1, day, hour, minute, second);
+          if (!isNaN(newDate.getTime())) {
+            return newDate.toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            }).replace(/\//g, '-');
+          }
+        }
+        
+        console.warn(`无法解析日期: "${dateTimeStr}"`);
+        return dateTimeStr;
+      }
+      
+      // 常规日期格式化
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(/\//g, '-');
+    } catch (error) {
+      console.error('日期格式化错误:', error, dateTimeStr);
+      return dateTimeStr || '-';
+    }
+  };
+
+  // 状态切换处理
+  const handleStatusToggle = async (region: Region) => {
+    try {
+      setIsLoading(true);
+      const newStatus = !region.status;
+      
+      await updateRegion(region.id, { status: newStatus });
+      
+      toast.success(
+        `区域状态已${newStatus ? '启用' : '禁用'}`,
+        {
+          description: `区域 "${region.name}" 的状态已成功更改`,
+          action: {
+            label: '撤销',
+            onClick: async () => {
+              try {
+                await updateRegion(region.id, { status: region.status });
+                toast.success('状态已恢复', {
+                  description: `区域 "${region.name}" 的状态已恢复`,
+                });
+                fetchRegions();
+              } catch {
+                toast.error('操作失败', {
+                  description: '无法撤销状态变更',
+                });
+              }
+            }
+          }
+        }
+      );
+      
+      fetchRegions();
+    } catch (error) {
+      console.error('更改状态失败:', error);
+      toast.error('状态更改失败', {
+        description: error instanceof Error ? error.message : '操作失败',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 如果正在加载身份验证状态，显示加载中
@@ -346,9 +562,19 @@ export default function RegionsPage() {
             管理教育区域信息，包括区域编码、名称和状态
           </p>
         </div>
-        <Button onClick={openAddDialog}>
-          <Plus className="mr-2 h-4 w-4" /> 添加区域
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={showHelpToast} aria-label="帮助">
+            <span className="sr-only">帮助</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[1.2rem] w-[1.2rem]">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <path d="M12 17h.01"/>
+            </svg>
+          </Button>
+          <Button onClick={openAddDialog}>
+            <Plus className="mr-2 h-4 w-4" /> 添加区域
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -449,11 +675,17 @@ export default function RegionsPage() {
                       </TableRow>
                     ) : (
                       regions.map((region) => (
-                        <TableRow key={region.id}>
-                          <TableCell className="font-medium">{region.id}</TableCell>
-                          <TableCell>{region.name}</TableCell>
+                        <TableRow key={region.id || `region-${Math.random()}`}>
+                          <TableCell className="font-medium">{region.id || '-'}</TableCell>
+                          <TableCell>{region.name || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant={region.status ? "default" : "secondary"}>
+                            <Badge 
+                              variant={region.status ? "default" : "secondary"}
+                              className="cursor-pointer hover:opacity-80"
+                              onClick={() => handleStatusToggle(region)}
+                              tabIndex={0}
+                              onKeyDown={(e) => e.key === 'Enter' && handleStatusToggle(region)}
+                            >
                               {region.status ? '启用' : '禁用'}
                             </Badge>
                           </TableCell>

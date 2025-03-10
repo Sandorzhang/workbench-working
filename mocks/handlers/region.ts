@@ -27,8 +27,20 @@ export const regionHandlers = [
         ? url.searchParams.get('status') === 'true' 
         : undefined;
       
-      // 获取所有区域 - 每次确保从数据库获取最新数据
-      const regions = db.region.getAll().map(region => {
+      console.log(`MSW: 分页参数 - 页码: ${pageNumber}, 每页条数: ${pageSize}`);
+      console.log(`MSW: 过滤参数 - 名称: "${nameFilter}", 状态: ${statusFilter === undefined ? '不限' : statusFilter ? '启用' : '禁用'}`);
+      
+      // 检查db.regions数组和db.region表中的数据
+      console.log(`MSW: db.regions数组中有 ${db.regions.length} 个区域`);
+      
+      // 获取所有区域
+      const regions = db.region.getAll();
+      console.log(`MSW: 数据库中共有 ${regions.length} 个区域数据`);
+      
+      // 输出前5个区域的信息，避免日志过长
+      console.log('MSW: 部分区域数据示例:', regions.slice(0, 5));
+      
+      const regionData = regions.map(region => {
         const regionData = {
           id: region.id,
           name: region.name,
@@ -39,10 +51,8 @@ export const regionHandlers = [
         return regionData;
       });
       
-      console.log(`MSW: 区域分页查询 - 数据库中共有 ${regions.length} 个区域`);
-      
       // 应用过滤
-      let filteredRegions = [...regions];
+      let filteredRegions = [...regionData];
       
       // 名称过滤
       if (nameFilter) {
@@ -67,7 +77,8 @@ export const regionHandlers = [
       const end = start + pageSize;
       const pagedRegions = filteredRegions.slice(start, end);
       
-      console.log(`MSW: 返回区域分页数据 - 总数: ${totalCount}, 当前页: ${pagedRegions.length}项, 页码: ${pageNumber}/${totalPage}`);
+      console.log(`MSW: 分页详情 - 总记录数: ${totalCount}, 总页数: ${totalPage}, 当前页: ${pageNumber}, 每页条数: ${pageSize}`);
+      console.log(`MSW: 当前页数据范围 - 从第${start+1}条到第${Math.min(end, totalCount)}条, 共${pagedRegions.length}条`);
       
       // 返回标准格式
       return HttpResponse.json({

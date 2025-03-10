@@ -1,6 +1,6 @@
 import { MswInitializer } from '@/components/MswInitializer';
 import { AuthProvider } from '@/lib/auth';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DebugPanel } from '@/components/DebugPanel';
 import type { Metadata } from "next";

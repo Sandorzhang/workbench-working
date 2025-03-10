@@ -479,134 +479,166 @@ export function loadDb(): boolean {
 export function seedRegionAndSchoolData() {
   console.log('检查是否需要初始化区域和学校数据...');
   
-  // 检查区域数据是否已存在
-  const existingRegions = db.region.getAll();
-  if (existingRegions.length > 0) {
-    console.log(`已存在 ${existingRegions.length} 个区域数据，跳过区域初始化`);
-    
-    // 确保regions数组也包含相同的数据
-    db.regions = existingRegions.map(region => ({
-      id: region.id,
-      name: region.name,
-      status: region.status,
-      createdAt: region.createdAt || new Date().toISOString(),
-      modifiedAt: region.modifiedAt || new Date().toISOString()
-    }));
-    console.log(`已同步 ${db.regions.length} 个区域数据到regions数组`);
-  } else {
-    console.log('初始化区域数据...');
-    
-    const now = new Date().toISOString();
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    
-    // 预先定义所有区域数据
-    const regionData = [
-      {
-        id: '110101',
-        name: '北京市东城区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '110102',
-        name: '北京市西城区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '110105',
-        name: '北京市朝阳区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '110106',
-        name: '北京市丰台区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '110108',
-        name: '北京市海淀区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '110109',
-        name: '北京市门头沟区',
-        status: false,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '310101',
-        name: '上海市黄浦区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '310104',
-        name: '上海市徐汇区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '310105',
-        name: '上海市长宁区',
-        status: true,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '120123',
-        name: '经开区',
-        status: false,
-        createdAt: yesterday,
-        modifiedAt: now
-      },
-      {
-        id: '120124',
-        name: '专属经济区',
-        status: false,
-        createdAt: yesterday,
-        modifiedAt: now
-      }
-    ];
-    // 添加更多数据用于测试分页功能
-  
-    
-    // 批量创建区域数据
-    regionData.forEach(region => {
-      db.region.create(region);
+  // 强制清除旧的区域数据，确保数据重新初始化
+  try {
+    // 先尝试清除区域数据
+    db.region.deleteMany({
+      where: {}
     });
+    console.log('已清除所有区域数据，准备重新初始化');
     
-    // 从数据库获取最新数据并同步到regions数组
-    // 使用db.region.getAll()确保获取到的是数据库实际存储的数据
-    db.regions = db.region.getAll().map(region => ({
-      id: region.id,
-      name: region.name,
-      status: region.status,
-      createdAt: region.createdAt || new Date().toISOString(),
-      modifiedAt: region.modifiedAt || new Date().toISOString()
-    }));
-    
-    console.log(`区域数据初始化完成，共创建 ${db.regions.length} 个区域`);
+    // 同时清空regions数组
+    db.regions = [];
+  } catch (error) {
+    console.error('清除区域数据失败:', error);
   }
+  
+  console.log('初始化区域数据...');
+  
+  const now = new Date().toISOString();
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  
+  // 预先定义基础区域数据
+  const baseRegionData = [
+    {
+      id: '110101',
+      name: '北京市东城区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '110102',
+      name: '北京市西城区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '110105',
+      name: '北京市朝阳区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '110106',
+      name: '北京市丰台区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '110108',
+      name: '北京市海淀区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '110109',
+      name: '北京市门头沟区',
+      status: false,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '310101',
+      name: '上海市黄浦区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '310104',
+      name: '上海市徐汇区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '310105',
+      name: '上海市长宁区',
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '120123',
+      name: '经开区',
+      status: false,
+      createdAt: yesterday,
+      modifiedAt: now
+    },
+    {
+      id: '120124',
+      name: '专属经济区',
+      status: false,
+      createdAt: yesterday,
+      modifiedAt: now
+    }
+  ];
+  
+  // 创建所有基础区域
+  console.log(`创建 ${baseRegionData.length} 个基础区域...`);
+  baseRegionData.forEach(region => {
+    try {
+      db.region.create(region);
+    } catch (error) {
+      console.error(`创建区域失败 (ID: ${region.id})`, error);
+    }
+  });
+  
+  // 添加更多测试数据 - 使用与现有数据一致的格式 (12xxxx)
+  console.log('添加测试区域数据...');
+  for (let i = 1; i <= 40; i++) {
+    const id = `12${i.toString().padStart(4, '0')}`;
+    try {
+      db.region.create({
+        id,
+        name: `测试区域 ${i}`,
+        status: i % 2 === 0, // 交替设置状态
+        createdAt: yesterday,
+        modifiedAt: now
+      });
+    } catch (error) {
+      console.error(`创建测试区域失败 (ID: ${id})`, error);
+    }
+  }
+  
+  // 从数据库获取最新数据并同步到regions数组
+  const createdRegions = db.region.getAll();
+  db.regions = createdRegions.map(region => ({
+    id: region.id,
+    name: region.name,
+    status: region.status,
+    createdAt: region.createdAt || new Date().toISOString(),
+    modifiedAt: region.modifiedAt || new Date().toISOString()
+  }));
+  
+  // 分析生成的数据
+  const testRegionCount = createdRegions.filter(r => r.id.startsWith('12') && r.id !== '120123' && r.id !== '120124').length;
+  console.log(`区域数据初始化完成，共创建 ${createdRegions.length} 个区域，其中包含 ${testRegionCount} 个测试区域`);
+  console.log(`数据库中不同ID前缀的区域数量统计:`);
+  const prefixCounts = new Map();
+  createdRegions.forEach(region => {
+    const prefix = region.id.substring(0, 2);
+    prefixCounts.set(prefix, (prefixCounts.get(prefix) || 0) + 1);
+  });
+  prefixCounts.forEach((count, prefix) => {
+    console.log(`  前缀 "${prefix}" 的区域数量: ${count}`);
+  });
+  
+  // 显式保存数据库状态
+  saveDb();
+  console.log('区域数据已保存到localStorage');
+  
+  // ... 继续学校数据的初始化 ...
   
   // 检查学校数据是否已存在
   const existingSchools = db.school.getAll();
   if (existingSchools.length > 0) {
     console.log(`已存在 ${existingSchools.length} 所学校数据，跳过学校初始化`);
-    
-    // 直接使用现有数据，不做额外的同步操作
-    console.log(`已有 ${existingSchools.length} 所学校数据`);
   } else {
     console.log('初始化学校数据...');
     
@@ -677,77 +709,10 @@ export function seedRegionAndSchoolData() {
       createdAt: new Date().toISOString()
     });
     
-    db.school.create({
-      id: '7',
-      name: '上海市长宁区实验中学',
-      code: '701',
-      regionId: '310105',
-      type: SchoolType.MIDDLE_FOUR,
-      grades: ['六年级', '初一', '初二', '初三'],
-      status: false,
-      createdAt: new Date().toISOString()
-    });
-    
-    // 添加更多学校
-    db.school.create({
-      id: '8',
-      name: '北京市丰台区第二中学',
-      code: '801',
-      regionId: '110106',
-      type: SchoolType.COMPLETE_SIX,
-      grades: ['初一', '初二', '初三', '高一', '高二', '高三'],
-      status: true,
-      createdAt: new Date().toISOString()
-    });
-    
-    db.school.create({
-      id: '9',
-      name: '北京市海淀区清华附中',
-      code: '901',
-      regionId: '110108',
-      type: SchoolType.COMPLETE_SEVEN,
-      grades: ['初一', '初二', '初三', '初四', '高一', '高二', '高三'],
-      status: true,
-      createdAt: new Date().toISOString()
-    });
-    
-    db.school.create({
-      id: '10',
-      name: '上海市徐汇区第三实验小学',
-      code: '102',
-      regionId: '310104',
-      type: SchoolType.PRIMARY_SIX,
-      grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'],
-      status: true,
-      createdAt: new Date().toISOString()
-    });
-    
-    db.school.create({
-      id: '11',
-      name: '北京市朝阳区实验高中',
-      code: '103',
-      regionId: '110105',
-      type: SchoolType.HIGH_THREE,
-      grades: ['高一', '高二', '高三'],
-      status: true,
-      createdAt: new Date().toISOString()
-    });
-    
-    db.school.create({
-      id: '12',
-      name: '上海市黄浦区育才中学',
-      code: '104',
-      regionId: '310101',
-      type: SchoolType.NINE_YEAR,
-      grades: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '初一', '初二', '初三'],
-      status: true,
-      createdAt: new Date().toISOString()
-    });
-    
     console.log('学校数据初始化完成');
   }
   
-  // 保存数据库状态
+  // 整体保存数据库状态
   saveDb();
   console.log('区域和学校数据已保存');
 }
