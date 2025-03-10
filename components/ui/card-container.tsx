@@ -85,9 +85,9 @@ export function CardContainer({
   // 内边距映射
   const paddingMap = {
     none: "p-0",
-    compact: "p-3",
-    standard: "p-4",
-    relaxed: "p-5",
+    compact: "p-3.5",
+    standard: "p-5",
+    relaxed: "p-6",
   };
 
   // 加载状态
@@ -95,9 +95,9 @@ export function CardContainer({
     return (
       <div 
         className={cn(
-          "rounded-lg border border-gray-100/80",
-          elevated && "shadow-sm",
-          backgroundClassName || "bg-white",
+          "rounded-xl border border-gray-100/60 dark:border-gray-800/60",
+          elevated && "shadow-md backdrop-blur-sm backdrop-filter",
+          backgroundClassName || "bg-white/90 dark:bg-gray-900/90",
           paddingMap[padding],
           "animate-pulse",
           className
@@ -107,25 +107,25 @@ export function CardContainer({
       >
         {/* 标题区域骨架屏 */}
         {(title || description) && (
-          <div className="mb-3">
-            {title && <Skeleton className="h-5 w-1/3 mb-1.5" />}
-            {description && <Skeleton className="h-3.5 w-2/3" />}
+          <div className="mb-4">
+            {title && <Skeleton className="h-6 w-1/3 mb-2" />}
+            {description && <Skeleton className="h-4 w-2/3" />}
           </div>
         )}
         
         {/* 内容区域骨架屏 */}
-        <div className="space-y-3">
-          <Skeleton className="h-20 w-full rounded-md" />
-          <div className="space-y-2">
-            <Skeleton className="h-3.5 w-full" />
-            <Skeleton className="h-3.5 w-2/3" />
+        <div className="space-y-4">
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <div className="space-y-2.5">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
         
         {/* 底部区域骨架屏 */}
         {footer && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <Skeleton className="h-4 w-1/4" />
+          <div className="mt-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60">
+            <Skeleton className="h-5 w-1/4" />
           </div>
         )}
       </div>
@@ -135,11 +135,13 @@ export function CardContainer({
   return (
     <div 
       className={cn(
-        "rounded-lg border border-gray-100/80",
-        elevated && "shadow-sm",
+        "rounded-xl border border-gray-100/60 dark:border-gray-800/60",
+        "bg-gradient-to-b from-white/40 to-white/95 dark:from-gray-900/40 dark:to-gray-900/95",
+        "backdrop-blur-sm backdrop-filter",
+        elevated && "shadow-md",
         clickable && 
-          "cursor-pointer hover:border-gray-200 hover:shadow-md transition-all duration-200",
-        backgroundClassName || "bg-white",
+          "cursor-pointer hover:border-gray-200/80 dark:hover:border-gray-700/80 hover:shadow-lg transform transition-all duration-300 ease-out hover:-translate-y-0.5",
+        backgroundClassName,
         className
       )}
       id={id}
@@ -151,23 +153,23 @@ export function CardContainer({
         <div className={cn(
           "flex flex-col space-y-1.5",
           children && paddingMap[padding],
-          children && "pb-2"
+          children && "pb-3"
         )}>
           <div className="flex items-start justify-between">
             <div>
               {title && (
-                <h3 className="text-base font-medium text-gray-900">
+                <h3 className="text-base font-medium tracking-tight text-gray-900 dark:text-gray-100 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300">
                   {title}
                 </h3>
               )}
               {description && (
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                   {description}
                 </p>
               )}
             </div>
             {actions && (
-              <div className="flex items-center space-x-2 shrink-0 ml-4">
+              <div className="flex items-center space-x-2.5 shrink-0 ml-4">
                 {actions}
               </div>
             )}
@@ -179,7 +181,7 @@ export function CardContainer({
       {children && (
         <div 
           className={cn(
-            (!title && !description && !actions) ? paddingMap[padding] : "px-4"
+            (!title && !description && !actions) ? paddingMap[padding] : "px-5"
           )}
         >
           {children}
@@ -189,9 +191,9 @@ export function CardContainer({
       {/* 卡片底部 */}
       {footer && (
         <div className={cn(
-          "mt-3 pt-3 border-t border-gray-100",
+          "mt-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/60",
           paddingMap[padding],
-          "pt-3"
+          "bg-gray-50/50 dark:bg-gray-800/30 rounded-b-xl"
         )}>
           {footer}
         </div>
