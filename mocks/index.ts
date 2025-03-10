@@ -244,7 +244,7 @@ const printHandlerInfo = () => {
     });
     
     // 检查常见的认证路径
-    const authPaths = ['/api/auth/login', '/api/auth/me', '/api/auth/logout'];
+    const authPaths = ['/auth/login', '/auth/user', '/auth/logout'];
     console.log('认证路径检查:');
     authPaths.forEach(path => {
       // 更适合MSW v2的路径检查

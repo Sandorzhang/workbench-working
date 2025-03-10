@@ -110,7 +110,7 @@ const originalHandlers = [
 // 添加关键认证处理程序 - 确保始终有这些路径的处理程序
 const criticalAuthHandlers = [
   // 登录处理程序 - 保底实现，如果原处理程序不起作用
-  http.post('/api/auth/login', async ({ request }) => {
+  http.post('*/auth/login', async ({ request }) => {
     console.log('使用保底登录处理程序 - 如果看到此消息，表明原处理程序未命中');
     
     try {
@@ -175,7 +175,7 @@ const criticalAuthHandlers = [
   }),
   
   // 获取当前用户信息 - 保底实现
-  http.get('/api/auth/me', async () => {
+  http.get('*/auth/user', async () => {
     console.log('使用保底用户信息处理程序');
     
     await delay(300);
@@ -199,7 +199,7 @@ const criticalAuthHandlers = [
   }),
   
   // 登出处理程序 - 保底实现
-  http.post('/api/auth/logout', async () => {
+  http.post('*/auth/logout', async () => {
     console.log('使用保底登出处理程序');
     
     await delay(300);

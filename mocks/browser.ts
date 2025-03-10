@@ -17,9 +17,9 @@ const validateHandlers = () => {
   
   // 验证关键的认证处理程序是否存在
   const authEndpoints = [
-    { pattern: '/api/auth/login', method: 'POST' },
-    { pattern: '/api/auth/me', method: 'GET' },
-    { pattern: '/api/auth/logout', method: 'POST' }
+    { pattern: '/auth/login', method: 'POST' },
+    { pattern: '/auth/user', method: 'GET' },
+    { pattern: '/auth/logout', method: 'POST' }
   ];
   
   // 调试所有处理程序信息
@@ -79,16 +79,32 @@ const validateHandlers = () => {
     }
   });
   
-  // 特别检查登录处理程序 - 最重要的功能
+  // 检查登录处理程序的存在
   const loginHandlers = handlers.filter((handler: any) => {
     try {
       if (handler && handler.info) {
         const { method, path } = handler.info;
         const pathStr = String(path);
         return method === 'POST' && (
-          pathStr === '/api/auth/login' || 
-          pathStr.includes('/api/auth/login') || 
-          pathStr === '*/api/auth/login'
+          pathStr.includes('/auth/login') ||
+          pathStr.includes('*/auth/login')
+        );
+      }
+      return false;
+    } catch (err) {
+      return false;
+    }
+  });
+  
+  // 检查用户信息处理程序的存在
+  const userInfoHandlers = handlers.filter((handler: any) => {
+    try {
+      if (handler && handler.info) {
+        const { method, path } = handler.info;
+        const pathStr = String(path);
+        return method === 'GET' && (
+          pathStr.includes('/auth/user') ||
+          pathStr.includes('*/auth/user')
         );
       }
       return false;
@@ -101,6 +117,12 @@ const validateHandlers = () => {
     console.log(`找到 ${loginHandlers.length} 个登录处理程序`);
   } else {
     console.error('⚠️ 警告: 未找到登录处理程序! 这将导致登录功能失败!');
+  }
+  
+  if (userInfoHandlers.length > 0) {
+    console.log(`找到 ${userInfoHandlers.length} 个用户信息处理程序`);
+  } else {
+    console.warn('⚠️ 警告: 未找到用户信息处理程序! 这可能会导致用户会话验证失败!');
   }
   
   return true;
