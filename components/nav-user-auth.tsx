@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  BadgeCheck,
   ChevronsUpDown,
   LogOut,
   Settings,
@@ -62,6 +61,12 @@ export function NavUserAuth({
       console.log('用户未登录或信息未加载');
     }
   }, [user]);
+  
+  // 获取用户姓名的首字母（安全地）
+  const getUserInitials = (name?: string) => {
+    if (!name) return "U";
+    return name.slice(0, 2);
+  };
   
   // 用户角色显示文本
   const getRoleDisplay = (role: string) => {
@@ -156,12 +161,12 @@ export function NavUserAuth({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
+                <AvatarImage src={user?.avatar} alt={user?.name || "用户头像"} />
+                <AvatarFallback className="rounded-lg">{getUserInitials(user?.name)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{user?.name || "用户"}</span>
+                <span className="truncate text-xs">{user?.email || "未知邮箱"}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -175,14 +180,14 @@ export function NavUserAuth({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
+                  <AvatarImage src={user?.avatar} alt={user?.name || "用户头像"} />
+                  <AvatarFallback className="rounded-lg">{getUserInitials(user?.name)}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{user?.name || "用户"}</span>
+                  <span className="truncate text-xs">{user?.email || "未知邮箱"}</span>
                   <Badge variant="outline" className="mt-1 text-[10px] py-0 w-fit">
-                    {getRoleDisplay(user.role)}
+                    {getRoleDisplay(user?.role || "")}
                   </Badge>
                 </div>
               </div>

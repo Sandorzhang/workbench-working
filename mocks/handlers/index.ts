@@ -32,6 +32,8 @@ import { permissionHandlers } from './permission';
 import { teachingDesignsHandlers } from './teaching-designs';
 import { teachingPlanHandlers } from './teaching-plans';
 import { mentorHandlers } from './mentor';
+import { aiAssistantHandlers } from './ai-assistant';
+import { difyApiHandlers } from './dify-api';
 // 导入其他处理器...
 
 // 定义原始处理程序集合
@@ -105,6 +107,8 @@ const originalHandlers = [
   ...teachingDesignsHandlers,
   ...teachingPlanHandlers,
   ...mentorHandlers,
+  ...aiAssistantHandlers,
+  ...difyApiHandlers,
 ];
 
 // 添加关键认证处理程序 - 确保始终有这些路径的处理程序

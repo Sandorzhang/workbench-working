@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { PageContainer } from '@/components/ui/page-container';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,24 +12,19 @@ import { toast } from 'sonner';
 import { 
   Search, 
   Plus, 
-  Edit2, 
   Trash2, 
   Shield, 
   User, 
   Users, 
   School,
-  RefreshCw,
-  Download,
   Upload,
-  Filter,
-  CheckCircle2,
-  XCircle,
   DownloadCloud,
+  CheckCircle2,
   Lock,
   Unlock,
   MoreHorizontal,
   FileEdit,
-  UserCog
+  Loader2
 } from 'lucide-react';
 import {
   Select,
@@ -39,7 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -257,142 +250,200 @@ export default function SuperAdminUsersPage() {
   };
   
   return (
-    <PageContainer
-      loading={isLoading}
-    >
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">用户管理</h1>
-            <p className="text-muted-foreground mt-1">
-              管理系统用户、角色和权限设置
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" size="sm">
-              <Upload className="mr-2 h-4 w-4" />
-              导入用户
-            </Button>
-            <Button variant="outline" size="sm">
-              <DownloadCloud className="mr-2 h-4 w-4" />
-              导出数据
-            </Button>
-            <Button 
-              className="sm:w-auto bg-primary hover:bg-primary/90"
-              onClick={handleOpenAddUserModal}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              添加用户
-            </Button>
-          </div>
+    <div className="space-y-6 p-6 pt-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold tracking-tight">用户管理</h2>
+          <p className="text-muted-foreground text-sm">管理系统中的所有用户账户与权限</p>
         </div>
-        
-        {/* 用户管理卡片 */}
-        <Card className="overflow-hidden border-border/40 shadow-sm">
-          <CardHeader className="px-6 pb-3">
-            <CardTitle>用户列表</CardTitle>
-            <CardDescription>
-              系统中的所有用户账户
-            </CardDescription>
+        <Button onClick={handleOpenAddUserModal} className="shadow-md transition-all hover:shadow-lg">
+          <Plus className="mr-2 h-4 w-4" />
+          添加用户
+        </Button>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <Card className="shadow-sm hover:shadow transition-all">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">总用户数</CardTitle>
           </CardHeader>
-          <CardContent className="px-6">
-            {/* 过滤栏 */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="搜索用户名、邮箱或学校..."
-                  className="w-full pl-8 bg-background"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex">
-                  <Select 
-                    value={roleFilter} 
-                    onValueChange={setRoleFilter}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="按角色筛选" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">所有角色</SelectItem>
-                      <SelectItem value="superadmin">超级管理员</SelectItem>
-                      <SelectItem value="admin">管理员</SelectItem>
-                      <SelectItem value="teacher">教师</SelectItem>
-                      <SelectItem value="student">学生</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex">
-                  <Select 
-                    value={statusFilter} 
-                    onValueChange={setStatusFilter}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <Filter className="mr-2 h-4 w-4" />
-                      <SelectValue placeholder="按状态筛选" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">所有状态</SelectItem>
-                      <SelectItem value="active">已激活</SelectItem>
-                      <SelectItem value="inactive">未激活</SelectItem>
-                      <SelectItem value="locked">已锁定</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Button variant="outline" size="icon" onClick={fetchUsers} title="刷新数据">
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => {
-                  setSearchQuery('');
-                  setRoleFilter('all');
-                  setStatusFilter('all');
-                }} title="清除筛选">
-                  <XCircle className="h-4 w-4" />
-                </Button>
-              </div>
+          <CardContent>
+            <div className="text-2xl font-bold">{users.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow transition-all">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">活跃用户</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{users.filter(u => u.status === 'active').length}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow transition-all">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">非活跃用户</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{users.filter(u => u.status !== 'active').length}</div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* 筛选工具栏 */}
+      <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/20 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">筛选条件</CardTitle>
+            <CardDescription className="text-xs mt-0.5">筛选用户数据</CardDescription>
+          </div>
+          
+          {/* 搜索框 */}
+          <div className="relative w-full sm:w-[280px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="搜索用户名、邮箱或学校..."
+              className="pl-9 h-9 w-full text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+
+        <CardContent className="px-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium block mb-2">角色</label>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="选择角色" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有角色</SelectItem>
+                  <SelectItem value="superadmin">超级管理员</SelectItem>
+                  <SelectItem value="admin">管理员</SelectItem>
+                  <SelectItem value="teacher">教师</SelectItem>
+                  <SelectItem value="student">学生</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
-            {/* 标签页 */}
-            <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="mb-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all" className="flex items-center">
-                  <Users className="mr-2 h-4 w-4" />
-                  全部用户
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="flex items-center">
-                  <Shield className="mr-2 h-4 w-4" />
-                  管理员
-                </TabsTrigger>
-                <TabsTrigger value="teacher" className="flex items-center">
-                  <School className="mr-2 h-4 w-4" />
-                  教师
-                </TabsTrigger>
-                <TabsTrigger value="student" className="flex items-center">
-                  <User className="mr-2 h-4 w-4" />
-                  学生
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div>
+              <label className="text-sm font-medium block mb-2">状态</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="选择状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有状态</SelectItem>
+                  <SelectItem value="active">已激活</SelectItem>
+                  <SelectItem value="inactive">未激活</SelectItem>
+                  <SelectItem value="locked">已锁定</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
-            {/* 用户列表 */}
-            <div className="rounded-md border shadow-sm overflow-hidden">
+            <div>
+              <label className="text-sm font-medium block mb-2">标签</label>
+              <Select value={activeTab} onValueChange={handleTabChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="选择标签" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有用户</SelectItem>
+                  <SelectItem value="superadmin">超级管理员</SelectItem>
+                  <SelectItem value="admin">管理员</SelectItem>
+                  <SelectItem value="teacher">教师</SelectItem>
+                  <SelectItem value="student">学生</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap justify-between items-center mt-6">
+            <div className="flex flex-wrap gap-2 items-center">
+              {(roleFilter !== 'all' || statusFilter !== 'all' || activeTab !== 'all') && (
+                <>
+                  <span className="text-xs text-muted-foreground">已选择:</span>
+                  {roleFilter !== 'all' && (
+                    <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal flex items-center gap-1.5">
+                      角色: {roleMap[roleFilter] || roleFilter}
+                    </Badge>
+                  )}
+                  {statusFilter !== 'all' && (
+                    <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal flex items-center gap-1.5">
+                      状态: {statusMap[statusFilter]?.label || statusFilter}
+                    </Badge>
+                  )}
+                  {activeTab !== 'all' && activeTab !== roleFilter && (
+                    <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal flex items-center gap-1.5">
+                      标签: {roleMap[activeTab] || activeTab}
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <div className="flex gap-2 mt-4 sm:mt-0">
+              <Button onClick={fetchUsers} className="px-4">
+                应用筛选
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setRoleFilter('all');
+                  setStatusFilter('all');
+                  setActiveTab('all');
+                  setSearchQuery('');
+                  setTimeout(() => fetchUsers(), 0);
+                }}
+                className="px-4"
+              >
+                清除
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* 用户列表 */}
+      <Card className="overflow-hidden shadow-md border-0 rounded-xl">
+        <CardHeader className="bg-muted/20 px-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div>
+              <CardTitle>用户列表</CardTitle>
+              <CardDescription>管理系统中的所有用户</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Upload className="mr-2 h-4 w-4" />
+                导入
+              </Button>
+              <Button variant="outline" size="sm">
+                <DownloadCloud className="mr-2 h-4 w-4" />
+                导出
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-0 py-0">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead>用户名</TableHead>
-                    <TableHead>联系方式</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>学校</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+                <TableHeader className="bg-muted/5">
+                  <TableRow>
+                    <TableHead className="font-semibold px-6 py-4">用户</TableHead>
+                    <TableHead className="font-semibold px-6">角色</TableHead>
+                    <TableHead className="font-semibold px-6">状态</TableHead>
+                    <TableHead className="font-semibold px-6">学校</TableHead>
+                    <TableHead className="font-semibold px-6">最近登录</TableHead>
+                    <TableHead className="text-right font-semibold px-6">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -434,21 +485,12 @@ export default function SuperAdminUsersPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm">
-                            <div>{user.email}</div>
-                            <div className="text-muted-foreground">{user.phone || '未设置'}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
                           <Badge 
                             className={user.role === 'superadmin' ? 'bg-red-100 text-red-700 hover:bg-red-200' : ''}
                             variant={user.role === 'superadmin' ? 'outline' : 'secondary'}
                           >
                             {roleMap[user.role] || user.role}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {user.schoolName || '—'}
                         </TableCell>
                         <TableCell>
                           {user.status === 'active' ? (
@@ -466,6 +508,12 @@ export default function SuperAdminUsersPage() {
                               {statusMap[user.status].label}
                             </Badge>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {user.schoolName || '—'}
+                        </TableCell>
+                        <TableCell>
+                          {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '未登录'}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -547,9 +595,9 @@ export default function SuperAdminUsersPage() {
                 </TableBody>
               </Table>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 添加用户模态窗口 */}
       <UserFormModal
@@ -565,6 +613,6 @@ export default function SuperAdminUsersPage() {
         user={selectedUser}
         onSuccess={handleUserFormSuccess}
       />
-    </PageContainer>
+    </div>
   );
 } 
