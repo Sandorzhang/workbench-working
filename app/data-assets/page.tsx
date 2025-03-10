@@ -9,13 +9,10 @@ import {
   FileText, 
   Filter, 
   Search,
-  ArrowUpDown,
-  BadgeInfo,
   TagIcon,
   Calendar,
   Users,
-  ArrowRight,
-  Check
+  ArrowRight
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +33,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -49,12 +45,9 @@ import {
 import { toast } from "sonner";
 import { 
   TitleSkeleton, 
-  CardSkeleton, 
-  ContentSkeleton, 
-  ListSkeleton 
+  CardSkeleton
 } from "@/components/ui/skeleton-loader";
 import { HeroSection } from "@/components/ui/hero-section";
-import { cn } from "@/lib/utils";
 
 // 数据资产类型
 interface DataAsset {
@@ -93,23 +86,19 @@ const accessLevelColors = {
 
 export default function DataAssetsPage() {
   const router = useRouter();
-  const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { token } = useAuth();
   
   // 状态管理
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [dataAssets, setDataAssets] = useState<DataAsset[]>([]);
   const [stats, setStats] = useState<DataStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeTab, setActiveTab] = useState('overview');
-  const [categories, setCategories] = useState([]);
   
   // 获取所有数据资产
   const fetchDataAssets = async () => {
     try {
-      setError(null);
-      
       if (!token) {
         console.warn('获取数据资产: 未提供认证token');
         return;
@@ -141,7 +130,6 @@ export default function DataAssetsPage() {
       setDataAssets(data);
     } catch (err) {
       console.error('获取数据资产失败:', err);
-      setError('获取数据资产失败，请稍后重试');
       toast.error('获取数据资产失败，请稍后重试');
     }
   };
@@ -197,12 +185,6 @@ export default function DataAssetsPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('zh-CN');
-  };
-  
-  // 处理搜索
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchDataAssets();
   };
   
   // 查看资产详情

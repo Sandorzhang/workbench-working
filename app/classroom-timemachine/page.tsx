@@ -1,22 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Clock, Heart, User, Calendar, Plus, Image, 
+  Clock, Heart, User, Plus, Image, 
   BookOpen, Network, HelpCircle, ListChecks, Clock10
 } from 'lucide-react';
 import { ClassRecord, FilmStrip, TeachingMoment } from '@/mocks/handlers/classroom-timemachine';
 import MomentDetail from '@/components/classroom-timemachine/moment-detail';
-import MemoryIcon from '@/components/classroom-timemachine/memory-icon';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Card } from '@/components/ui/card';
 import VerticalTimeline from '@/components/classroom-timemachine/vertical-timeline';
 import { HeroSection } from '@/components/ui/hero-section';
 
@@ -26,7 +23,6 @@ export default function ClassroomTimeMachinePage() {
   const [filmStrips, setFilmStrips] = useState<FilmStrip[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<ClassRecord | null>(null);
   const [selectedMoment, setSelectedMoment] = useState<TeachingMoment | undefined>(undefined);
-  const [loadingRecords, setLoadingRecords] = useState(true);
   const [loadingFilmStrips, setLoadingFilmStrips] = useState(true);
   const [loadingMoment, setLoadingMoment] = useState(false);
   const [activeTab, setActiveTab] = useState("teaching");
@@ -60,31 +56,25 @@ export default function ClassroomTimeMachinePage() {
     fetchInitialData();
   }, []);
   
-  // 获取热门记录
-const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] => {
-  return [...records].sort((a, b) => b.likes - a.likes).slice(0, count);
-};
-
   // 获取课堂记录
   const fetchClassroomRecords = async () => {
-    setLoadingRecords(true);
     try {
       const response = await fetch('/api/classroom-timemachine/records', {
+        method: 'GET',
         headers: {
-          'Authorization': 'Bearer mock-token'
-        }
+          'Content-Type': 'application/json',
+        },
       });
-      if (!response.ok) throw new Error('获取课堂记录失败');
+      
+      if (!response.ok) {
+        throw new Error('获取课堂记录失败');
+      }
+      
       const data = await response.json();
       setRecords(data);
-      if (data.length > 0 && !selectedRecord) {
-        setSelectedRecord(data[0]);
-      }
     } catch (error) {
       console.error('获取课堂记录错误:', error);
       toast.error('获取课堂记录失败');
-    } finally {
-      setLoadingRecords(false);
     }
   };
   
@@ -131,42 +121,11 @@ const getTopLikedRecords = (records: ClassRecord[], count = 1): ClassRecord[] =>
     }
   };
   
-  // 处理时刻点击
+  // 点击教学时刻
   const handleMomentClick = (moment: TeachingMoment) => {
-    fetchMomentDetail(moment.id);
+    setSelectedMoment(moment);
   };
   
-  // 处理记录点击
-  const handleRecordClick = (recordId: string) => {
-    const record = records.find(r => r.id === recordId);
-    if (record) {
-      setSelectedRecord(record);
-      
-      // 更新URL参数但不重新加载页面
-      router.push(`/classroom-timemachine?record=${recordId}`, { scroll: false });
-    }
-  };
-  
-  // 获取顶部喜欢的记录IDs
-  const topLikedRecords = useMemo(() => {
-    return getTopLikedRecords(records, 2).map(record => record.id);
-  }, [records]);
-
-  // 渲染内容占位符
-  const renderPlaceholder = (title: string, description: string, icon: React.ReactNode) => (
-    <div className="flex h-full items-center justify-center">
-      <div className="text-center p-8 max-w-md">
-        <div className="mx-auto h-16 w-16 text-gray-300 mb-4 flex items-center justify-center">
-          {icon}
-        </div>
-        <h3 className="text-lg font-medium text-gray-700">{title}</h3>
-        <p className="mt-2 text-gray-500 text-sm">
-          {description}
-        </p>
-      </div>
-    </div>
-  );
-
   // 计算内容区高度，确保在任何分辨率下都能正确显示
   const contentHeight = "calc(100% - 64px)"; // 减去标题部分的高度
 

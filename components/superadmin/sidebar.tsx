@@ -1,18 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { 
-  Home, Users, School,
+  Users, School,
   MapPin, LayoutDashboard, 
-  Settings, Shield, LogOut,
-  Key,
-  ServerCog,
-  Database,
-  Megaphone
+  Shield, Key
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { 
   SidebarContent, 
@@ -25,7 +19,6 @@ import {
   SidebarGroupLabel,
   SidebarRail
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NavUserAuth } from "@/components/nav-user-auth";
 
@@ -46,7 +39,6 @@ interface SidebarGroup {
 }
 
 export default function SuperAdminSidebar() {
-  const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
   

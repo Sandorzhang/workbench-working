@@ -1,13 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { useAuth } from "@/lib/auth";
 import { 
   Bell, 
-  Search, 
-  LogOut,
-  Shield,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +20,6 @@ import {
 } from "@/components/ui/breadcrumb";
 
 export default function SuperAdminHeader() {
-  const { logout } = useAuth();
   const pathname = usePathname();
 
   // 面包屑路径映射

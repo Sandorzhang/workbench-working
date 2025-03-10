@@ -22,16 +22,23 @@ export function StudentDetail({ student, onBack }: StudentDetailProps) {
   const [comment, setComment] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [studentRecords, setStudentRecords] = useState<IndicatorRecord[]>([]);
 
   useEffect(() => {
     const fetchIndicators = async () => {
+      setIsLoading(true);
       try {
-        const response = await fetch('/api/indicators');
-        if (!response.ok) throw new Error('Failed to fetch indicators');
-        const data = await response.json();
-        setIndicators(data);
-      } catch (err) {
-        setError('Failed to load indicators');
+        const response = await fetch(`/api/students/${student.id}/indicators`);
+        if (response.ok) {
+          const data = await response.json();
+          setIndicators(data.indicators || []);
+          setStudentRecords(data.records || []);
+        }
+      } catch {
+        console.error('获取学生指标数据失败');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -39,12 +46,15 @@ export function StudentDetail({ student, onBack }: StudentDetailProps) {
   }, []);
 
   const handleSubmit = async () => {
-    if (!selectedIndicator) return;
+    if (!selectedIndicator || !indicatorValue || !comment.trim()) {
+      setError('请填写所有必填字段');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
 
     try {
-      setIsSubmitting(true);
-      setError(null);
-
       const record: Omit<IndicatorRecord, 'id'> = {
         studentId: student.id,
         indicatorId: selectedIndicator.id,
@@ -61,13 +71,16 @@ export function StudentDetail({ student, onBack }: StudentDetailProps) {
       });
 
       if (!response.ok) throw new Error('Failed to save record');
-
-      // Reset form
+      
+      // 重新获取数据
+      fetchIndicators();
+      
+      // 重置表单
       setIndicatorValue("");
       setComment("");
       setSelectedIndicator(null);
-    } catch (err) {
-      setError('Failed to save record');
+    } catch {
+      setError('数据提交失败，请重试');
     } finally {
       setIsSubmitting(false);
     }
@@ -213,10 +226,10 @@ export function StudentDetail({ student, onBack }: StudentDetailProps) {
 
             <TabsContent value="history">
               <div className="space-y-4">
-                {student.indicators.length === 0 ? (
+                {studentRecords.length === 0 ? (
                   <p className="text-gray-500 text-center py-4">暂无记录</p>
                 ) : (
-                  student.indicators.map((record) => {
+                  studentRecords.map((record) => {
                     const indicator = indicators.find(i => i.id === record.indicatorId);
                     return (
                       <Card key={record.id}>

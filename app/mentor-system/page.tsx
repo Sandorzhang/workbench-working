@@ -2,13 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { MentorHub } from "@/components/mentor-hub/mentor-hub";
-import { Users, UserCircle, UserCog } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Users, UserCircle } from "lucide-react";
 import { HeroSection } from "@/components/ui/hero-section";
 import TeacherView from "@/components/mentor-hub/teacher-view";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import Link from "next/link";
 
 // 用户角色类型
 type UserRole = 'admin' | 'teacher' | 'student';

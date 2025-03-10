@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
-import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { 
   TitleSkeleton, 
@@ -26,7 +25,6 @@ import {
   ContentSkeleton, 
   ListSkeleton 
 } from "@/components/ui/skeleton-loader";
-import { Skeleton } from "@/components/ui/skeleton";
 import { HeroSection } from '@/components/ui/hero-section';
 
 // 日历事件类型
@@ -333,9 +331,6 @@ export default function CalendarPage() {
     setSelectedDate(date);
   };
   
-  // 获取选中日期的事件
-  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
-  
   // 格式化日期显示
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('zh-CN', { 
@@ -600,7 +595,14 @@ export default function CalendarPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ) : null}
+                ) : (
+                  <Card>
+                    <CardContent className="py-6 text-center text-muted-foreground">
+                      <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>选择一个日期查看活动安排</p>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             ) : (
               <Card>

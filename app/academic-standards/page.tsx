@@ -6,11 +6,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PageContainer } from '@/components/ui/page-container';
-import { SectionContainer } from '@/components/ui/section-container';
 import { CardContainer } from '@/components/ui/card-container';
 import { Input } from '@/components/ui/input';
-import { Search, Calculator, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Calculator, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { ResponsiveGrid } from '@/components/ui/responsive-grid';
@@ -31,14 +29,6 @@ interface Subject {
   id: string;
   name: string;
   icon: string;
-}
-
-// 标准详情类型
-interface StandardDetail {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
 }
 
 export default function AcademicStandardsPage() {

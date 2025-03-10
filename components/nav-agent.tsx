@@ -7,7 +7,6 @@ import {
   MoreHorizontal,
   Trash2,
   Plus,
-  Bot,
   type LucideIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -126,7 +125,6 @@ export const NavAgent = memo(({
   const { toast } = useToast();
   const [selectedAgent, setSelectedAgent] = useState<{id: string, name: string, description?: string} | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [removingAgent, setRemovingAgent] = useState<string | null>(null);
   const [localAgents, setLocalAgents] = useState<AgentItem[]>([]);
   
   // 当props中的agents变化时更新本地状态
@@ -143,9 +141,6 @@ export const NavAgent = memo(({
   // 移除智能体
   const handleRemoveAgent = useCallback(async (agentId: string) => {
     try {
-      // 设置正在移除的状态
-      setRemovingAgent(agentId);
-      
       // 在API调用前获取要移除的智能体信息
       const agentToRemove = localAgents.find(agent => agent.id === agentId);
       
@@ -195,8 +190,6 @@ export const NavAgent = memo(({
         description: "无法移除智能体，请稍后再试",
         variant: "destructive"
       });
-    } finally {
-      setRemovingAgent(null);
     }
   }, [toast, localAgents, agents]);
 
@@ -233,8 +226,10 @@ export const NavAgent = memo(({
                 />
               ))
             ) : (
-              <div className="py-2 px-3 text-sm text-muted-foreground">
-                暂无智能体，点击"+"添加
+              <div className="mt-2 text-center text-sm text-muted-foreground">
+                <p>
+                  没有可用的智能体，点击&ldquo;+&rdquo;添加
+                </p>
               </div>
             )
           )}

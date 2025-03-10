@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageContainer } from '@/components/ui/page-container';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, Calculator, BookOpen, Search } from 'lucide-react';
+import { ChevronLeft, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { StandardNavigation } from '@/components/academic-standards/standard-navigation';

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
-  CardContent, 
   CardDescription, 
   CardFooter, 
   CardHeader, 
@@ -11,11 +10,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bot, Search, Plus, Check, Brain, BookOpen, Sparkles, Lightbulb, Pencil, PieChart } from "lucide-react";
-import { useRouter } from 'next/navigation';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
 import { ResponsiveGrid } from '@/components/ui/responsive-grid';
@@ -43,7 +41,6 @@ interface AIAgent {
 }
 
 const AILibraryPage = () => {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [loading, setLoading] = useState(true);

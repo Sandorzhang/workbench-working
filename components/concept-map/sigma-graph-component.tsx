@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { MultiDirectedGraph } from "graphology";
 import { 
   SigmaContainer, 
@@ -55,20 +55,20 @@ const relationTypeMap: Record<number, string> = {
 };
 
 // 添加基本样式
-const sigmaStyles = {
+const styles = {
   container: {
     height: '100%',
     width: '100%',
-    position: 'relative' as 'relative',
+    position: 'relative' as const,
     overflow: 'hidden',
     backgroundColor: 'white'
   },
   controls: {
-    position: 'absolute' as 'absolute',
+    position: 'absolute' as const,
     bottom: '10px',
     right: '10px',
     display: 'flex',
-    flexDirection: 'column' as 'column',
+    flexDirection: 'column' as const,
     gap: '5px',
     zIndex: 1
   },
@@ -161,18 +161,10 @@ function LoadGraph({ data, onNodeClick }: SigmaGraphComponentProps) {
         // 居中显示
         setTimeout(() => {
           try {
-            // 通过设置zoom和x/y位置手动重置视图
-            const camera = sigma.getCamera();
-            // 使用任何格式的类型断言以避免TypeScript错误
-            (camera as any).setSettings({
-              x: 0,
-              y: 0,
-              ratio: 1,
-              angle: 0
-            });
+            // 刷新视图
             sigma.refresh();
-          } catch (e) {
-            console.error("居中相机视图失败:", e);
+          } catch (error) {
+            console.error("刷新视图失败:", error);
           }
         }, 100);
       } else {
@@ -252,7 +244,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
               // 累加力的分量
               dx += (xDist / dist) * force;
               dy += (yDist / dist) * force;
-            } catch (e) {
+            } catch {
               // 忽略单个节点计算错误
             }
           });
@@ -277,8 +269,8 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
               // 累加力的分量
               dx -= (xDist / dist) * force;
               dy -= (yDist / dist) * force;
-            } catch (e) {
-              // 忽略单个节点计算错误
+            } catch {
+              // 忽略错误
             }
           });
           
@@ -296,7 +288,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
           
           // 记录总移动量
           totalDisplacement += displacement;
-        } catch (e) {
+        } catch {
           // 忽略单个节点计算错误
         }
       });
@@ -306,7 +298,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
         try {
           graph.setNodeAttribute(node, 'x', pos.x);
           graph.setNodeAttribute(node, 'y', pos.y);
-        } catch (e) {
+        } catch {
           // 忽略单个节点更新错误
         }
       });
@@ -343,16 +335,16 @@ function SigmaControls() {
   };
   
   return (
-    <div style={sigmaStyles.controls}>
+    <div style={styles.controls}>
       <button 
-        style={sigmaStyles.controlButton}
+        style={styles.controlButton}
         onClick={handleZoomIn}
         title="放大"
       >
         <Maximize2 size={16} />
       </button>
       <button 
-        style={sigmaStyles.controlButton}
+        style={styles.controlButton}
         onClick={handleZoomOut}
         title="缩小"
       >
@@ -371,7 +363,7 @@ export const SigmaGraphComponent = ({ data, onNodeClick }: SigmaGraphComponentPr
   
   return (
     <SigmaContainer
-      style={sigmaStyles.container}
+      style={styles.container}
       settings={{
         renderLabels: true,
         defaultNodeColor: '#999',

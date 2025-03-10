@@ -1,7 +1,7 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
-import { redirect, usePathname } from "next/navigation";
+import { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 

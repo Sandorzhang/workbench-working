@@ -1,15 +1,13 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { WaveGraphProps, Point } from './types';
 import { SvgFrame } from './svg-frame';
 import { useHighlightIndex, useLayerValue, useResize } from './hooks';
 import { renderSectors, getLabelPosList } from './formula';
-import { LabelFrame, LabelItem } from './label-frame';
 
 export function WaveGraph(props: WaveGraphProps) {
     const {
         height = 400,
         grayColor = '#f0f0f0',
-        shortestRadius = 100,
         segments = [],
         selectedId,
         onSelect,
@@ -37,7 +35,7 @@ export function WaveGraph(props: WaveGraphProps) {
     const radius = Math.min(cx, cy) - 40; // 增加边距，确保标签不会超出边界
     
     // 渲染扇区数据
-    const { sectors, separateLines, rings } = useMemo(() => {
+    const { sectors, rings } = useMemo(() => {
         console.log('渲染扇区:', {
             segmentCount: segments.length,
             segmentLayers: segments.map(s => s.layers),

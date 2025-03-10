@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "../ui/card";
+import { CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { MentorList } from "./mentor-list";
 import { MentorDetail } from "./mentor-detail";
 import { Button } from "../ui/button";
 import { Mentor } from "@/types/models/mentor";
-import { Loader2 } from "lucide-react";
 import { 
   TabsSkeleton, 
   ListSkeleton,

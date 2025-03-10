@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { Mentor, MentorStudent } from "@/lib/types";
 import { StudentDetail } from "./student-detail";
@@ -14,30 +13,29 @@ interface MentorDetailProps {
 
 export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
   const [students, setStudents] = useState<MentorStudent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<MentorStudent | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const response = await fetch(`/api/mentors/${mentor.id}/students`);
-        if (!response.ok) throw new Error('Failed to fetch students');
-        
-        const data = await response.json();
-        setStudents(data);
-      } catch (err) {
-        setError('Failed to load students');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchStudents();
   }, [mentor.id]);
+
+  const fetchStudents = async () => {
+    setLoading(true);
+    try {
+      // 模拟API请求
+      const response = await fetch(`/api/mentors/${mentor.id}/students`);
+      if (response.ok) {
+        const data = await response.json();
+        setStudents(data);
+      }
+    } catch {
+      // 错误处理
+      console.error("获取学生数据失败");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (selectedStudent) {
     return (
@@ -88,15 +86,13 @@ export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
           <CardTitle>指导学生</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {loading ? (
             <div className="text-center py-4">
               <svg className="animate-spin h-5 w-5 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </div>
-          ) : error ? (
-            <div className="text-red-500 text-center py-4">{error}</div>
           ) : students.length === 0 ? (
             <div className="text-gray-500 text-center py-4">暂无指导学生</div>
           ) : (

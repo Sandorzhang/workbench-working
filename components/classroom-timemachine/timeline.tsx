@@ -1,13 +1,12 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Play, FileText, Mic, Video, BookOpen, Calendar, Clock, Maximize, Minimize, X } from 'lucide-react';
+import { Play, FileText, Mic, Video, BookOpen, Calendar, Clock, Maximize, Minimize, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { FilmStrip, TeachingMoment } from '@/mocks/handlers/classroom-timemachine';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { X as DialogClose } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 
 // 获取类型信息
 const getTypeInfo = (type: string) => {
@@ -21,73 +20,54 @@ const getTypeInfo = (type: string) => {
     case 'audio':
       return {
         icon: <Mic className="h-4 w-4" />,
-        className: 'bg-blue-500',
-        label: '音频'
+        className: 'bg-rose-500',
+        label: '录音'
       };
     case 'video':
       return {
         icon: <Video className="h-4 w-4" />,
-        className: 'bg-rose-500',
+        className: 'bg-blue-500',
         label: '视频'
       };
-    case 'homework':
+    case 'document':
       return {
         icon: <BookOpen className="h-4 w-4" />,
-        className: 'bg-green-500',
-        label: '作业'
+        className: 'bg-emerald-500',
+        label: '文档'
       };
     default:
       return {
         icon: <FileText className="h-4 w-4" />,
-        className: 'bg-purple-500',
+        className: 'bg-slate-500',
         label: '其他'
       };
   }
 };
 
-// 获取学科颜色
-const getSubjectColor = (subject: string) => {
-  const colors: Record<string, string> = {
-    '语文': 'text-red-500',
-    '数学': 'text-purple-500',
-    '英语': 'text-blue-500',
-    '物理': 'text-sky-500',
-    '化学': 'text-green-500',
-    '生物': 'text-emerald-500',
-    '历史': 'text-amber-500',
-    '地理': 'text-rose-500',
-    '政治': 'text-indigo-500',
-  };
-  return colors[subject] || 'text-gray-500';
-};
-
-// 学科颜色映射（用于背景和边框）
-const subjectColors: Record<string, string> = {
-  '语文': 'text-red-500 border-red-200 bg-red-50',
-  '数学': 'text-purple-500 border-purple-200 bg-purple-50',
-  '英语': 'text-blue-500 border-blue-200 bg-blue-50',
-  '物理': 'text-sky-500 border-sky-200 bg-sky-50',
-  '化学': 'text-green-500 border-green-200 bg-green-50',
-  '生物': 'text-emerald-500 border-emerald-200 bg-emerald-50',
-  '历史': 'text-amber-500 border-amber-200 bg-amber-50',
-  '地理': 'text-rose-500 border-rose-200 bg-rose-50',
-  '政治': 'text-indigo-500 border-indigo-200 bg-indigo-50',
-};
-
 // 获取学科渐变色
 const getSubjectGradient = (subject: string) => {
-  const gradients: Record<string, string> = {
-    '语文': 'from-red-500/20 to-transparent',
-    '数学': 'from-purple-500/20 to-transparent',
-    '英语': 'from-blue-500/20 to-transparent',
-    '物理': 'from-sky-500/20 to-transparent',
-    '化学': 'from-green-500/20 to-transparent',
-    '生物': 'from-emerald-500/20 to-transparent',
-    '历史': 'from-amber-500/20 to-transparent',
-    '地理': 'from-rose-500/20 to-transparent',
-    '政治': 'from-indigo-500/20 to-transparent',
-  };
-  return gradients[subject] || 'from-gray-500/20 to-transparent';
+  switch (subject) {
+    case '语文':
+      return 'from-red-50 to-red-100 border-red-200';
+    case '数学':
+      return 'from-blue-50 to-blue-100 border-blue-200';
+    case '英语':
+      return 'from-green-50 to-green-100 border-green-200';
+    case '物理':
+      return 'from-purple-50 to-purple-100 border-purple-200';
+    case '化学':
+      return 'from-orange-50 to-orange-100 border-orange-200';
+    case '生物':
+      return 'from-emerald-50 to-emerald-100 border-emerald-200';
+    case '历史':
+      return 'from-amber-50 to-amber-100 border-amber-200';
+    case '地理':
+      return 'from-teal-50 to-teal-100 border-teal-200';
+    case '政治':
+      return 'from-indigo-50 to-indigo-100 border-indigo-200';
+    default:
+      return 'from-gray-50 to-gray-100 border-gray-200';
+  }
 };
 
 // 生成时间段标记
@@ -133,7 +113,6 @@ export const Timeline: React.FC<TimelineProps> = ({
   const [viewMode, setViewMode] = useState<'compact' | 'expanded'>('compact');
   const timelineRef = useRef<HTMLDivElement>(null);
   const [timelineWidth, setTimelineWidth] = useState(2000);
-  const [containerWidth, setContainerWidth] = useState(0);
   const [viewportPosition, setViewportPosition] = useState(0); // 0-100 表示滚动视口在时间线上的位置
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -157,20 +136,14 @@ export const Timeline: React.FC<TimelineProps> = ({
     const updateWidth = () => {
       if (timelineRef.current) {
         const parentWidth = timelineRef.current.parentElement?.offsetWidth || 800;
-        setContainerWidth(parentWidth);
-        
-        // 确保每个学期有足够的空间，最小宽度为容器的3倍
-        const minWidth = parentWidth * 3;
-        const calculatedWidth = filmStrips.length * 800;
-        const finalWidth = Math.max(minWidth, calculatedWidth);
-        setTimelineWidth(finalWidth);
+        setTimelineWidth(parentWidth);
       }
     };
     
     updateWidth();
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
-  }, [filmStrips.length]);
+  }, []);
 
   // 监听滚动位置更新
   useEffect(() => {
@@ -191,11 +164,6 @@ export const Timeline: React.FC<TimelineProps> = ({
     };
   }, []);
 
-  // 将所有教学时刻展平为一个数组，方便访问
-  const allMoments = useMemo(() => {
-    return filmStrips.flatMap(strip => strip.moments);
-  }, [filmStrips]);
-
   // 处理选择学期
   const handleSelectSemester = (semester: string) => {
     setSelectedSemester(semester);
@@ -204,20 +172,6 @@ export const Timeline: React.FC<TimelineProps> = ({
     if (stripIndex !== -1 && timelineRef.current) {
       const scrollPosition = (stripIndex / filmStrips.length) * timelineWidth;
       timelineRef.current.scrollTo({ left: scrollPosition, behavior: 'smooth' });
-    }
-  };
-
-  // 向左滚动
-  const scrollLeft = () => {
-    if (timelineRef.current) {
-      timelineRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-    }
-  };
-
-  // 向右滚动
-  const scrollRight = () => {
-    if (timelineRef.current) {
-      timelineRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
 
@@ -246,11 +200,10 @@ export const Timeline: React.FC<TimelineProps> = ({
     setIsDialogOpen(true);
   };
 
-  // 紧凑视图的胶片帧
+  // 渲染紧凑模式的时刻
   const renderCompactFilmFrame = (moment: TeachingMoment, position: number) => {
     const isSelected = selectedMomentId === moment.id;
     const typeInfo = getTypeInfo(moment.type);
-    const subjectColor = getSubjectColor(moment.subject);
     const subjectGradient = getSubjectGradient(moment.subject);
 
     return (
@@ -416,11 +369,10 @@ export const Timeline: React.FC<TimelineProps> = ({
     );
   };
 
-  // 扩展视图的胶片帧
+  // 渲染展开模式的时刻
   const renderExpandedFilmFrame = (moment: TeachingMoment, position: number) => {
     const isSelected = selectedMomentId === moment.id;
     const typeInfo = getTypeInfo(moment.type);
-    const subjectColor = getSubjectColor(moment.subject);
     const subjectGradient = getSubjectGradient(moment.subject);
 
     return (
@@ -866,7 +818,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                     </Badge>
                     <Badge variant="outline" className={cn(
                       "py-1.5 px-3 text-sm border", 
-                      subjectColors[expandedMoment.subject] || "border-gray-200 bg-gray-50"
+                      getSubjectGradient(expandedMoment.subject)
                     )}>
                       {expandedMoment.subject}
                     </Badge>

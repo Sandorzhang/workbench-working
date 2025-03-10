@@ -24,7 +24,6 @@ function StudentWarnings() {
   const [standards, setStandards] = useState<LearningStandard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"subject" | "date">("subject");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -207,7 +206,7 @@ function StudentWarnings() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="subject" className="w-full" onValueChange={(val) => setActiveTab(val as "subject" | "date")}>
+        <Tabs defaultValue="subject" className="w-full">
           <div className="flex justify-between items-center mb-4">
             <TabsList>
               <TabsTrigger value="subject" className="flex items-center gap-1.5">

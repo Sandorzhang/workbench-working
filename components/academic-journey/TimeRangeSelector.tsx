@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { addMonths, format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
 type TimeRange = 'week' | 'month' | 'quarter' | 'year' | 'custom';

@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation"
 import {
   SquareTerminal,
   Calendar,
-  Bot,
-  type LucideIcon
+  Bot
 } from "lucide-react"
 
 import { useAuth } from "@/lib/auth"
@@ -16,14 +15,11 @@ import { NavMain } from "@/components/nav-main"
 import { NavAgent, type AgentItem } from "@/components/nav-agent"
 import { NavUserAuth } from "@/components/nav-user-auth"
 
-// 智能体类型
-interface AIAgent {
-  id: string
-  name: string
-  description: string
-  icon: string
-  category?: string
-  tags?: string[]
+// 导入的智能体类型
+interface ImportedAgent {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 // 导航数据
@@ -83,12 +79,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const data = await response.json();
       
       // 转换为智能体格式 - 确保符合AgentItem接口
-      const formattedAgents: AgentItem[] = data.map((agent: any) => ({
+      const formattedAgents: AgentItem[] = data.map((agent: ImportedAgent) => ({
         id: agent.id,
         name: agent.name,
         description: agent.description || '',
         url: `/ai-chat/${agent.id}`,
-        icon: Bot // 使用LucideIcon类型
+        icon: Bot // 使用Bot图标
       }));
       
       // 比较新旧数据，只在数据真正变化时更新状态
@@ -136,7 +132,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         // 检查事件是否包含详细数据
         const customEvent = event as CustomEvent;
         if (customEvent.detail) {
-          const { action, agent, timestamp } = customEvent.detail;
+          const { action, agent } = customEvent.detail;
           console.log(`收到${action}操作的数据:`, agent);
           
           // 直接基于事件数据更新状态，避免额外的API调用

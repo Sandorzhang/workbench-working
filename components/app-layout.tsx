@@ -16,13 +16,11 @@ import {
 } from "@/components/ui/breadcrumb";
 import {
   Sidebar,
-  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Pencil } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -131,7 +129,7 @@ function getSidebarStateFromCookie() {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [sidebarState, setSidebarState] = useState<boolean | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
   const [dynamicPageTitle, setDynamicPageTitle] = useState<string | null>(null);
