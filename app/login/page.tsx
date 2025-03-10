@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,31 +26,7 @@ export default function LoginPage() {
   const [codeSent, setCodeSent] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(0);
   
-  const router = useRouter();
-  const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading, error, user } = useAuth();
-
-  // 处理认证后的重定向
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      // 根据用户角色决定重定向到不同页面
-      let redirectPath = '/workbench';
-      
-      // 超级管理员重定向到超级管理员控制台
-      if (user.role === 'superadmin') {
-        redirectPath = '/superadmin';
-        toast.success('登录成功，即将跳转到超级管理员控制台...');
-      } else {
-        toast.success('登录成功，即将跳转到工作台...');
-      }
-      
-      // 短暂延迟以显示成功消息
-      const timer = setTimeout(() => {
-        router.push(redirectPath);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, user, router]);
+  const { login, loginWithCode, sendVerificationCode, isAuthenticated, isLoading, error } = useAuth();
 
   // 显示错误提示
   useEffect(() => {
@@ -263,61 +238,50 @@ export default function LoginPage() {
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-1.5">
                         <Smartphone className="h-4 w-4 text-gray-500" />
-                        手机号
+                        手机号码
                       </Label>
                       <div className="flex gap-2">
                         <Input
                           id="phone"
                           value={phone}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
-                          placeholder="请输入手机号"
-                          maxLength={11}
+                          placeholder="请输入手机号码"
+                          className="h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                           required
-                          className="flex-1 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
+                        <Button 
+                          type="button" 
                           onClick={handleSendCode}
-                          disabled={isLoading || countdown > 0 || phone.length !== 11}
-                          className="whitespace-nowrap h-12 min-w-28 transition-all rounded-lg border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+                          className="h-12 px-4 font-medium transition-all bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg shadow-md hover:shadow-lg"
+                          disabled={isLoading || countdown > 0}
                         >
-                          {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+                          {countdown > 0 ? `${countdown}秒` : '获取验证码'}
                         </Button>
                       </div>
                     </div>
                     
-                    {codeSent && (
-                      <div className="space-y-2 animate-fadeIn">
-                        <Label htmlFor="code" className="text-sm font-medium flex items-center gap-1.5">
-                          <Mail className="h-4 w-4 text-gray-500" />
-                          验证码
-                        </Label>
-                        <div className="flex w-full">
-                          <InputOTP
-                            maxLength={6}
-                            value={verificationCode}
-                            onChange={setVerificationCode}
-                            className="w-full"
-                          >
-                            <InputOTPGroup className="w-full grid grid-cols-6 gap-2 sm:gap-3">
-                              {Array.from({ length: 6 }).map((_, index) => (
-                                <InputOTPSlot 
-                                  key={index} 
-                                  index={index}
-                                  className="rounded-lg aspect-square w-full h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 text-lg font-medium" 
-                                />
-                              ))}
-                            </InputOTPGroup>
-                          </InputOTP>
-                        </div>
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="code" className="text-sm font-medium flex items-center gap-1.5">
+                        <ShieldCheck className="h-4 w-4 text-gray-500" />
+                        验证码
+                      </Label>
+                      <InputOTP 
+                        maxLength={6} 
+                        value={verificationCode}
+                        onChange={setVerificationCode}
+                      >
+                        <InputOTPGroup>
+                          {Array.from({ length: 6 }).map((_, index) => (
+                            <InputOTPSlot key={index} index={index} className="w-[48px] h-[48px] text-center text-lg font-semibold border border-gray-300 rounded-md" />
+                          ))}
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
                     
                     <Button 
                       type="submit" 
-                      className="w-full h-12 mt-4 font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg shadow-md hover:shadow-lg"
-                      disabled={isLoading || (codeSent && verificationCode.length < 6) || (!codeSent && phone.length !== 11)}
+                      className="w-full h-12 mt-4 font-medium transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg shadow-md hover:shadow-lg" 
+                      disabled={isLoading}
                     >
                       {isLoading ? (
                         <>
@@ -326,7 +290,7 @@ export default function LoginPage() {
                         </>
                       ) : (
                         <>
-                          {codeSent ? '验证并登录' : '下一步'}
+                          登录
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </>
                       )}
@@ -334,24 +298,15 @@ export default function LoginPage() {
                   </form>
                 </TabsContent>
               </Tabs>
-              
-              <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-                <span className="text-sm text-gray-500">没有账号? </span>
-                <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors">
-                  联系管理员
-                </a>
-              </div>
             </CardContent>
-          </Card>
-          
-          <div className="mt-8 text-center">
-            <CardFooter className="flex justify-center text-sm text-gray-500 px-0">
-              <div className="p-3 bg-white/70 backdrop-blur-sm rounded-lg shadow-md">
-                <p>提示：管理员账号 admin / password123，教师账号 teacher / password123</p>
-                <p className="mt-1">手机验证码：可使用手机 13800138000（管理员）或 13900139000（教师）</p>
+            
+            <CardFooter className="flex flex-col items-center justify-center p-6 border-t border-gray-100">
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <Mail className="h-4 w-4" />
+                <span>如需帮助，请联系系统管理员</span>
               </div>
             </CardFooter>
-          </div>
+          </Card>
         </div>
       </div>
     </div>

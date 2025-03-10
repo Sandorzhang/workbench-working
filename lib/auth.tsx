@@ -1,9 +1,11 @@
 "use client";
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
 import { api } from './api';
-import { LoginResponse, User as ApiUser } from './api-types';
+import { LoginResponse, User as ApiUser, Role } from './api-types';
+import md5 from 'crypto-js/md5';
 
 // 用户类型
 interface User {
@@ -11,9 +13,10 @@ interface User {
   name: string;
   email: string;
   avatar: string;
-  role: string;
+  role: Role;
   school?: string; // 用户所属学校
   schoolType?: string; // 学校类型
+  permissions?: string[]; // 用户权限列表
 }
 
 // 认证上下文状态
@@ -31,7 +34,11 @@ interface AuthContextType extends AuthState {
   loginWithCode: (phone: string, code: string) => Promise<void>;
   sendVerificationCode: (phone: string) => Promise<void>;
   logout: () => Promise<void>;
+  redirectToAppropriateRoute: () => void;
 }
+
+// 密码加盐的盐值（理想情况下应该存储在环境变量中）
+const SALT = "workbench_secure_salt_2023";
 
 // 创建认证上下文
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,6 +50,7 @@ interface AuthProviderProps {
 
 // 认证提供者组件
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const router = useRouter();
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
@@ -66,6 +74,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // 使用API工具获取用户信息
         const userData = await api.auth.getCurrentUser() as User;
+        
+        // 更新 Redux 存储（如果使用 Redux）
+        if (typeof window !== 'undefined' && window.store) {
+          window.store.dispatch({
+            type: 'auth/setUser',
+            payload: userData
+          });
+        }
         
         setState({
           isAuthenticated: true,
@@ -116,6 +132,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
+  // 密码加密函数 - 使用 MD5 加盐
+  const hashPassword = (password: string): string => {
+    // 将密码与盐组合并进行 MD5 加密
+    return md5(password + SALT).toString();
+  };
+
+  // 根据用户角色确定重定向路径
+  const getRedirectPathByRole = (role: Role): string => {
+    // 根据不同角色返回不同的路径
+    switch (role) {
+      case 'superadmin':
+        return '/dashboard';
+      case 'admin':
+        return '/workbench';
+      case 'teacher':
+        return '/workbench';
+      case 'student':
+        return '/workbench';
+      default:
+        return '/workbench';
+    }
+  };
+
+  // 重定向到合适的路由函数
+  const redirectToAppropriateRoute = () => {
+    if (!state.isAuthenticated || !state.user) {
+      router.push('/login');
+      return;
+    }
+
+    const redirectPath = getRedirectPathByRole(state.user.role);
+    
+    // 显示成功消息
+    toast.success(`登录成功，即将跳转到${state.user.role === 'superadmin' ? '超级管理员控制台' : '工作台'}...`);
+    
+    // 短暂延迟以显示成功消息
+    setTimeout(() => {
+      router.push(redirectPath);
+    }, 1000);
+  };
+
   // 用户名密码登录
   const login = async (username: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
@@ -123,15 +180,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('开始账号密码登录请求...');
       
+      // 对密码进行加密
+      const hashedPassword = hashPassword(password);
+      
       // 使用API工具进行登录
-      const data = await api.auth.login(username, password) as LoginResponse;
+      const data = await api.auth.login(username, hashedPassword) as LoginResponse;
       
       console.log('登录成功，获取到token和用户数据');
       
-      // 先保存token
+      // 先保存token到localStorage
       localStorage.setItem('token', data.token);
       
-      // 立即更新状态，不使用setTimeout
+      // 如果使用 Redux，更新用户状态
+      if (typeof window !== 'undefined' && window.store) {
+        window.store.dispatch({
+          type: 'auth/setUser',
+          payload: data.user
+        });
+        
+        window.store.dispatch({
+          type: 'auth/setToken',
+          payload: data.token
+        });
+      }
+      
+      // 立即更新状态
       setState({
         isAuthenticated: true,
         user: data.user,
@@ -141,6 +214,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       
       toast.success('登录成功');
+      
+      // 自动重定向到合适的路由
+      const redirectPath = getRedirectPathByRole(data.user.role);
+      
+      // 显示成功消息
+      toast.success(`登录成功，即将跳转到${data.user.role === 'superadmin' ? '超级管理员控制台' : '工作台'}...`);
+      
+      // 短暂延迟以显示成功消息
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, 1000);
     } catch (error: any) {
       console.error('登录失败:', error);
       const errorMessage = error.message || '登录时发生错误';
@@ -165,10 +249,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       console.log('验证码登录成功，获取到token和用户数据');
       
-      // 先保存token
+      // 先保存token到localStorage
       localStorage.setItem('token', data.token);
       
-      // 立即更新状态，不使用setTimeout
+      // 如果使用 Redux，更新用户状态
+      if (typeof window !== 'undefined' && window.store) {
+        window.store.dispatch({
+          type: 'auth/setUser',
+          payload: data.user
+        });
+        
+        window.store.dispatch({
+          type: 'auth/setToken',
+          payload: data.token
+        });
+      }
+      
+      // 立即更新状态
       setState({
         isAuthenticated: true,
         user: data.user,
@@ -178,6 +275,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       
       toast.success('登录成功');
+      
+      // 自动重定向到合适的路由
+      const redirectPath = getRedirectPathByRole(data.user.role);
+      
+      // 显示成功消息
+      toast.success(`登录成功，即将跳转到${data.user.role === 'superadmin' ? '超级管理员控制台' : '工作台'}...`);
+      
+      // 短暂延迟以显示成功消息
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, 1000);
     } catch (error: any) {
       console.error('验证码登录失败:', error);
       const errorMessage = error.message || '验证码登录失败';
@@ -229,6 +337,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem('token');
       console.log('已清除本地token');
       
+      // 如果使用 Redux，清除用户状态
+      if (typeof window !== 'undefined' && window.store) {
+        window.store.dispatch({ type: 'auth/clearUser' });
+        window.store.dispatch({ type: 'auth/clearToken' });
+      }
+      
       try {
         // 尝试调用API，但不等待结果
         if (currentToken) {
@@ -252,73 +366,136 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
       
-      // 添加成功提示
+      // 显示成功消息
       toast.success('已成功退出登录');
-      console.log('登出流程完成，状态已重置');
+      
+      // 重定向到登录页
+      router.push('/login');
     } catch (error: any) {
-      console.error('注销过程中发生错误:', error);
+      console.error('注销失败:', error);
       
-      // 即使出错也清除本地token和状态
-      localStorage.removeItem('token');
-      setState({
-        isAuthenticated: false,
-        user: null,
-        token: null,
-        isLoading: false,
-        error: error.message || '注销过程中发生错误',
-      });
+      const errorMessage = error.message || '注销失败';
+      setState(prev => ({ 
+        ...prev, 
+        isLoading: false, 
+        error: errorMessage
+      }));
       
-      toast.error(error.message || '退出登录时发生错误');
+      toast.error(errorMessage);
     }
   };
 
-  const value = {
-    ...state,
-    login,
-    loginWithCode,
-    sendVerificationCode,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        ...state,
+        login,
+        loginWithCode,
+        sendVerificationCode,
+        logout,
+        redirectToAppropriateRoute,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// 自定义钩子用于在组件中使用认证上下文
+// 声明全局 Redux 存储类型
+declare global {
+  interface Window {
+    store?: {
+      dispatch: (action: any) => void;
+      getState: () => any;
+    };
+  }
+}
+
+// 认证上下文使用钩子
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  
   if (context === undefined) {
-    throw new Error('useAuth 必须在 AuthProvider 内部使用');
+    throw new Error("useAuth 必须在 AuthProvider 中使用");
   }
-  
   return context;
 };
 
-// 用于保护需要认证的路由
+// 页面级认证守卫 HOC
 export const withAuth = (Component: React.ComponentType<any>) => {
   const AuthenticatedComponent = (props: any) => {
-    const { isAuthenticated, isLoading } = useAuth();
-    
+    const { isAuthenticated, isLoading, user } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+      if (!isLoading && !isAuthenticated) {
+        // 未通过认证，重定向到登录页
+        router.push('/login');
+      }
+    }, [isAuthenticated, isLoading, router]);
+
     // 如果还在加载，显示加载状态
     if (isLoading) {
-      return <div>Loading...</div>;
+      return (
+        <div className="flex h-screen w-full items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"></div>
+            <p className="text-lg font-medium text-gray-700">认证中...</p>
+          </div>
+        </div>
+      );
     }
-    
-    // 如果未认证，重定向到登录页
+
+    // 如果未认证且已加载完成，返回 null，等待重定向完成
     if (!isAuthenticated) {
-      // 如果在客户端环境
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-        return null;
-      }
-      
-      // 服务器端渲染时返回一个占位符
-      return <div>Redirecting...</div>;
+      return null;
     }
-    
-    // 已认证，渲染原始组件
-    return <Component {...props} />;
+
+    // 通过认证，渲染组件
+    return <Component {...props} user={user} />;
   };
-  
+
   return AuthenticatedComponent;
+};
+
+// 角色授权 HOC
+export const withRole = (Component: React.ComponentType<any>, allowedRoles: Role[]) => {
+  const RoleAuthComponent = (props: any) => {
+    const { isAuthenticated, isLoading, user, redirectToAppropriateRoute } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+      if (!isLoading) {
+        if (!isAuthenticated) {
+          // 未通过认证，重定向到登录页
+          router.push('/login');
+        } else if (user && !allowedRoles.includes(user.role)) {
+          // 未授权访问，重定向到合适的路由
+          toast.error('您没有权限访问此页面');
+          redirectToAppropriateRoute();
+        }
+      }
+    }, [isAuthenticated, isLoading, user, router, redirectToAppropriateRoute]);
+
+    // 如果还在加载，显示加载状态
+    if (isLoading) {
+      return (
+        <div className="flex h-screen w-full items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"></div>
+            <p className="text-lg font-medium text-gray-700">认证中...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // 如果未认证或无权限，返回 null，等待重定向完成
+    if (!isAuthenticated || (user && !allowedRoles.includes(user.role))) {
+      return null;
+    }
+
+    // 通过认证和授权，渲染组件
+    return <Component {...props} user={user} />;
+  };
+
+  return RoleAuthComponent;
 }; 
