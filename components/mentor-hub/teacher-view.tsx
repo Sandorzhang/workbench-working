@@ -15,7 +15,8 @@ import {
   Search,
   User,
   BarChart3,
-  ClipboardEdit
+  ClipboardEdit,
+  Loader2
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Skeleton } from "../ui/skeleton";
@@ -27,6 +28,7 @@ import { StudentCompetency } from "./student-competency";
 import { StudentAcademic } from "./student-academic";
 import { StudentTracking } from "./student-tracking";
 import { StudentEvaluation } from "./student-evaluation";
+import { cn } from "@/lib/utils";
 
 // 学生列表组件
 function StudentList({ 
@@ -56,18 +58,27 @@ function StudentList({
 
   if (students.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full w-full flex flex-col">
-        <div className="px-3 py-2 border-b border-gray-100 bg-slate-50/90">
+      <div className={cn(
+        "rounded-xl overflow-hidden h-full w-full flex flex-col",
+        "bg-gradient-to-b from-white/80 to-white/95 dark:from-gray-900/80 dark:to-gray-900/95",
+        "border border-gray-100/60 dark:border-gray-800/40",
+        "shadow-md backdrop-blur-sm backdrop-filter"
+      )}>
+        <div className={cn(
+          "px-3 py-2 border-b",
+          "border-gray-100/80 dark:border-gray-800/60",
+          "bg-gradient-to-b from-gray-50/90 to-gray-100/30 dark:from-gray-800/50 dark:to-gray-900/30"
+        )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <User className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-medium text-gray-800">学生列表</h2>
+              <h2 className="text-sm font-medium text-gray-800 dark:text-gray-200">学生列表</h2>
             </div>
             <Button 
               variant="ghost"
               size="sm"
               onClick={handleRefresh}
-              className="h-7 px-1.5 rounded-md"
+              className="h-7 px-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               title="刷新学生数据"
               disabled={students.length === 0}
             >
@@ -75,22 +86,27 @@ function StudentList({
             </Button>
           </div>
         </div>
-        <div className="p-3 text-center py-10 bg-white flex-1 flex flex-col items-center justify-center">
-          <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2">
-            <User className="w-5 h-5 text-muted-foreground opacity-50" />
+        <div className="p-3 text-center py-10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm flex-1 flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-gray-50/80 dark:bg-gray-800/80 flex items-center justify-center mb-3 shadow-sm">
+            <User className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
-          <p className="text-muted-foreground text-sm">暂无分配学生</p>
-          <p className="text-muted-foreground text-xs mt-1">请联系管理员分配学生</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">暂无分配学生</p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs mt-1.5">请联系管理员分配学生</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full w-full flex flex-col">
-      <div className="px-4 py-3 border-b border-gray-100 bg-white">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-medium text-gray-800 flex items-center">
+    <div className={cn(
+      "rounded-xl overflow-hidden h-full w-full flex flex-col",
+      "bg-gradient-to-b from-white/80 to-white/95 dark:from-gray-900/80 dark:to-gray-900/95",
+      "border border-gray-100/60 dark:border-gray-800/40",
+      "shadow-md backdrop-blur-sm backdrop-filter"
+    )}>
+      <div className="px-4 py-3 border-b border-gray-100/80 dark:border-gray-800/60">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-medium text-gray-800 dark:text-gray-200 flex items-center">
             <User className="mr-2 h-5 w-5 text-primary" />
             学生列表
           </h2>
@@ -98,10 +114,10 @@ function StudentList({
             variant="outline"
             size="sm" 
             onClick={handleRefresh}
-            className="h-8 px-2"
+            className="h-8 px-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border-gray-200/80 dark:border-gray-700/60"
             title="刷新学生数据"
           >
-            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
             刷新
           </Button>
         </div>
@@ -111,14 +127,15 @@ function StudentList({
           <Input 
             type="text"
             placeholder="搜索姓名或学号..." 
-            className="h-9 text-sm pl-9 pr-8 rounded-md border-gray-200 w-full"
+            className="h-9 text-sm pl-9 pr-8 rounded-md border-gray-200/80 dark:border-gray-700/60 w-full bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button 
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-gray-700 transition-colors"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               onClick={() => setSearchQuery("")}
+              aria-label="清除搜索"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -131,13 +148,13 @@ function StudentList({
       
       <div className="overflow-y-auto flex-1 student-list-scroll">
         {filteredStudents.length === 0 ? (
-          <div className="px-4 py-8 text-center">
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
-              <SearchIcon className="h-5 w-5 text-muted-foreground opacity-40" />
+          <div className="px-4 py-10 text-center">
+            <div className="w-12 h-12 rounded-full bg-gray-50/80 dark:bg-gray-800/80 flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <SearchIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
             </div>
-            <p className="text-sm text-muted-foreground">未找到匹配的学生</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">未找到匹配的学生</p>
             <button 
-              className="mt-2 text-sm text-primary font-medium hover:underline"
+              className="text-sm text-primary font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-primary/20 rounded px-2 py-1"
               onClick={() => setSearchQuery("")}
             >
               清除搜索
@@ -148,23 +165,40 @@ function StudentList({
             {filteredStudents.map((student) => (
               <div 
                 key={student.id} 
-                className={`px-3 py-2.5 rounded-md mb-1 flex items-center cursor-pointer transition-all duration-200 group ${
+                className={cn(
+                  "px-3 py-2.5 rounded-md mb-2 flex items-center cursor-pointer transition-all duration-200 group",
                   selectedStudentId === student.id 
-                    ? 'bg-primary/10 border-l-4 border-l-primary' 
-                    : 'hover:bg-slate-50 border-l-4 border-l-transparent hover:border-l-primary/50'
-                }`}
+                    ? 'bg-primary/10 border-l-4 border-l-primary shadow-sm' 
+                    : 'hover:bg-gray-50/80 dark:hover:bg-gray-800/50 border-l-4 border-l-transparent hover:border-l-primary/50',
+                  "border border-transparent",
+                  selectedStudentId === student.id 
+                    ? 'border-primary/20' 
+                    : 'hover:border-gray-200/50 dark:hover:border-gray-700/30'
+                )}
                 onClick={() => onSelectStudent(student)}
               >
-                <Avatar className="h-10 w-10 mr-3 ring-1 ring-gray-100 transition-shadow group-hover:ring-2 group-hover:ring-primary/20">
+                <Avatar className={cn(
+                  "h-10 w-10 mr-3 transition-all",
+                  "ring-1 ring-gray-100/80 dark:ring-gray-800/80",
+                  "group-hover:ring-2 group-hover:ring-primary/20",
+                  selectedStudentId === student.id 
+                    ? "ring-2 ring-primary/30 shadow-sm" 
+                    : ""
+                )}>
                   <AvatarImage src={student.avatar} alt={student.name} />
-                  <AvatarFallback className="text-sm bg-slate-100 text-slate-500">{student.name.slice(0, 2)}</AvatarFallback>
+                  <AvatarFallback className="text-sm bg-primary/10 dark:bg-primary/20 text-primary">{student.name.slice(0, 2)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-slate-700 group-hover:text-primary transition-colors truncate">
+                  <p className={cn(
+                    "font-medium text-sm truncate transition-colors",
+                    selectedStudentId === student.id 
+                      ? "text-primary" 
+                      : "text-gray-700 dark:text-gray-300 group-hover:text-primary"
+                  )}>
                     {student.name}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    学号: <span className="font-medium text-slate-600">{student.studentId}</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    学号: <span className="font-medium text-gray-600 dark:text-gray-300">{student.studentId}</span>
                   </p>
                 </div>
               </div>
@@ -220,26 +254,35 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* 学生基本信息 */}
-      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
-          <Avatar className="h-16 w-16 border-2 border-blue-100">
+      <div className={cn(
+        "p-5 rounded-xl relative overflow-hidden",
+        "bg-gradient-to-r from-blue-50/30 via-white/80 to-white/90 dark:from-blue-950/20 dark:via-gray-900/80 dark:to-gray-900/90",
+        "border border-gray-100/60 dark:border-gray-800/40",
+        "shadow-md backdrop-blur-sm backdrop-filter"
+      )}>
+        {/* 装饰性背景元素 */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-primary/5 to-transparent rounded-full -mr-12 -mt-12 blur-3xl opacity-60 dark:opacity-40"></div>
+        <div className="absolute inset-0 bg-white/30 dark:bg-gray-900/30 backdrop-blur-[1px] backdrop-filter z-0"></div>
+        
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 relative z-10">
+          <Avatar className="h-16 w-16 border-2 border-blue-100 dark:border-blue-900/50 shadow-md">
             <AvatarImage src={student.avatar} alt={student.name} />
-            <AvatarFallback className="bg-primary/10 text-primary text-lg">
+            <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
               {student.name.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex-1 space-y-2 text-center md:text-left">
             <div>
-              <h2 className="text-xl font-bold flex items-center justify-center md:justify-start gap-2">
+              <h2 className="text-xl font-bold flex items-center justify-center md:justify-start gap-2 text-gray-900 dark:text-gray-100">
                 {student.name}
-                <Badge variant="outline" className="ml-2 text-xs font-normal">
+                <Badge variant="outline" className="ml-2 text-xs font-normal bg-white/80 dark:bg-gray-800/80 border-gray-200/80 dark:border-gray-700/60">
                   {student.grade} {student.class}
                 </Badge>
               </h2>
-              <p className="text-muted-foreground">学号: {student.studentId}</p>
+              <p className="text-gray-500 dark:text-gray-400">学号: {student.studentId}</p>
             </div>
           </div>
         </div>
@@ -247,20 +290,25 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
 
       {/* Tab切换导航 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 mb-3">
-          <TabsTrigger value="competency" className="flex items-center gap-1">
+        <TabsList className={cn(
+          "grid grid-cols-4 mb-4 p-1",
+          "bg-gray-100/50 dark:bg-gray-800/30",
+          "backdrop-blur-sm backdrop-filter",
+          "border border-gray-100/60 dark:border-gray-800/40 rounded-lg"
+        )}>
+          <TabsTrigger value="competency" className="flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:dark:bg-gray-800/80 data-[state=active]:shadow-sm">
             <Star className="h-4 w-4" />
             学生轮盘
           </TabsTrigger>
-          <TabsTrigger value="academic" className="flex items-center gap-1">
+          <TabsTrigger value="academic" className="flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:dark:bg-gray-800/80 data-[state=active]:shadow-sm">
             <BookOpen className="h-4 w-4" />
             学生学业
           </TabsTrigger>
-          <TabsTrigger value="tracking" className="flex items-center gap-1">
+          <TabsTrigger value="tracking" className="flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:dark:bg-gray-800/80 data-[state=active]:shadow-sm">
             <History className="h-4 w-4" />
             学生追踪
           </TabsTrigger>
-          <TabsTrigger value="evaluation" className="flex items-center gap-1">
+          <TabsTrigger value="evaluation" className="flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:dark:bg-gray-800/80 data-[state=active]:shadow-sm">
             <BarChart3 className="h-4 w-4" />
             学生评价
           </TabsTrigger>
@@ -293,13 +341,14 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
 // 骨架屏组件
 function TeacherViewSkeleton() {
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="flex h-[calc(100vh-12rem)]">
-        <div className="w-1/5 pr-2">
-          <Skeleton className="h-full rounded-lg" />
+    <div className="space-y-5 animate-pulse">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="col-span-1 lg:col-span-2">
+          <Skeleton className="h-[calc(100vh-10rem)] rounded-xl" />
         </div>
-        <div className="w-4/5">
-          <Skeleton className="h-full rounded-lg" />
+        <div className="col-span-1 lg:col-span-10">
+          <Skeleton className="h-32 rounded-xl mb-5" />
+          <Skeleton className="h-[calc(100vh-16rem)] rounded-xl" />
         </div>
       </div>
     </div>
@@ -508,12 +557,19 @@ export default function TeacherView() {
   };
 
   if (isLoading) {
-    return <TeacherViewSkeleton />;
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center space-y-4 p-6 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-lg border border-gray-100/60 dark:border-gray-800/40">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-gray-600 dark:text-gray-300">正在加载学生数据...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div className="col-span-1 lg:col-span-2 bg-white rounded-xl overflow-hidden">
+      <div className="col-span-1 lg:col-span-2">
         <StudentList 
           students={students} 
           onSelectStudent={handleSelectStudent}
@@ -526,11 +582,18 @@ export default function TeacherView() {
         {selectedStudent ? (
           <StudentDetail student={selectedStudent} />
         ) : (
-          <div className="flex h-[300px] items-center justify-center bg-white rounded-xl shadow border border-gray-100">
-            <div className="text-center">
-              <User className="mx-auto h-12 w-12 text-gray-300" />
-              <h3 className="mt-2 text-lg font-medium">请选择一名学生</h3>
-              <p className="text-sm text-muted-foreground mt-1">
+          <div className={cn(
+            "flex h-64 items-center justify-center rounded-xl",
+            "bg-gradient-to-b from-white/80 to-white/95 dark:from-gray-900/80 dark:to-gray-900/95",
+            "border border-gray-100/60 dark:border-gray-800/40",
+            "shadow-md backdrop-blur-sm backdrop-filter"
+          )}>
+            <div className="text-center p-6">
+              <div className="w-16 h-16 mx-auto flex items-center justify-center rounded-full bg-gray-50/80 dark:bg-gray-800/80 mb-4 shadow-sm">
+                <User className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-1.5">请选择一名学生</h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-md">
                 从左侧列表选择一名学生查看详情
               </p>
             </div>

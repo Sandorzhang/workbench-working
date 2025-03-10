@@ -2,11 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { MentorHub } from "@/components/mentor-hub/mentor-hub";
-import { Users, UserCircle, UserCog } from "lucide-react";
+import { Users, UserCircle, UserCog, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { HeroSection } from "@/components/ui/hero-section";
 import TeacherView from "@/components/mentor-hub/teacher-view";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageContainer } from "@/components/ui/page-container";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -48,21 +51,35 @@ export default function MentorHubPage() {
   const getRoleBasedContent = () => {
     if (userRole === 'teacher') {
       return {
-        title: "全员导师",
-        description: "查看和管理您指导的学生信息",
+        title: "全员导师系统",
+        description: "查看和管理您指导的学生信息，跟踪学生进度，提供个性化指导和支持。",
         icon: UserCircle,
-        gradient: "from-blue-50 to-indigo-50",
-        actions: null
+        iconColor: "text-blue-600",
+        iconBgColor: "bg-blue-50/90",
+        gradient: "from-blue-50/40 via-blue-50/20 to-transparent",
+        actions: (
+          <Button className="gap-1 shadow-sm">
+            <Plus className="h-4 w-4" />
+            添加学生
+          </Button>
+        )
       };
     }
     
     // 默认管理员视图
     return {
-      title: "全员导师",
-      description: "浏览、管理和分配导师资源",
+      title: "全员导师系统",
+      description: "浏览、管理和分配导师资源，实现全校师生高效协作，打造全方位育人体系。",
       icon: Users,
-      gradient: "from-amber-50 to-yellow-50",
-      actions: null
+      iconColor: "text-amber-600",
+      iconBgColor: "bg-amber-50/90",
+      gradient: "from-amber-50/40 via-amber-50/20 to-transparent",
+      actions: (
+        <Button className="gap-1 shadow-sm">
+          <Plus className="h-4 w-4" />
+          添加导师
+        </Button>
+      )
     };
   };
   
@@ -71,53 +88,47 @@ export default function MentorHubPage() {
   // 加载状态
   if (isLoading) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="animate-pulse space-y-6">
-          <div className="h-32 bg-gradient-to-r from-gray-100 to-gray-50 rounded-xl"></div>
-          <div className="flex-1 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm h-[500px]"></div>
+      <PageContainer>
+        <div className="h-full flex flex-col">
+          <div className="animate-pulse space-y-6">
+            <div className="h-32 bg-gradient-to-r from-gray-100 to-gray-50 rounded-xl"></div>
+            <div className="flex-1 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm h-[500px]"></div>
+          </div>
         </div>
-      </div>
-    );
-  }
-  
-  // 如果用户是教师，直接渲染TeacherView组件
-  if (userRole === 'teacher') {
-    return (
-      <div className="h-full flex flex-col">
-        {/* 页面标题区域 */}
-        <HeroSection
-          title={content.title}
-          description={content.description}
-          icon={content.icon}
-          gradient={content.gradient}
-          actions={content.actions}
-          className="mb-6"
-        />
-        
-        {/* 教师视图直接显示 */}
-        <div className="flex-1">
-          <TeacherView />
-        </div>
-      </div>
+      </PageContainer>
     );
   }
   
   return (
-    <div className="h-full flex flex-col">
-      {/* 页面标题区域 */}
-      <HeroSection
-        title={content.title}
-        description={content.description}
-        icon={content.icon}
-        gradient={content.gradient}
-        actions={content.actions}
-        className="mb-6"
-      />
-      
-      {/* 主要内容区域 */}
-      <div className="flex-1">
-        <MentorHub />
+    <PageContainer>
+      <div className="h-full flex flex-col">
+        {/* Hero Section */}
+        <div className="mb-8">
+          <HeroSection
+            title={content.title}
+            description={content.description}
+            icon={content.icon}
+            size="md"
+            iconColor={content.iconColor}
+            iconBgColor={content.iconBgColor}
+            gradient={content.gradient}
+            shadow="md"
+            actions={content.actions}
+          />
+        </div>
+        
+        {/* 内容区域 */}
+        <div className="flex-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1"
+          >
+            {userRole === 'teacher' ? <TeacherView /> : <MentorHub />}
+          </motion.div>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 } 
