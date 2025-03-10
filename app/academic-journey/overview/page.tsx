@@ -1,5 +1,5 @@
 import { ClassOverview } from "@/components/academic-journey/ClassOverview";
-import { GraduationCap, BarChart } from "lucide-react";
+import { BarChart } from "lucide-react";
 import { HeroSection } from "@/components/ui/hero-section";
 
 export default function AcademicJourneyOverviewPage() {
@@ -11,10 +11,10 @@ export default function AcademicJourneyOverviewPage() {
         icon={BarChart}
         gradient="from-purple-50 to-indigo-50"
       />
-      
+
       <div className="mt-6">
         <ClassOverview classId="class-1" />
       </div>
     </div>
   );
-} 
+}

@@ -1,5 +1,5 @@
-import { BaseEntity } from './base';
-import { Student } from './education';
+import { BaseEntity } from "./base";
+import { Student } from "./education";
 
 /**
  * 导师相关模型定义
@@ -14,9 +14,9 @@ export interface Mentor extends BaseEntity {
   phone: string;
   avatar?: string;
   specialties: string[];
-  isAssigned?: boolean;  // 是否已分配学生
-  bio?: string;          // 导师简介
-  students?: Student[];  // 指导的学生列表
+  isAssigned?: boolean; // 是否已分配学生
+  bio?: string; // 导师简介
+  students?: Student[]; // 指导的学生列表
 }
 
 // 指标记录接口
@@ -33,8 +33,8 @@ export interface IndicatorRecord extends BaseEntity {
 export interface MentorStudent extends Student {
   mentorId: string;
   mentor?: Mentor;
-  major?: string;  // 专业
-  indicators: IndicatorRecord[];  // 指标记录
+  major?: string; // 专业
+  indicators: IndicatorRecord[]; // 指标记录
 }
 
 // 带有指标的学生
@@ -57,7 +57,7 @@ export interface EnrichedStudent extends Student {
     name: string;
     value: number;
     maxValue: number;
-    color: string;
+    color?: string;
     description?: string;
   }[];
   academicRecords?: {
@@ -105,4 +105,4 @@ export interface AcademicRecord extends BaseEntity {
   type: string;
   rank?: string;
   comment?: string;
-} 
+}

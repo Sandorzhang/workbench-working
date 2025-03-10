@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SquareTerminal, Calendar, Bot, type LucideIcon } from "lucide-react";
+import { SquareTerminal, Calendar, Bot } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import {
@@ -18,14 +18,14 @@ import { NavAgent, type AgentItem } from "@/components/nav-agent";
 import { NavUserAuth } from "@/components/nav-user-auth";
 
 // 智能体类型
-interface AIAgent {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category?: string;
-  tags?: string[];
-}
+// interface AIAgent {
+//   id: string;
+//   name: string;
+//   description: string;
+//   icon: string;
+//   category?: string;
+//   tags?: string[];
+// }
 
 // 导航数据
 const navMainData = [
@@ -58,6 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       // 清空用户相关数据
       setAgents([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   // 获取用户AI助手列表
@@ -84,6 +85,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const data = await response.json();
 
       // 转换为智能体格式 - 确保符合AgentItem接口
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formattedAgents: AgentItem[] = data.map((agent: any) => ({
         id: agent.id,
         name: agent.name,
@@ -101,7 +103,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       } else {
         // console.log('智能体数据无变化，跳过更新');
       }
-    } catch (error) {
+    } catch (_error) {
       // console.error('获取用户AI助手失败:', error);
     } finally {
       setIsLoading(false);
@@ -138,7 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         // 检查事件是否包含详细数据
         const customEvent = event as CustomEvent;
         if (customEvent.detail) {
-          const { action, agent, timestamp } = customEvent.detail;
+          const { action, agent } = customEvent.detail;
           // console.log(`收到${action}操作的数据:`, agent);
 
           // 直接基于事件数据更新状态，避免额外的API调用
@@ -183,6 +185,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("agent-list-updated", handleAgentListUpdate);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, agents.length]);
 
   // 处理登出
@@ -198,7 +201,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       // 导航到登录页
       // console.log('退出成功，重定向到登录页');
       router.push("/login");
-    } catch (error) {
+    } catch (_error) {
       // console.error('登出处理失败:', error);
       // 即使失败也尝试跳转到登录页
       router.push("/login");

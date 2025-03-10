@@ -97,8 +97,8 @@ request.interceptors.request.use(
     }
 
     // 检查是否有认证头并记录日志
-    const hasAuthHeader =
-      config.headers && "Authorization" in Object(config.headers);
+    // const hasAuthHeader =
+    //   config.headers && "Authorization" in Object(config.headers);
 
     // 只在开发环境记录API请求日志
     if (process.env.NODE_ENV === "development") {

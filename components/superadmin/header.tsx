@@ -1,20 +1,14 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { useAuth } from "@/lib/auth";
-import { 
-  Bell, 
-  Search, 
-  LogOut,
-  Shield,
-} from "lucide-react";
+// import { useAuth } from "@/lib/auth";
+import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
-import { 
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -24,56 +18,56 @@ import {
 } from "@/components/ui/breadcrumb";
 
 export default function SuperAdminHeader() {
-  const { logout } = useAuth();
+  // const { logout } = useAuth();
   const pathname = usePathname();
 
   // 面包屑路径映射
   const getBreadcrumbItems = () => {
-    const pathSegments = pathname.split('/').filter(Boolean);
-    
+    const pathSegments = pathname.split("/").filter(Boolean);
+
     if (pathSegments.length === 0) {
       return null;
     }
-    
+
     const items = [];
-    
+
     // 添加根路径
-    if (pathSegments[0] === 'superadmin') {
+    if (pathSegments[0] === "superadmin") {
       items.push({
-        label: '超级管理控制台',
-        href: '/superadmin',
-        current: pathSegments.length === 1
+        label: "超级管理控制台",
+        href: "/superadmin",
+        current: pathSegments.length === 1,
       });
     }
-    
+
     // 添加中间路径
     if (pathSegments.length > 1) {
-      const segmentMap: {[key: string]: string} = {
-        'users': '用户管理',
-        'schools': '学校管理',
-        'regions': '区域管理',
-        'permissions': '权限管理'
+      const segmentMap: { [key: string]: string } = {
+        users: "用户管理",
+        schools: "学校管理",
+        regions: "区域管理",
+        permissions: "权限管理",
       };
-      
+
       const segment = pathSegments[1];
       const label = segmentMap[segment] || segment;
-      
+
       items.push({
         label,
         href: `/${pathSegments[0]}/${segment}`,
-        current: pathSegments.length === 2
+        current: pathSegments.length === 2,
       });
     }
-    
+
     // 添加详情页
     if (pathSegments.length > 2) {
       items.push({
-        label: '详情',
+        label: "详情",
         href: pathname,
-        current: true
+        current: true,
       });
     }
-    
+
     return items;
   };
 
@@ -86,24 +80,32 @@ export default function SuperAdminHeader() {
         <Separator orientation="vertical" className="mx-4 h-5" />
         <Breadcrumb>
           <BreadcrumbList>
-            {breadcrumbItems && breadcrumbItems.map((item, index) => (
-              <React.Fragment key={index}>
-                {index > 0 && <BreadcrumbSeparator className="text-gray-400" />}
-                <BreadcrumbItem>
-                  {item.current ? (
-                    <BreadcrumbPage className="text-gray-900 font-semibold">{item.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink href={item.href} className="text-gray-500 hover:text-gray-900 font-medium">
-                      {item.label}
-                    </BreadcrumbLink>
+            {breadcrumbItems &&
+              breadcrumbItems.map((item, index) => (
+                <React.Fragment key={index}>
+                  {index > 0 && (
+                    <BreadcrumbSeparator className="text-gray-400" />
                   )}
-                </BreadcrumbItem>
-              </React.Fragment>
-            ))}
+                  <BreadcrumbItem>
+                    {item.current ? (
+                      <BreadcrumbPage className="text-gray-900 font-semibold">
+                        {item.label}
+                      </BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink
+                        href={item.href}
+                        className="text-gray-500 hover:text-gray-900 font-medium"
+                      >
+                        {item.label}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </React.Fragment>
+              ))}
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      
+
       <div className="ml-auto flex items-center gap-4">
         <div className="relative hidden lg:flex w-full max-w-sm items-center">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -113,7 +115,7 @@ export default function SuperAdminHeader() {
             className="w-full bg-background pl-8 md:w-[260px] lg:w-[320px]"
           />
         </div>
-        
+
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600"></span>
@@ -121,4 +123,4 @@ export default function SuperAdminHeader() {
       </div>
     </header>
   );
-} 
+}

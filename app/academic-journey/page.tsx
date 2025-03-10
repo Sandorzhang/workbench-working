@@ -1,21 +1,31 @@
-'use client';
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { ClassOverview } from "@/components/academic-journey/ClassOverview";
-import { GraduationCap, Users, BookOpen, AlertTriangle, Calendar, Clock } from "lucide-react";
+import {
+  GraduationCap,
+  Users,
+  BookOpen,
+  AlertTriangle,
+  Calendar,
+  Clock,
+} from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HeroSection } from "@/components/ui/hero-section";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
-import { 
-  StudentSummary, 
-  LearningStandard, 
-  MasteryLevel 
+import {
+  StudentSummary,
+  LearningStandard,
+  MasteryLevel,
 } from "@/types/academic-journey";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { getStudentList, getLearningStandards } from "@/lib/api-academic-journey";
+import {
+  getStudentList,
+  getLearningStandards,
+} from "@/lib/api-academic-journey";
 import { MasteryBadge } from "@/components/academic-journey/MasteryLegend";
 
 // Student warning component
@@ -24,19 +34,19 @@ function StudentWarnings() {
   const [standards, setStandards] = useState<LearningStandard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"subject" | "date">("subject");
+  const [_activeTab, setActiveTab] = useState<"subject" | "date">("subject");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch all students
         const studentResponse = await getStudentList("class-1", 1, 100);
-        
+
         // Fetch all standards for reference
         const standardsResponse = await getLearningStandards();
-        
+
         setStudents(studentResponse.students);
         setStandards(standardsResponse.standards);
       } catch (err) {
@@ -85,43 +95,50 @@ function StudentWarnings() {
   }
 
   // Filter students with warning indicators (has 'needs-improvement' or 'not-started' standards)
-  const studentsWithWarnings = students.filter(student => 
-    student.standardsCounts.needsImprovement > 0 || 
-    student.standardsCounts.notStarted > 0
+  const studentsWithWarnings = students.filter(
+    (student) =>
+      student.standardsCounts.needsImprovement > 0 ||
+      student.standardsCounts.notStarted > 0
   );
 
   // Get warning info from recent progress
   const getWarningsBySubject = () => {
     // Group warnings by subject
-    const warningsBySubject: Record<string, {
-      subject: string;
-      students: Array<{
-        studentId: string;
-        studentName: string;
-        standardId: string;
-        standardCode: string;
-        standardDescription: string;
-        masteryLevel: MasteryLevel;
-        date: string;
-      }>
-    }> = {};
+    const warningsBySubject: Record<
+      string,
+      {
+        subject: string;
+        students: Array<{
+          studentId: string;
+          studentName: string;
+          standardId: string;
+          standardCode: string;
+          standardDescription: string;
+          masteryLevel: MasteryLevel;
+          date: string;
+        }>;
+      }
+    > = {};
 
     // Process each student with warnings
-    studentsWithWarnings.forEach(student => {
+    studentsWithWarnings.forEach((student) => {
       // Look at their recent progress for warning levels
-      student.recentProgress.forEach(progress => {
-        if (progress.currentLevel === 'needs-improvement' || progress.currentLevel === 'not-started') {
+      student.recentProgress.forEach((progress) => {
+        if (
+          progress.currentLevel === "needs-improvement" ||
+          progress.currentLevel === "not-started"
+        ) {
           // Find the standard details
-          const standard = standards.find(s => s.id === progress.standardId);
+          const standard = standards.find((s) => s.id === progress.standardId);
           if (standard) {
             // Initialize subject group if not exists
             if (!warningsBySubject[standard.subject]) {
               warningsBySubject[standard.subject] = {
                 subject: standard.subject,
-                students: []
+                students: [],
               };
             }
-            
+
             // Add warning to the subject group
             warningsBySubject[standard.subject].students.push({
               studentId: student.id,
@@ -130,7 +147,7 @@ function StudentWarnings() {
               standardCode: standard.code,
               standardDescription: standard.shortDescription,
               masteryLevel: progress.currentLevel,
-              date: progress.date
+              date: progress.date,
             });
           }
         }
@@ -142,35 +159,41 @@ function StudentWarnings() {
 
   const getWarningsByDate = () => {
     // Group warnings by date
-    const warningsByDate: Record<string, {
-      date: string;
-      students: Array<{
-        studentId: string;
-        studentName: string;
-        standardId: string;
-        standardCode: string;
-        standardDescription: string;
-        masteryLevel: MasteryLevel;
-        subject: string;
-      }>
-    }> = {};
+    const warningsByDate: Record<
+      string,
+      {
+        date: string;
+        students: Array<{
+          studentId: string;
+          studentName: string;
+          standardId: string;
+          standardCode: string;
+          standardDescription: string;
+          masteryLevel: MasteryLevel;
+          subject: string;
+        }>;
+      }
+    > = {};
 
     // Process each student with warnings
-    studentsWithWarnings.forEach(student => {
+    studentsWithWarnings.forEach((student) => {
       // Look at their recent progress for warning levels
-      student.recentProgress.forEach(progress => {
-        if (progress.currentLevel === 'needs-improvement' || progress.currentLevel === 'not-started') {
+      student.recentProgress.forEach((progress) => {
+        if (
+          progress.currentLevel === "needs-improvement" ||
+          progress.currentLevel === "not-started"
+        ) {
           // Find the standard details
-          const standard = standards.find(s => s.id === progress.standardId);
+          const standard = standards.find((s) => s.id === progress.standardId);
           if (standard) {
             // Initialize date group if not exists
             if (!warningsByDate[progress.date]) {
               warningsByDate[progress.date] = {
                 date: progress.date,
-                students: []
+                students: [],
               };
             }
-            
+
             // Add warning to the date group
             warningsByDate[progress.date].students.push({
               studentId: student.id,
@@ -179,7 +202,7 @@ function StudentWarnings() {
               standardCode: standard.code,
               standardDescription: standard.shortDescription,
               masteryLevel: progress.currentLevel,
-              subject: standard.subject
+              subject: standard.subject,
             });
           }
         }
@@ -187,8 +210,8 @@ function StudentWarnings() {
     });
 
     // Sort dates from newest to oldest
-    return Object.values(warningsByDate).sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
+    return Object.values(warningsByDate).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   };
 
@@ -200,17 +223,24 @@ function StudentWarnings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-amber-500" />
-          学生预警情况 
+          学生预警情况
           <Badge variant="outline" className="ml-2">
             {studentsWithWarnings.length} 位学生需要关注
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="subject" className="w-full" onValueChange={(val) => setActiveTab(val as "subject" | "date")}>
+        <Tabs
+          defaultValue="subject"
+          className="w-full"
+          onValueChange={(val) => setActiveTab(val as "subject" | "date")}
+        >
           <div className="flex justify-between items-center mb-4">
             <TabsList>
-              <TabsTrigger value="subject" className="flex items-center gap-1.5">
+              <TabsTrigger
+                value="subject"
+                className="flex items-center gap-1.5"
+              >
                 <BookOpen className="h-4 w-4" />
                 按学科查看
               </TabsTrigger>
@@ -229,26 +259,32 @@ function StudentWarnings() {
           <TabsContent value="subject" className="mt-0">
             {warningsBySubject.length > 0 ? (
               <div className="space-y-4">
-                {warningsBySubject.map(group => (
+                {warningsBySubject.map((group) => (
                   <div key={group.subject} className="border rounded-lg p-4">
                     <h3 className="font-medium text-md mb-3 flex items-center gap-2">
                       <BookOpen className="h-4 w-4 text-indigo-500" />
-                      {group.subject} 
+                      {group.subject}
                       <span className="text-sm font-normal text-muted-foreground ml-2">
                         {group.students.length} 个预警
                       </span>
                     </h3>
                     <div className="space-y-2">
                       {group.students.map((warning, idx) => (
-                        <div key={`${warning.studentId}-${warning.standardId}-${idx}`} 
-                          className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md">
+                        <div
+                          key={`${warning.studentId}-${warning.standardId}-${idx}`}
+                          className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
+                        >
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium">{warning.studentName}</span>
+                              <span className="font-medium">
+                                {warning.studentName}
+                              </span>
                               <MasteryBadge level={warning.masteryLevel} />
                             </div>
                             <div className="text-sm text-muted-foreground flex items-center gap-1">
-                              <span className="text-gray-500">{warning.standardCode}:</span> 
+                              <span className="text-gray-500">
+                                {warning.standardCode}:
+                              </span>
                               {warning.standardDescription}
                             </div>
                           </div>
@@ -272,7 +308,7 @@ function StudentWarnings() {
           <TabsContent value="date" className="mt-0">
             {warningsByDate.length > 0 ? (
               <div className="space-y-4">
-                {warningsByDate.map(group => (
+                {warningsByDate.map((group) => (
                   <div key={group.date} className="border rounded-lg p-4">
                     <h3 className="font-medium text-md mb-3 flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-indigo-500" />
@@ -283,15 +319,21 @@ function StudentWarnings() {
                     </h3>
                     <div className="space-y-2">
                       {group.students.map((warning, idx) => (
-                        <div key={`${warning.studentId}-${warning.standardId}-${idx}`} 
-                          className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md">
+                        <div
+                          key={`${warning.studentId}-${warning.standardId}-${idx}`}
+                          className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
+                        >
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium">{warning.studentName}</span>
+                              <span className="font-medium">
+                                {warning.studentName}
+                              </span>
                               <MasteryBadge level={warning.masteryLevel} />
                             </div>
                             <div className="text-sm text-muted-foreground flex items-center gap-1">
-                              <span className="text-gray-500">{warning.standardCode}:</span> 
+                              <span className="text-gray-500">
+                                {warning.standardCode}:
+                              </span>
                               {warning.standardDescription}
                             </div>
                           </div>
@@ -327,7 +369,10 @@ export default function AcademicJourneyPage() {
         gradient="from-blue-50 to-indigo-50"
         actions={
           <Link href="/academic-journey/students">
-            <Button variant="outline" className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+            <Button
+              variant="outline"
+              className="h-10 rounded-xl border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+            >
               <Users className="h-4 w-4 mr-2" />
               查看学生进度
             </Button>
@@ -339,7 +384,7 @@ export default function AcademicJourneyPage() {
       <div className="space-y-6 mt-6">
         {/* Student Warnings Section */}
         <StudentWarnings />
-        
+
         {/* Class Overview Section */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
           <ClassOverview classId="class-1" />
@@ -347,4 +392,4 @@ export default function AcademicJourneyPage() {
       </div>
     </div>
   );
-} 
+}

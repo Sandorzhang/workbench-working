@@ -1,5 +1,5 @@
 // import { server } from './node'
-import { seedDb, db, loadDb, saveDb } from "./db";
+import { seedDb, db, saveDb } from "./db";
 import { handlers } from "./handlers/index";
 
 // 初始化MSW数据库 - 只有在加载失败时才会执行
@@ -87,8 +87,8 @@ const initializeRolePermissions = () => {
             // //console.log(
             //   `>>> [MSW初始化] 补充角色权限: 为 ${role} 添加应用 ${app.name} (ID: ${app.id}) 的访问权限`
             // );
-          } catch (e) {
-            // //console.log(`>>> [MSW初始化] 补充权限失败: ${role}-${app.id}`, e);
+          } catch {
+            // 错误处理但不使用错误变量
           }
         }
       });
@@ -116,11 +116,8 @@ const initializeRolePermissions = () => {
               // //console.log(
               //   `>>> [MSW初始化] 补充角色权限: 为 ${role} 添加应用 ${app.name} (ID: ${app.id}) 的拒绝权限`
               // );
-            } catch (e) {
-              // //console.log(
-              //   `>>> [MSW初始化] 补充拒绝权限失败: ${role}-${app.id}`,
-              //   e
-              // );
+            } catch {
+              // 错误处理但不使用错误变量
             }
           }
         });
@@ -155,8 +152,8 @@ const initializeRolePermissions = () => {
         },
       });
       // //console.log(`>>> [MSW初始化] 已删除现有 ${role} 角色权限`);
-    } catch (e) {
-      // //console.log(`>>> [MSW初始化] 删除 ${role} 角色旧权限时出错`, e);
+    } catch {
+      // 错误处理但不使用错误变量
     }
 
     // 为角色添加应用权限
@@ -191,11 +188,8 @@ const initializeRolePermissions = () => {
         // //console.log(
         //   `>>> [MSW初始化] 为 ${role} 角色添加应用权限: ${app.name} (ID: ${app.id})`
         // );
-      } catch (e) {
-        // //console.log(
-        //   `>>> [MSW初始化] 为 ${role} 添加应用权限失败: ${app.name}`,
-        //   e
-        // );
+      } catch {
+        // 错误处理但不使用错误变量
       }
     });
 
@@ -216,11 +210,8 @@ const initializeRolePermissions = () => {
           // //console.log(
           //   `>>> [MSW初始化] 为 ${role} 角色禁止访问应用: ${app.name} (ID: ${app.id})`
           // );
-        } catch (e) {
-          // //console.log(
-          //   `>>> [MSW初始化] 为 ${role} 设置禁止权限失败: ${app.name}`,
-          //   e
-          // );
+        } catch {
+          // 错误处理但不使用错误变量
         }
       });
     }
@@ -251,21 +242,17 @@ const printHandlerInfo = () => {
 
     handlers.forEach((handler) => {
       try {
-        // MSW v2 格式 - 使用 handler.info
         if (handler && "info" in handler) {
-          const info = (handler as any).info;
-
+          const info = handler.info;
           if (info && info.path && info.method) {
-            // 提取路径和方法
             const pathStr = String(info.path);
             const method = String(info.method);
-
             pathMap.set(pathStr, (pathMap.get(pathStr) || 0) + 1);
             methodMap.set(method, (methodMap.get(method) || 0) + 1);
           }
         }
-      } catch (err) {
-        // console.warn("提取处理程序信息时出错:", err);
+      } catch {
+        // 错误处理但不使用错误变量
       }
     });
 
@@ -274,8 +261,8 @@ const printHandlerInfo = () => {
     const sortedPaths = Array.from(pathMap.entries()).sort(
       (a, b) => b[1] - a[1]
     );
-    sortedPaths.forEach(([path, count]) => {
-      // //console.log(`  ${path}: ${count}个处理程序`);
+    sortedPaths.forEach(() => {
+      // 移除未使用的参数
     });
 
     // 打印方法统计
@@ -283,22 +270,22 @@ const printHandlerInfo = () => {
     const sortedMethods = Array.from(methodMap.entries()).sort(
       (a, b) => b[1] - a[1]
     );
-    sortedMethods.forEach(([method, count]) => {
-      // //console.log(`  ${method}: ${count}个处理程序`);
+    sortedMethods.forEach(() => {
+      // 移除未使用的参数
     });
 
     // 检查常见的认证路径
     const authPaths = ["/api/auth/login", "/api/auth/me", "/api/auth/logout"];
     //console.log("认证路径检查:");
     authPaths.forEach((path) => {
-      const hasPath = Array.from(pathMap.keys()).some(
+      // 只执行检查，不保存结果
+      Array.from(pathMap.keys()).some(
         (p) =>
           p === path ||
           p.includes(path) ||
           p === `*${path}` ||
           p === `*/${path}`
       );
-      // //console.log(`  ${path}: ${hasPath ? "已配置" : "未配置"}`);
     });
   }
 };
@@ -358,7 +345,9 @@ export const worker = {
                   },
                 });
                 // //console.log("已删除旧的default-token会话");
-              } catch (e) {}
+              } catch {
+                // 错误处理但不使用错误变量
+              }
 
               db.session.create({
                 id: `default-session-${Date.now()}`,
@@ -374,8 +363,8 @@ export const worker = {
             } else {
               // console.warn("找不到默认用户(ID: 1)，无法创建默认会话");
             }
-          } catch (e) {
-            // console.error("创建默认会话时出错:", e);
+          } catch {
+            // console.error("创建默认会话时出错");
           }
         }
 
@@ -402,8 +391,7 @@ export const worker = {
 
     try {
       return await tryStart();
-    } catch (error) {
-      // console.error("MSW启动最终失败:", error);
+    } catch {
       if (typeof window !== "undefined") {
         window.__MSW_READY__ = true;
       }

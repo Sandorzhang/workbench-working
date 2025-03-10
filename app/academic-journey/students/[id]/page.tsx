@@ -1,17 +1,16 @@
+import { use } from "react";
 import { StudentHeatmap } from "@/components/academic-journey/StudentHeatmap";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User } from "lucide-react";
 import Link from "next/link";
 import { HeroSection } from "@/components/ui/hero-section";
 
-interface StudentDetailPageProps {
-  params: {
-    id: string;
-  };
-}
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
 
-export default function StudentDetailPage({ params }: StudentDetailPageProps) {
-  const { id } = params;
+export default function Page({ params }: PageProps) {
+  const { id } = use(params);
 
   return (
     <div className="h-full flex flex-col">
@@ -29,10 +28,10 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
           gradient="from-blue-50 to-cyan-50"
         />
       </div>
-      
+
       <div className="mt-6">
         <StudentHeatmap studentId={id} />
       </div>
     </div>
   );
-} 
+}

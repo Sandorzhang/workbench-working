@@ -7,7 +7,6 @@ import {
   MoreHorizontal,
   Trash2,
   Plus,
-  Bot,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -137,7 +136,7 @@ export const NavAgent = memo(
       description?: string;
     } | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [removingAgent, setRemovingAgent] = useState<string | null>(null);
+    const [, setRemovingAgent] = useState<string | null>(null);
     const [localAgents, setLocalAgents] = useState<AgentItem[]>([]);
 
     // 当props中的agents变化时更新本地状态
@@ -208,7 +207,7 @@ export const NavAgent = memo(
               variant: "destructive",
             });
           }
-        } catch (error) {
+        } catch (_error) {
           // console.error('移除智能体失败:', error);
           // 恢复之前移除的智能体
           setLocalAgents(agents);
@@ -262,7 +261,7 @@ export const NavAgent = memo(
               ))
             ) : (
               <div className="py-2 px-3 text-sm text-muted-foreground">
-                暂无智能体，点击"+"添加
+                暂无智能体，点击 + 添加`
               </div>
             )}
           </SidebarMenu>

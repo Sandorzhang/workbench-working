@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         //console.log("正在验证用户会话，token:", token.substring(0, 5) + "...");
 
         // 使用API工具获取用户信息
-        const userData = (await apiGetCurrentUser()) as User;
+        const userData = (await apiGetCurrentUser()).data as User;
 
         // 更新 Redux 存储（如果使用 Redux）
         if (typeof window !== "undefined" && window.store) {
@@ -256,7 +256,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const data = (await apiLoginWithCode(phone, code)) as LoginResponse;
+      const data = (await apiLoginWithCode(phone, code)).data as LoginResponse;
 
       // 先保存token到localStorage
       localStorage.setItem("token", data.accessToken);
@@ -414,7 +414,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 declare global {
   interface Window {
     store?: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dispatch: (action: any) => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       getState: () => any;
     };
   }
@@ -430,7 +432,9 @@ export const useAuth = () => {
 };
 
 // 页面级认证守卫 HOC
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const withAuth = (Component: React.ComponentType<any>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const AuthenticatedComponent = (props: any) => {
     const { isAuthenticated, isLoading, user } = useAuth();
     const router = useRouter();
@@ -468,9 +472,11 @@ export const withAuth = (Component: React.ComponentType<any>) => {
 
 // 角色授权 HOC
 export const withRole = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Component: React.ComponentType<any>,
   allowedRoles: Role[]
 ) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const RoleAuthComponent = (props: any) => {
     const { isAuthenticated, isLoading, user, redirectToAppropriateRoute } =
       useAuth();

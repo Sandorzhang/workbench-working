@@ -47,6 +47,7 @@ interface ResponsiveGridProps {
   /**
    * 其他属性
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
@@ -67,28 +68,38 @@ export function ResponsiveGrid({
   ...props
 }: ResponsiveGridProps) {
   // 列数映射到对应的Tailwind类名
-  const getColsClassName = (cols: number | undefined, breakpoint: string = "") => {
+  const getColsClassName = (
+    cols: number | undefined,
+    breakpoint: string = ""
+  ) => {
     if (cols === undefined) return "";
-    
+
     const prefix = breakpoint ? `${breakpoint}:` : "";
-    
+
     // 如果需要平均分配宽度
     if (equalWidth) {
       return `${prefix}grid-cols-${cols}`;
     }
-    
+
     // 否则使用自动填充
     switch (cols) {
-      case 1: return `${prefix}grid-cols-1`;
-      case 2: return `${prefix}grid-cols-2`;
-      case 3: return `${prefix}grid-cols-3`;
-      case 4: return `${prefix}grid-cols-4`;
-      case 5: return `${prefix}grid-cols-5`;
-      case 6: return `${prefix}grid-cols-6`;
-      default: return `${prefix}grid-cols-1`;
+      case 1:
+        return `${prefix}grid-cols-1`;
+      case 2:
+        return `${prefix}grid-cols-2`;
+      case 3:
+        return `${prefix}grid-cols-3`;
+      case 4:
+        return `${prefix}grid-cols-4`;
+      case 5:
+        return `${prefix}grid-cols-5`;
+      case 6:
+        return `${prefix}grid-cols-6`;
+      default:
+        return `${prefix}grid-cols-1`;
     }
   };
-  
+
   // 间距映射
   const gapMap = {
     none: "gap-0",
@@ -98,9 +109,9 @@ export function ResponsiveGrid({
     lg: "gap-6",
     xl: "gap-8",
   };
-  
+
   return (
-    <div 
+    <div
       className={cn(
         "grid w-full",
         getColsClassName(xs),
@@ -117,4 +128,4 @@ export function ResponsiveGrid({
       {children}
     </div>
   );
-} 
+}

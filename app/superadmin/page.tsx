@@ -11,8 +11,6 @@ import {
   Users,
   School,
   MapPin,
-  LayoutDashboard,
-  Shield,
   Key,
   ShieldAlert,
   CheckCircle,
@@ -32,63 +30,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-
-// 管理系统应用类型定义
-interface AdminApplication {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  url: string;
-}
-
-interface StatsCardProps {
-  title: string;
-  value: string;
-  description: string;
-  icon: React.ReactNode;
-  change?: string;
-  trend?: "up" | "down" | "neutral";
-}
-
-function StatsCard({
-  title,
-  value,
-  description,
-  icon,
-  change,
-  trend,
-}: StatsCardProps) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className="h-8 w-8 rounded-full bg-primary/10 p-1.5 text-primary">
-          {icon}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-        {change && (
-          <div className="mt-2 flex items-center text-xs">
-            {trend === "up" && (
-              <span className="text-green-500">{change} ↑</span>
-            )}
-            {trend === "down" && (
-              <span className="text-red-500">{change} ↓</span>
-            )}
-            {trend === "neutral" && (
-              <span className="text-gray-500">{change}</span>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function SuperAdminPage() {
   const router = useRouter();
@@ -96,9 +38,6 @@ export default function SuperAdminPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentDate] = useState(new Date());
-  const [authChecked, setAuthChecked] = useState(false);
-
-  // 系统摘要数据 - 模拟数据
   const [stats] = useState({
     users: { total: 0, admin: 0, teacher: 0, student: 0 },
     regions: { total: 0, active: 0, inactive: 0 },
@@ -109,8 +48,6 @@ export default function SuperAdminPage() {
   useEffect(() => {
     if (!authLoading) {
       // 认证检查完成
-      setAuthChecked(true);
-
       if (!isAuthenticated) {
         //console.log('未登录状态，重定向到登录页');
         toast.error("请先登录");
@@ -141,46 +78,6 @@ export default function SuperAdminPage() {
       }, 300);
     }
   }, [authLoading, isAuthenticated, user, router]);
-
-  // 管理应用数据
-  const adminApplications: AdminApplication[] = [
-    {
-      id: "1",
-      name: "用户管理",
-      description: "管理系统用户、角色和账号设置",
-      icon: "users",
-      url: "/superadmin/users",
-    },
-    {
-      id: "2",
-      name: "学校管理",
-      description: "创建和管理学校，设置学校级别的配置",
-      icon: "building",
-      url: "/superadmin/schools",
-    },
-    {
-      id: "3",
-      name: "区域管理",
-      description: "管理系统地区划分和区域设置",
-      icon: "mapPin",
-      url: "/superadmin/regions",
-    },
-    {
-      id: "4",
-      name: "权限管理",
-      description: "设置系统权限和访问控制策略",
-      icon: "lock",
-      url: "/superadmin/permissions",
-    },
-  ];
-
-  // 图标映射
-  const iconComponents: Record<string, React.ElementType> = {
-    users: Users,
-    building: School,
-    mapPin: MapPin,
-    lock: Key,
-  };
 
   // 格式化日期函数
   const formatDate = () => {

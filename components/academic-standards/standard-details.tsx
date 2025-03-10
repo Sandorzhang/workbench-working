@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Calculator, Book, Award, Lightbulb, Download } from 'lucide-react';
+import { Calculator, Book, Award, Lightbulb, Download } from "lucide-react";
 
 // 标准目标类型
 interface StandardObjective {
   id: string;
   content: string;
-  type: 'knowledge' | 'skill' | 'attitude';
+  type: "knowledge" | "skill" | "attitude";
   code?: string;
 }
 
@@ -32,71 +32,74 @@ interface StandardDetailsProps {
   isLoading?: boolean;
 }
 
-export function StandardDetails({ data, isLoading = false }: StandardDetailsProps) {
+export function StandardDetails({
+  data,
+  isLoading = false,
+}: StandardDetailsProps) {
   // 按类型过滤目标
   const filterObjectivesByType = (type: string) => {
     if (!data) return [];
-    return data.objectives.filter(obj => obj.type === type);
+    return data.objectives.filter((obj) => obj.type === type);
   };
-  
+
   // 默认数据（用于演示）
   const defaultData: StandardDetails = {
-    id: 'M01.01.001',
-    title: '能认、读、写10以内的数',
-    description: 'M01.01数与代数/数与运算',
-    code: 'M01.01.001',
-    grade: '一年级',
-    domain: '数与代数',
+    id: "M01.01.001",
+    title: "能认、读、写10以内的数",
+    description: "M01.01数与代数/数与运算",
+    code: "M01.01.001",
+    grade: "一年级",
+    domain: "数与代数",
     objectives: [
       {
-        id: 'o1',
-        content: '能够认识10以内的数字符号',
-        type: 'knowledge',
-        code: 'K1'
+        id: "o1",
+        content: "能够认识10以内的数字符号",
+        type: "knowledge",
+        code: "K1",
       },
       {
-        id: 'o2',
-        content: '能够读出10以内的数',
-        type: 'skill',
-        code: 'S1'
+        id: "o2",
+        content: "能够读出10以内的数",
+        type: "skill",
+        code: "S1",
       },
       {
-        id: 'o3',
-        content: '能够写出10以内的数字',
-        type: 'skill',
-        code: 'S2'
+        id: "o3",
+        content: "能够写出10以内的数字",
+        type: "skill",
+        code: "S2",
       },
       {
-        id: 'o4',
-        content: '理解数字与数量的对应关系',
-        type: 'knowledge',
-        code: 'K2'
+        id: "o4",
+        content: "理解数字与数量的对应关系",
+        type: "knowledge",
+        code: "K2",
       },
       {
-        id: 'o5',
-        content: '对数的认识有好奇心',
-        type: 'attitude',
-        code: 'A1'
-      }
-    ]
+        id: "o5",
+        content: "对数的认识有好奇心",
+        type: "attitude",
+        code: "A1",
+      },
+    ],
   };
-  
+
   const displayData = data || defaultData;
-  
+
   // 获取图标
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'knowledge':
+      case "knowledge":
         return <Book className="h-4 w-4" />;
-      case 'skill':
+      case "skill":
         return <Calculator className="h-4 w-4" />;
-      case 'attitude':
+      case "attitude":
         return <Award className="h-4 w-4" />;
       default:
         return <Lightbulb className="h-4 w-4" />;
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -104,14 +107,14 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
           <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-5 w-1/2" />
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
         </div>
-        
+
         <Skeleton className="h-8 w-48" />
-        
+
         <div className="space-y-3">
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-16 w-full" />
@@ -120,7 +123,7 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       <div>
@@ -136,7 +139,7 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
         </div>
         <p className="text-gray-600 mt-3">{displayData.description}</p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -147,11 +150,11 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500">
-              {filterObjectivesByType('knowledge').length} 项知识目标
+              {filterObjectivesByType("knowledge").length} 项知识目标
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -161,11 +164,11 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500">
-              {filterObjectivesByType('skill').length} 项技能目标
+              {filterObjectivesByType("skill").length} 项技能目标
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -175,12 +178,12 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500">
-              {filterObjectivesByType('attitude').length} 项情感目标
+              {filterObjectivesByType("attitude").length} 项情感目标
             </p>
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">学业目标详情</h2>
         <Button variant="outline" size="sm" className="flex items-center gap-1">
@@ -188,7 +191,7 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
           导出标准
         </Button>
       </div>
-      
+
       <Tabs defaultValue="all" className="w-full">
         <TabsList>
           <TabsTrigger value="all">全部目标</TabsTrigger>
@@ -196,22 +199,30 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
           <TabsTrigger value="skill">技能目标</TabsTrigger>
           <TabsTrigger value="attitude">情感目标</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="all" className="space-y-4 mt-4">
-          {displayData.objectives.map(objective => (
+          {displayData.objectives.map((objective) => (
             <Card key={objective.id}>
               <CardContent className="pt-4">
                 <div className="flex items-start gap-3">
                   <div>
-                    <Badge className={
-                      objective.type === 'knowledge' ? 'bg-blue-500' :
-                      objective.type === 'skill' ? 'bg-green-500' : 'bg-amber-500'
-                    }>
+                    <Badge
+                      className={
+                        objective.type === "knowledge"
+                          ? "bg-blue-500"
+                          : objective.type === "skill"
+                          ? "bg-green-500"
+                          : "bg-amber-500"
+                      }
+                    >
                       <div className="flex items-center gap-1">
                         {getTypeIcon(objective.type)}
                         <span>
-                          {objective.type === 'knowledge' ? '知识' :
-                           objective.type === 'skill' ? '技能' : '态度'}
+                          {objective.type === "knowledge"
+                            ? "知识"
+                            : objective.type === "skill"
+                            ? "技能"
+                            : "态度"}
                         </span>
                       </div>
                     </Badge>
@@ -225,9 +236,9 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
             </Card>
           ))}
         </TabsContent>
-        
+
         <TabsContent value="knowledge" className="space-y-4 mt-4">
-          {filterObjectivesByType('knowledge').map(objective => (
+          {filterObjectivesByType("knowledge").map((objective) => (
             <Card key={objective.id}>
               <CardContent className="pt-4">
                 <div className="flex items-start gap-3">
@@ -248,9 +259,9 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
             </Card>
           ))}
         </TabsContent>
-        
+
         <TabsContent value="skill" className="space-y-4 mt-4">
-          {filterObjectivesByType('skill').map(objective => (
+          {filterObjectivesByType("skill").map((objective) => (
             <Card key={objective.id}>
               <CardContent className="pt-4">
                 <div className="flex items-start gap-3">
@@ -271,9 +282,9 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
             </Card>
           ))}
         </TabsContent>
-        
+
         <TabsContent value="attitude" className="space-y-4 mt-4">
-          {filterObjectivesByType('attitude').map(objective => (
+          {filterObjectivesByType("attitude").map((objective) => (
             <Card key={objective.id}>
               <CardContent className="pt-4">
                 <div className="flex items-start gap-3">
@@ -297,4 +308,4 @@ export function StandardDetails({ data, isLoading = false }: StandardDetailsProp
       </Tabs>
     </div>
   );
-} 
+}

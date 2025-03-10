@@ -12,22 +12,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -66,7 +61,6 @@ export function AssignStudentsDialog({
   onOpenChange,
   classId,
   className,
-  gradeId,
   onAssignSuccess,
 }: AssignStudentsDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,14 +98,16 @@ export function AssignStudentsDialog({
             throw new Error("获取学生数据失败");
           }
           const studentsData = await studentsResponse.json();
-          
+
           // 获取已分配该班级的学生
-          const classStudentsResponse = await fetch(`/api/students?classId=${classId}`);
+          const classStudentsResponse = await fetch(
+            `/api/students?classId=${classId}`
+          );
           if (!classStudentsResponse.ok) {
             throw new Error("获取班级学生数据失败");
           }
           const classStudents = await classStudentsResponse.json();
-          
+
           // 过滤已经在该班级的学生
           const classStudentIds = classStudents.map((s: Student) => s.id);
           setSelectedStudentIds(classStudentIds);
@@ -130,6 +126,7 @@ export function AssignStudentsDialog({
     } else {
       resetForm();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, classId, form]);
 
   // 搜索过滤
@@ -183,13 +180,16 @@ export function AssignStudentsDialog({
   };
 
   // 处理学生勾选/取消勾选
-  const handleStudentSelection = (studentId: string, isChecked: boolean | "indeterminate") => {
+  const handleStudentSelection = (
+    studentId: string,
+    isChecked: boolean | "indeterminate"
+  ) => {
     if (isChecked === true) {
       const newSelected = [...selectedStudentIds, studentId];
       setSelectedStudentIds(newSelected);
       form.setValue("studentIds", newSelected);
     } else {
-      const newSelected = selectedStudentIds.filter(id => id !== studentId);
+      const newSelected = selectedStudentIds.filter((id) => id !== studentId);
       setSelectedStudentIds(newSelected);
       form.setValue("studentIds", newSelected);
     }
@@ -198,7 +198,7 @@ export function AssignStudentsDialog({
   // 全选/取消全选
   const handleSelectAll = (isChecked: boolean | "indeterminate") => {
     if (isChecked === true) {
-      const allIds = filteredStudents.map(student => student.id);
+      const allIds = filteredStudents.map((student) => student.id);
       setSelectedStudentIds(allIds);
       form.setValue("studentIds", allIds);
     } else {
@@ -208,8 +208,11 @@ export function AssignStudentsDialog({
   };
 
   // 检查是否全部选中
-  const isAllSelected = filteredStudents.length > 0 && 
-    filteredStudents.every(student => selectedStudentIds.includes(student.id));
+  const isAllSelected =
+    filteredStudents.length > 0 &&
+    filteredStudents.every((student) =>
+      selectedStudentIds.includes(student.id)
+    );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -217,9 +220,7 @@ export function AssignStudentsDialog({
         <DialogHeader>
           <DialogTitle>分配学生到班级</DialogTitle>
           {className && (
-            <DialogDescription>
-              为 {className} 分配学生
-            </DialogDescription>
+            <DialogDescription>为 {className} 分配学生</DialogDescription>
           )}
         </DialogHeader>
         {isLoading ? (
@@ -240,17 +241,17 @@ export function AssignStudentsDialog({
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              
+
               <div className="max-h-[400px] overflow-auto">
                 <Table>
                   <TableHeader className="bg-gray-50/30 sticky top-0">
                     <TableRow>
                       <TableHead className="w-[50px]">
-                        <Checkbox 
+                        <Checkbox
                           checked={isAllSelected}
-                          onCheckedChange={(checked: boolean | "indeterminate") => 
-                            handleSelectAll(checked)
-                          }
+                          onCheckedChange={(
+                            checked: boolean | "indeterminate"
+                          ) => handleSelectAll(checked)}
                           disabled={filteredStudents.length === 0}
                         />
                       </TableHead>
@@ -265,7 +266,10 @@ export function AssignStudentsDialog({
                   <TableBody>
                     {filteredStudents.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell
+                          colSpan={7}
+                          className="text-center py-8 text-muted-foreground"
+                        >
                           {searchQuery ? "未找到匹配的学生" : "暂无学生数据"}
                         </TableCell>
                       </TableRow>
@@ -273,11 +277,11 @@ export function AssignStudentsDialog({
                       filteredStudents.map((student) => (
                         <TableRow key={student.id}>
                           <TableCell>
-                            <Checkbox 
+                            <Checkbox
                               checked={selectedStudentIds.includes(student.id)}
-                              onCheckedChange={(checked: boolean | "indeterminate") => 
-                                handleStudentSelection(student.id, checked)
-                              }
+                              onCheckedChange={(
+                                checked: boolean | "indeterminate"
+                              ) => handleStudentSelection(student.id, checked)}
                             />
                           </TableCell>
                           <TableCell>{student.name}</TableCell>
@@ -286,10 +290,18 @@ export function AssignStudentsDialog({
                           <TableCell>{student.studentId}</TableCell>
                           <TableCell>
                             {student.class ? (
-                              <span className={student.class === classId ? "text-green-600 font-medium" : ""}>
+                              <span
+                                className={
+                                  student.class === classId
+                                    ? "text-green-600 font-medium"
+                                    : ""
+                                }
+                              >
                                 已分配班级
                               </span>
-                            ) : "未分配"}
+                            ) : (
+                              "未分配"
+                            )}
                           </TableCell>
                           <TableCell>{student.guardian}</TableCell>
                         </TableRow>
@@ -302,7 +314,7 @@ export function AssignStudentsDialog({
               <FormField
                 control={form.control}
                 name="studentIds"
-                render={({ field }) => (
+                render={({}) => (
                   <FormItem>
                     <FormMessage />
                   </FormItem>
@@ -320,7 +332,10 @@ export function AssignStudentsDialog({
                 >
                   取消
                 </Button>
-                <Button type="submit" disabled={isSubmitting || selectedStudentIds.length === 0}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || selectedStudentIds.length === 0}
+                >
                   {isSubmitting ? "保存中..." : "确认分配"}
                 </Button>
               </DialogFooter>
@@ -330,4 +345,4 @@ export function AssignStudentsDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

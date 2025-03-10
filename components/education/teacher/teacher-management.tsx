@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,7 +37,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -55,34 +54,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Teacher } from "@/types/education";
+import { Teacher } from "@/types/db";
 
 // 定义教师表单验证模式
 const teacherFormSchema = z.object({
   name: z.string().min(2, { message: "姓名至少需要2个字符" }),
-  gender: z.enum(["male", "female"], { 
-    required_error: "请选择性别" 
+  gender: z.enum(["male", "female"], {
+    required_error: "请选择性别",
   }),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { 
-    message: "请输入有效的日期格式 (YYYY-MM-DD)" 
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "请输入有效的日期格式 (YYYY-MM-DD)",
   }),
   subject: z.string().min(1, { message: "请输入任教学科" }),
-  externalAppIds: z.array(
-    z.object({
-      appId: z.string(),
-      appName: z.string(),
-      externalId: z.string(),
-    })
-  ).optional().default([]),
+  externalAppIds: z
+    .array(
+      z.object({
+        appId: z.string(),
+        appName: z.string(),
+        externalId: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
 });
 
 // 教师管理组件
 export default function TeacherManagement() {
-  const router = useRouter();
+  // const router = useRouter();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,7 +117,7 @@ export default function TeacherManagement() {
         `/api/teachers?page=${currentPage}&search=${searchTerm}`
       );
       if (!response.ok) throw new Error("加载教师数据失败");
-      
+
       const data = await response.json();
       setTeachers(data.data);
       setTotalPages(data.totalPages);
@@ -131,6 +132,7 @@ export default function TeacherManagement() {
   // 监听页码和搜索词变化，重新加载数据
   useEffect(() => {
     loadTeachers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm]);
 
   // 处理搜索
@@ -141,7 +143,9 @@ export default function TeacherManagement() {
   };
 
   // 处理添加教师
-  const handleAddTeacher = async (values: z.infer<typeof teacherFormSchema>) => {
+  const handleAddTeacher = async (
+    values: z.infer<typeof teacherFormSchema>
+  ) => {
     try {
       const response = await fetch("/api/teachers", {
         method: "POST",
@@ -152,7 +156,7 @@ export default function TeacherManagement() {
       });
 
       if (!response.ok) throw new Error("添加教师失败");
-      
+
       toast.success("教师添加成功");
       setIsAddDialogOpen(false);
       form.reset();
@@ -164,7 +168,9 @@ export default function TeacherManagement() {
   };
 
   // 处理编辑教师
-  const handleEditTeacher = async (values: z.infer<typeof teacherFormSchema>) => {
+  const handleEditTeacher = async (
+    values: z.infer<typeof teacherFormSchema>
+  ) => {
     if (!selectedTeacher) return;
 
     try {
@@ -177,7 +183,7 @@ export default function TeacherManagement() {
       });
 
       if (!response.ok) throw new Error("更新教师失败");
-      
+
       toast.success("教师信息更新成功");
       setIsEditDialogOpen(false);
       loadTeachers();
@@ -197,7 +203,7 @@ export default function TeacherManagement() {
       });
 
       if (!response.ok) throw new Error("删除教师失败");
-      
+
       toast.success("教师删除成功");
       setIsDeleteDialogOpen(false);
       loadTeachers();
@@ -212,17 +218,15 @@ export default function TeacherManagement() {
     setSelectedTeacher(teacher);
     form.reset({
       name: teacher.name,
-      gender: teacher.gender,
+      gender: teacher.gender === "男" ? "male" : "female",
       birthDate: teacher.birthDate,
       subject: teacher.subject,
-      externalAppIds: teacher.externalAppIds.length > 0 
-        ? teacher.externalAppIds 
-        : [{ appId: "", appName: "", externalId: "" }],
+      externalAppIds: teacher.externalAppIds || [
+        { appId: "", appName: "", externalId: "" },
+      ],
     });
     setExternalAppIdFields(
-      teacher.externalAppIds.length > 0 
-        ? teacher.externalAppIds 
-        : [{ appId: "", appName: "", externalId: "" }]
+      teacher.externalAppIds || [{ appId: "", appName: "", externalId: "" }]
     );
     setIsEditDialogOpen(true);
   };
@@ -242,37 +246,55 @@ export default function TeacherManagement() {
   };
 
   // 更新外部应用ID字段
-  const updateExternalAppIdField = (index: number, field: string, value: string) => {
+  const updateExternalAppIdField = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
     const updatedFields = [...externalAppIdFields];
     updatedFields[index] = { ...updatedFields[index], [field]: value };
     setExternalAppIdFields(updatedFields);
-    
+
     // 同时更新表单值
-    form.setValue("externalAppIds", updatedFields.filter(
-      field => field.appId && field.appName && field.externalId
-    ));
+    form.setValue(
+      "externalAppIds",
+      updatedFields.filter(
+        (field) => field.appId && field.appName && field.externalId
+      )
+    );
   };
 
   // 删除外部应用ID字段
   const removeExternalAppIdField = (index: number) => {
     const updatedFields = externalAppIdFields.filter((_, i) => i !== index);
-    setExternalAppIdFields(updatedFields.length ? updatedFields : [{ appId: "", appName: "", externalId: "" }]);
-    
+    setExternalAppIdFields(
+      updatedFields.length
+        ? updatedFields
+        : [{ appId: "", appName: "", externalId: "" }]
+    );
+
     // 同时更新表单值
-    form.setValue("externalAppIds", updatedFields.filter(
-      field => field.appId && field.appName && field.externalId
-    ));
+    form.setValue(
+      "externalAppIds",
+      updatedFields.filter(
+        (field) => field.appId && field.appName && field.externalId
+      )
+    );
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">教师管理</h1>
-        <Button onClick={() => {
-          form.reset();
-          setExternalAppIdFields([{ appId: "", appName: "", externalId: "" }]);
-          setIsAddDialogOpen(true);
-        }}>
+        <Button
+          onClick={() => {
+            form.reset();
+            setExternalAppIdFields([
+              { appId: "", appName: "", externalId: "" },
+            ]);
+            setIsAddDialogOpen(true);
+          }}
+        >
           <Plus className="mr-2 h-4 w-4" /> 添加教师
         </Button>
       </div>
@@ -316,23 +338,32 @@ export default function TeacherManagement() {
               <TableBody>
                 {teachers.map((teacher) => (
                   <TableRow key={teacher.id}>
-                    <TableCell className="font-medium">{teacher.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {teacher.name}
+                    </TableCell>
                     <TableCell>
                       {teacher.gender === "male" ? "男" : "女"}
                     </TableCell>
                     <TableCell>{teacher.birthDate}</TableCell>
                     <TableCell>{teacher.subject}</TableCell>
                     <TableCell>
-                      {teacher.externalAppIds && teacher.externalAppIds.length > 0 ? (
+                      {teacher.externalAppIds &&
+                      teacher.externalAppIds.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {teacher.externalAppIds.map((app, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {app.appName}: {app.externalId}
                             </Badge>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-sm">无</span>
+                        <span className="text-muted-foreground text-sm">
+                          无
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -344,10 +375,12 @@ export default function TeacherManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(teacher)}>
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(teacher)}
+                          >
                             <Edit className="mr-2 h-4 w-4" /> 编辑
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => openDeleteDialog(teacher)}
                             className="text-destructive focus:text-destructive"
                           >
@@ -379,7 +412,9 @@ export default function TeacherManagement() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage >= totalPages}
               >
                 下一页 <ChevronRight className="h-4 w-4 ml-1" />
@@ -399,7 +434,10 @@ export default function TeacherManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleAddTeacher)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleAddTeacher)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="name"
@@ -444,9 +482,9 @@ export default function TeacherManagement() {
                   <FormItem>
                     <FormLabel>出生日期 *</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field} 
+                      <Input
+                        type="date"
+                        {...field}
                         onChange={(e) => {
                           field.onChange(e.target.value);
                         }}
@@ -480,19 +518,37 @@ export default function TeacherManagement() {
                         <Input
                           placeholder="应用ID"
                           value={field.appId}
-                          onChange={(e) => updateExternalAppIdField(index, "appId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="应用名称"
                           value={field.appName}
-                          onChange={(e) => updateExternalAppIdField(index, "appName", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appName",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="外部ID"
                           value={field.externalId}
-                          onChange={(e) => updateExternalAppIdField(index, "externalId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "externalId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                       </div>
@@ -519,7 +575,11 @@ export default function TeacherManagement() {
               </div>
 
               <DialogFooter className="mt-6">
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
                   取消
                 </Button>
                 <Button type="submit">保存</Button>
@@ -539,7 +599,10 @@ export default function TeacherManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleEditTeacher)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleEditTeacher)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="name"
@@ -584,9 +647,9 @@ export default function TeacherManagement() {
                   <FormItem>
                     <FormLabel>出生日期 *</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field} 
+                      <Input
+                        type="date"
+                        {...field}
                         onChange={(e) => {
                           field.onChange(e.target.value);
                         }}
@@ -620,19 +683,37 @@ export default function TeacherManagement() {
                         <Input
                           placeholder="应用ID"
                           value={field.appId}
-                          onChange={(e) => updateExternalAppIdField(index, "appId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="应用名称"
                           value={field.appName}
-                          onChange={(e) => updateExternalAppIdField(index, "appName", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appName",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="外部ID"
                           value={field.externalId}
-                          onChange={(e) => updateExternalAppIdField(index, "externalId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "externalId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                       </div>
@@ -659,7 +740,11 @@ export default function TeacherManagement() {
               </div>
 
               <DialogFooter className="mt-6">
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
                   取消
                 </Button>
                 <Button type="submit">保存</Button>
@@ -675,11 +760,14 @@ export default function TeacherManagement() {
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              您确定要删除教师 "{selectedTeacher?.name}" 吗？此操作不可撤销。
+              您确定要删除教师 {selectedTeacher?.name} 吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               取消
             </Button>
             <Button variant="destructive" onClick={handleDeleteTeacher}>
@@ -690,4 +778,4 @@ export default function TeacherManagement() {
       </Dialog>
     </div>
   );
-} 
+}

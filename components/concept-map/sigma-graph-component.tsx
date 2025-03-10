@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import { MultiDirectedGraph } from "graphology";
 import { SigmaContainer, useSigma } from "@react-sigma/core";
 import { Maximize2 } from "lucide-react";
@@ -119,7 +119,7 @@ function LoadGraph({ data, onNodeClick }: SigmaGraphComponentProps) {
               x: col * spacing,
               y: row * spacing,
             });
-          } catch (e) {
+          } catch (_e) {
             // console.error(`添加节点失败: ${node.id}`, e);
           }
         });
@@ -137,7 +137,7 @@ function LoadGraph({ data, onNodeClick }: SigmaGraphComponentProps) {
               size: 2,
               color: "#999",
             });
-          } catch (e) {
+          } catch (_e) {
             // console.error(`添加边失败: ${link.source} -> ${link.target}`, e);
           }
         });
@@ -163,6 +163,7 @@ function LoadGraph({ data, onNodeClick }: SigmaGraphComponentProps) {
             // 通过设置zoom和x/y位置手动重置视图
             const camera = sigma.getCamera();
             // 使用任何格式的类型断言以避免TypeScript错误
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (camera as any).setSettings({
               x: 0,
               y: 0,
@@ -170,14 +171,14 @@ function LoadGraph({ data, onNodeClick }: SigmaGraphComponentProps) {
               angle: 0,
             });
             sigma.refresh();
-          } catch (e) {
+          } catch (_e) {
             // console.error("居中相机视图失败:", e);
           }
         }, 100);
       } else {
         // console.warn("没有有效的概念图数据");
       }
-    } catch (e) {
+    } catch (_e) {
       // console.error("概念图渲染失败:", e);
     }
 
@@ -185,7 +186,7 @@ function LoadGraph({ data, onNodeClick }: SigmaGraphComponentProps) {
     return () => {
       try {
         sigma.removeAllListeners();
-      } catch (e) {
+      } catch (_e) {
         // console.error("清理事件失败:", e);
       }
     };
@@ -252,7 +253,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
               // 累加力的分量
               dx += (xDist / dist) * force;
               dy += (yDist / dist) * force;
-            } catch (e) {
+            } catch (_e) {
               // 忽略单个节点计算错误
             }
           });
@@ -277,7 +278,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
               // 累加力的分量
               dx -= (xDist / dist) * force;
               dy -= (yDist / dist) * force;
-            } catch (e) {
+            } catch (_e) {
               // 忽略单个节点计算错误
             }
           });
@@ -297,7 +298,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
 
           // 记录总移动量
           totalDisplacement += displacement;
-        } catch (e) {
+        } catch (_e) {
           // 忽略单个节点计算错误
         }
       });
@@ -307,7 +308,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
         try {
           graph.setNodeAttribute(node, "x", pos.x);
           graph.setNodeAttribute(node, "y", pos.y);
-        } catch (e) {
+        } catch (_e) {
           // 忽略单个节点更新错误
         }
       });
@@ -324,7 +325,7 @@ function applyForceLayout(graph: MultiDirectedGraph, iterations: number = 50) {
     }
 
     // console.log("力导向布局计算完成");
-  } catch (e) {
+  } catch (_e) {
     // console.error("力导向布局计算失败:", e);
   }
 }

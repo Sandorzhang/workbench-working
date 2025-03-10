@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { toast } from '@/components/ui/use-toast'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,282 +11,297 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { AlertCircle, Edit, FileUp, Image as ImageIcon, Plus, Trash2, Calculator } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Question, LearningObjective } from '@/types/question'
-import { QuestionDialog } from './question-dialog'
-import { Exam } from '@/types/exam'
-import { PdfImportDialog } from './pdf-import-dialog'
-import { BulkScoreDialog } from './bulk-score-dialog'
+} from "@/components/ui/table";
+import {
+  AlertCircle,
+  Edit,
+  FileUp,
+  Image as ImageIcon,
+  Plus,
+  Trash2,
+  Calculator,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Question, LearningObjective } from "@/types/question";
+import { QuestionDialog } from "./question-dialog";
+import { Exam } from "@/types/exam";
+import { PdfImportDialog } from "./pdf-import-dialog";
+import { BulkScoreDialog } from "./bulk-score-dialog";
 
 interface QuestionManagementProps {
-  examId: string
-  questions: Question[]
-  examSubject?: string // 添加考试学科属性
-  onQuestionsUpdate: (questions: Question[]) => void
+  examId: string;
+  questions: Question[];
+  examSubject?: string; // 添加考试学科属性
+  onQuestionsUpdate: (questions: Question[]) => void;
 }
 
 export function QuestionManagement({
   examId,
   questions,
-  examSubject = '综合', // 默认为综合
+  examSubject = "综合", // 默认为综合
   onQuestionsUpdate,
 }: QuestionManagementProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [pdfImportDialogOpen, setPdfImportDialogOpen] = useState(false)
-  const [bulkScoreDialogOpen, setBulkScoreDialogOpen] = useState(false)
-  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null)
-  const [learningObjectives, setLearningObjectives] = useState<LearningObjective[]>([])
-  const [isLoadingObjectives, setIsLoadingObjectives] = useState(false)
-  const [examInfo, setExamInfo] = useState<Partial<Exam> | null>(null)
+  const [isLoading, setIsLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pdfImportDialogOpen, setPdfImportDialogOpen] = useState(false);
+  const [bulkScoreDialogOpen, setBulkScoreDialogOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
+    null
+  );
+  const [learningObjectives, setLearningObjectives] = useState<
+    LearningObjective[]
+  >([]);
+  const [_, setIsLoadingObjectives] = useState(false);
+  const [examInfo, setExamInfo] = useState<Partial<Exam> | null>(null);
 
   // 获取考试信息
   useEffect(() => {
     const fetchExamInfo = async () => {
       try {
-        const response = await fetch(`/api/exams/${examId}`)
+        const response = await fetch(`/api/exams/${examId}`);
         if (!response.ok) {
-          throw new Error('获取考试信息失败')
+          throw new Error("获取考试信息失败");
         }
-        const data = await response.json()
-        setExamInfo(data)
+        const data = await response.json();
+        setExamInfo(data);
       } catch (error) {
-        console.error('获取考试信息出错:', error)
+        console.error("获取考试信息出错:", error);
       }
-    }
+    };
 
-    fetchExamInfo()
-  }, [examId])
+    fetchExamInfo();
+  }, [examId]);
 
   // 获取学业目标，根据考试学科筛选
   const fetchLearningObjectives = async () => {
-    setIsLoadingObjectives(true)
+    setIsLoadingObjectives(true);
     try {
       // 使用考试学科或传入的学科参数
-      const subject = examInfo?.subject || examSubject
-      const response = await fetch(`/api/learning-objectives?subject=${encodeURIComponent(subject)}`)
+      const subject = examInfo?.subject || examSubject;
+      const response = await fetch(
+        `/api/learning-objectives?subject=${encodeURIComponent(subject)}`
+      );
       if (!response.ok) {
-        throw new Error('获取学业目标失败')
+        throw new Error("获取学业目标失败");
       }
-      const data = await response.json()
-      setLearningObjectives(data)
+      const data = await response.json();
+      setLearningObjectives(data);
     } catch (error) {
-      console.error('获取学业目标出错:', error)
+      console.error("获取学业目标出错:", error);
       toast({
-        title: '获取学业目标失败',
-        description: '请稍后再试',
-        variant: 'destructive',
-      })
+        title: "获取学业目标失败",
+        description: "请稍后再试",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoadingObjectives(false)
+      setIsLoadingObjectives(false);
     }
-  }
+  };
 
   // 组件加载时获取学业目标
   useEffect(() => {
     if (examInfo?.subject || examSubject) {
-      fetchLearningObjectives()
+      fetchLearningObjectives();
     }
-  }, [examInfo?.subject, examSubject])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [examInfo?.subject, examSubject]);
 
   // 添加/编辑题目
   const handleAddEditQuestion = (question: Question | null = null) => {
-    setSelectedQuestion(question)
-    setDialogOpen(true)
-  }
+    setSelectedQuestion(question);
+    setDialogOpen(true);
+  };
 
   // 处理题目对话框提交
   const handleQuestionDialogSubmit = async (data: Partial<Question>) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      let updatedQuestion: Question
-      
+      let updatedQuestion: Question;
+
       if (data.id) {
         // 更新现有题目
         const response = await fetch(`/api/questions/${data.id}`, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        })
-        
+        });
+
         if (!response.ok) {
           // 尝试详细记录错误响应
           const responseText = await response.text();
-          console.error('错误响应原始内容:', responseText);
-          
-          let errorMessage = '更新题目失败';
+          console.error("错误响应原始内容:", responseText);
+
+          let errorMessage = "更新题目失败";
           try {
             const errorData = JSON.parse(responseText);
             if (errorData && errorData.message) {
               errorMessage = errorData.message;
             }
           } catch (parseError) {
-            console.error('解析错误响应失败:', parseError);
+            console.error("解析错误响应失败:", parseError);
           }
-          
+
           throw new Error(errorMessage);
         }
-        
-        updatedQuestion = await response.json()
-        
+
+        updatedQuestion = await response.json();
+
         // 更新本地题目列表
-        const updatedQuestions = questions.map(q => 
+        const updatedQuestions = questions.map((q) =>
           q.id === updatedQuestion.id ? updatedQuestion : q
-        )
-        
-        onQuestionsUpdate(updatedQuestions)
+        );
+
+        onQuestionsUpdate(updatedQuestions);
         toast({
-          title: '题目已更新',
-          description: '题目信息已成功更新',
-        })
+          title: "题目已更新",
+          description: "题目信息已成功更新",
+        });
       } else {
         // 创建新题目
-        const response = await fetch('/api/questions', {
-          method: 'POST',
+        const response = await fetch("/api/questions", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             ...data,
             examId,
           }),
-        })
-        
+        });
+
         if (!response.ok) {
           // 尝试详细记录错误响应
           const responseText = await response.text();
-          console.error('错误响应原始内容:', responseText);
-          
-          let errorMessage = '创建题目失败';
+          console.error("错误响应原始内容:", responseText);
+
+          let errorMessage = "创建题目失败";
           try {
             const errorData = JSON.parse(responseText);
             if (errorData && errorData.message) {
               errorMessage = errorData.message;
             }
           } catch (parseError) {
-            console.error('解析错误响应失败:', parseError);
+            console.error("解析错误响应失败:", parseError);
           }
-          
+
           throw new Error(errorMessage);
         }
-        
-        updatedQuestion = await response.json()
-        
+
+        updatedQuestion = await response.json();
+
         // 更新本地题目列表
-        onQuestionsUpdate([...questions, updatedQuestion])
+        onQuestionsUpdate([...questions, updatedQuestion]);
         toast({
-          title: '题目已添加',
-          description: '新题目已成功添加到考试中',
-        })
+          title: "题目已添加",
+          description: "新题目已成功添加到考试中",
+        });
       }
-      
+
       // 关闭对话框
-      setDialogOpen(false)
+      setDialogOpen(false);
     } catch (error) {
-      console.error('保存题目出错:', error);
-      
+      console.error("保存题目出错:", error);
+
       // 确保错误消息正确显示
-      let errorMessage = '保存题目时出现错误，请稍后再试';
+      let errorMessage = "保存题目时出现错误，请稍后再试";
       if (error instanceof Error && error.message) {
         errorMessage = error.message;
       }
-      
+
       // 使用具体的错误消息
       toast({
-        title: '操作失败',
+        title: "操作失败",
         description: errorMessage,
-        variant: 'destructive',
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // 删除题目
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm('确定要删除这个题目吗？此操作无法撤销。')) {
-      return
+    if (!confirm("确定要删除这个题目吗？此操作无法撤销。")) {
+      return;
     }
-    
-    setIsLoading(true)
+
+    setIsLoading(true);
     try {
       const response = await fetch(`/api/questions/${questionId}`, {
-        method: 'DELETE',
-      })
-      
+        method: "DELETE",
+      });
+
       if (!response.ok) {
-        throw new Error('删除题目失败')
+        throw new Error("删除题目失败");
       }
-      
+
       // 更新本地题目列表
-      const updatedQuestions = questions.filter(q => q.id !== questionId)
-      onQuestionsUpdate(updatedQuestions)
-      
+      const updatedQuestions = questions.filter((q) => q.id !== questionId);
+      onQuestionsUpdate(updatedQuestions);
+
       toast({
-        title: '题目已删除',
-        description: '题目已成功从考试中移除',
-      })
+        title: "题目已删除",
+        description: "题目已成功从考试中移除",
+      });
     } catch (error) {
-      console.error('删除题目出错:', error)
+      console.error("删除题目出错:", error);
       toast({
-        title: '删除失败',
-        description: '删除题目时出现错误，请稍后再试',
-        variant: 'destructive',
-      })
+        title: "删除失败",
+        description: "删除题目时出现错误，请稍后再试",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // 获取学业目标详情
   const getLearningObjectiveDetail = (code: string) => {
-    return learningObjectives.find(obj => obj.code === code)
-  }
+    return learningObjectives.find((obj) => obj.code === code);
+  };
 
   // 查看图片
   const handleViewImage = (imageUrl: string) => {
     // 在新窗口打开图片
-    window.open(imageUrl, '_blank')
-  }
+    window.open(imageUrl, "_blank");
+  };
 
   // 打开PDF导入对话框
   const handleOpenPdfImport = () => {
     // 检查考试是否已有题目
     if (questions.length > 0) {
       toast({
-        title: '无法导入',
-        description: '只有空的考试才能使用批量导入功能，请先删除所有题目后再试',
-        variant: 'destructive',
-      })
-      return
+        title: "无法导入",
+        description: "只有空的考试才能使用批量导入功能，请先删除所有题目后再试",
+        variant: "destructive",
+      });
+      return;
     }
-    
-    setPdfImportDialogOpen(true)
-  }
+
+    setPdfImportDialogOpen(true);
+  };
 
   // 处理PDF导入完成
   const handlePdfImportComplete = (importedQuestions: Question[]) => {
-    onQuestionsUpdate(importedQuestions)
-  }
+    onQuestionsUpdate(importedQuestions);
+  };
 
   // 打开批量赋分对话框
   const handleOpenBulkScore = () => {
     // 检查考试是否有题目
     if (questions.length === 0) {
       toast({
-        title: '无题目可赋分',
-        description: '请先添加题目后再使用批量赋分功能',
-        variant: 'destructive',
-      })
-      return
+        title: "无题目可赋分",
+        description: "请先添加题目后再使用批量赋分功能",
+        variant: "destructive",
+      });
+      return;
     }
-    
-    setBulkScoreDialogOpen(true)
-  }
+
+    setBulkScoreDialogOpen(true);
+  };
 
   return (
     <Card>
@@ -294,31 +309,32 @@ export function QuestionManagement({
         <CardTitle>题目管理</CardTitle>
         <div className="flex gap-2">
           {/* 批量导入按钮 */}
-          <Button 
+          <Button
             variant="outline"
-            onClick={handleOpenPdfImport} 
+            onClick={handleOpenPdfImport}
             disabled={isLoading || questions.length > 0}
-            title={questions.length > 0 ? "只有空的考试才能使用批量导入" : "导入PDF自动识别题目"}
+            title={
+              questions.length > 0
+                ? "只有空的考试才能使用批量导入"
+                : "导入PDF自动识别题目"
+            }
           >
             <FileUp className="mr-2 h-4 w-4" />
             批量导入
           </Button>
-          
+
           {/* 批量赋分按钮 */}
-          <Button 
+          <Button
             variant="outline"
-            onClick={handleOpenBulkScore} 
+            onClick={handleOpenBulkScore}
             disabled={isLoading || questions.length === 0}
           >
             <Calculator className="mr-2 h-4 w-4" />
             批量赋分
           </Button>
-          
+
           {/* 添加题目按钮 */}
-          <Button 
-            onClick={() => handleAddEditQuestion()} 
-            disabled={isLoading}
-          >
+          <Button onClick={() => handleAddEditQuestion()} disabled={isLoading}>
             <Plus className="mr-2 h-4 w-4" />
             添加题目
           </Button>
@@ -330,7 +346,8 @@ export function QuestionManagement({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>暂无题目</AlertTitle>
             <AlertDescription>
-              该考试还没有添加任何题目，点击"添加题目"按钮开始创建，或使用"批量导入"功能导入PDF试卷。
+              该考试还没有添加任何题目，点击添加题目 按钮开始创建，或使用
+              批量导入功能导入PDF试卷。
             </AlertDescription>
           </Alert>
         ) : (
@@ -349,11 +366,15 @@ export function QuestionManagement({
                 </TableHeader>
                 <TableBody>
                   {questions.map((question) => {
-                    const objective = getLearningObjectiveDetail(question.learningObjective)
-                    
+                    const objective = getLearningObjectiveDetail(
+                      question.learningObjective
+                    );
+
                     return (
                       <TableRow key={question.id}>
-                        <TableCell className="font-medium">{question.questionNumber}</TableCell>
+                        <TableCell className="font-medium">
+                          {question.questionNumber}
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
                             <span>{question.learningObjective}</span>
@@ -366,20 +387,24 @@ export function QuestionManagement({
                         </TableCell>
                         <TableCell>{question.score}</TableCell>
                         <TableCell className="max-w-[200px] truncate">
-                          {question.description || '-'}
+                          {question.description || "-"}
                         </TableCell>
                         <TableCell>
                           {question.imageUrl ? (
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleViewImage(question.imageUrl!)}
+                              onClick={() =>
+                                handleViewImage(question.imageUrl!)
+                              }
                               title="查看图片"
                             >
                               <ImageIcon className="h-4 w-4 text-blue-500" />
                             </Button>
                           ) : (
-                            <span className="text-muted-foreground text-sm">无</span>
+                            <span className="text-muted-foreground text-sm">
+                              无
+                            </span>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -405,19 +430,23 @@ export function QuestionManagement({
                           </div>
                         </TableCell>
                       </TableRow>
-                    )
+                    );
                   })}
                 </TableBody>
               </Table>
             </div>
-            
+
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
-              <span className="text-sm text-muted-foreground">总题数: {questions.length}</span>
-              <span className="font-medium text-primary">总分: {questions.reduce((sum, q) => sum + q.score, 0)} 分</span>
+              <span className="text-sm text-muted-foreground">
+                总题数: {questions.length}
+              </span>
+              <span className="font-medium text-primary">
+                总分: {questions.reduce((sum, q) => sum + q.score, 0)} 分
+              </span>
             </div>
           </div>
         )}
-        
+
         {/* 题目编辑对话框 */}
         <QuestionDialog
           open={dialogOpen}
@@ -428,7 +457,7 @@ export function QuestionManagement({
           examSubject={examInfo?.subject || examSubject}
           onSubmit={handleQuestionDialogSubmit}
         />
-        
+
         {/* PDF导入对话框 */}
         <PdfImportDialog
           examId={examId}
@@ -436,7 +465,7 @@ export function QuestionManagement({
           onOpenChange={setPdfImportDialogOpen}
           onQuestionsImport={handlePdfImportComplete}
         />
-        
+
         {/* 批量赋分对话框 */}
         <BulkScoreDialog
           examId={examId}
@@ -447,5 +476,5 @@ export function QuestionManagement({
         />
       </CardContent>
     </Card>
-  )
-} 
+  );
+}

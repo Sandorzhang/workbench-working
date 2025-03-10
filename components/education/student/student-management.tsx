@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,7 +37,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -54,37 +53,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Student, Grade, Class, PaginatedResponse } from "@/types/education";
+import { Class, Grade, PaginatedResponse, Student } from "@/types/models";
 
 // 学生表单验证模式
 const studentFormSchema = z.object({
   name: z.string().min(2, { message: "姓名至少需要2个字符" }),
-  gender: z.enum(["male", "female"], { 
-    required_error: "请选择性别" 
+  gender: z.enum(["male", "female"], {
+    required_error: "请选择性别",
   }),
-  enrollmentYear: z.coerce.number().min(2015, { message: "入学年份不能早于2015年" }),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { 
-    message: "请输入有效的日期格式 (YYYY-MM-DD)" 
+  enrollmentYear: z.coerce
+    .number()
+    .min(2015, { message: "入学年份不能早于2015年" }),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "请输入有效的日期格式 (YYYY-MM-DD)",
   }),
   studentNumber: z.string().min(5, { message: "学籍号至少需要5个字符" }),
   classId: z.string().min(1, { message: "请选择班级" }),
   gradeId: z.string().min(1, { message: "请选择年级" }),
-  externalAppIds: z.array(
-    z.object({
-      appId: z.string(),
-      appName: z.string(),
-      externalId: z.string(),
-    })
-  ).optional().default([]),
+  externalAppIds: z
+    .array(
+      z.object({
+        appId: z.string(),
+        appName: z.string(),
+        externalId: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
 });
 
 export default function StudentManagement() {
-  const router = useRouter();
+  // const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -126,8 +128,8 @@ export default function StudentManagement() {
         `/api/students?page=${currentPage}&search=${searchTerm}&gradeId=${gradeFilter}&classId=${classFilter}`
       );
       if (!response.ok) throw new Error("加载学生数据失败");
-      
-      const data = await response.json() as PaginatedResponse<Student>;
+
+      const data = (await response.json()) as PaginatedResponse<Student>;
       setStudents(data.data);
       setTotalPages(data.totalPages);
     } catch (error) {
@@ -141,9 +143,9 @@ export default function StudentManagement() {
   // 加载年级数据
   const loadGrades = async () => {
     try {
-      const response = await fetch('/api/grades');
+      const response = await fetch("/api/grades");
       if (!response.ok) throw new Error("加载年级数据失败");
-      
+
       const data = await response.json();
       setGrades(data.data);
     } catch (error) {
@@ -155,9 +157,9 @@ export default function StudentManagement() {
   // 加载班级数据
   const loadClasses = async () => {
     try {
-      const response = await fetch('/api/classes');
+      const response = await fetch("/api/classes");
       if (!response.ok) throw new Error("加载班级数据失败");
-      
+
       const data = await response.json();
       setClasses(data.data);
     } catch (error) {
@@ -169,6 +171,7 @@ export default function StudentManagement() {
   // 监听页码和筛选条件变化，重新加载数据
   useEffect(() => {
     loadStudents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm, gradeFilter, classFilter]);
 
   // 初始加载年级和班级数据
@@ -179,8 +182,8 @@ export default function StudentManagement() {
 
   // 更新年级筛选时，重置班级筛选并过滤相关班级
   useEffect(() => {
-    if (gradeFilter && gradeFilter !== 'all') {
-      setFilteredClasses(classes.filter(cls => cls.gradeId === gradeFilter));
+    if (gradeFilter && gradeFilter !== "all") {
+      setFilteredClasses(classes.filter((cls) => cls.gradeId === gradeFilter));
       setClassFilter("all");
     } else {
       setFilteredClasses(classes);
@@ -190,11 +193,11 @@ export default function StudentManagement() {
   // 更新表单中年级选择时，过滤相关班级
   const handleGradeChange = (gradeId: string) => {
     setGradeFilter(gradeId);
-    form.setValue("gradeId", gradeId === 'all' ? "" : gradeId);
+    form.setValue("gradeId", gradeId === "all" ? "" : gradeId);
     form.setValue("classId", "");
-    
-    if (gradeId && gradeId !== 'all') {
-      setFilteredClasses(classes.filter(cls => cls.gradeId === gradeId));
+
+    if (gradeId && gradeId !== "all") {
+      setFilteredClasses(classes.filter((cls) => cls.gradeId === gradeId));
     } else {
       setFilteredClasses(classes);
     }
@@ -208,7 +211,9 @@ export default function StudentManagement() {
   };
 
   // 处理添加学生
-  const handleAddStudent = async (values: z.infer<typeof studentFormSchema>) => {
+  const handleAddStudent = async (
+    values: z.infer<typeof studentFormSchema>
+  ) => {
     try {
       const response = await fetch("/api/students", {
         method: "POST",
@@ -219,7 +224,7 @@ export default function StudentManagement() {
       });
 
       if (!response.ok) throw new Error("添加学生失败");
-      
+
       toast.success("学生添加成功");
       setIsAddDialogOpen(false);
       form.reset();
@@ -231,7 +236,9 @@ export default function StudentManagement() {
   };
 
   // 处理编辑学生
-  const handleEditStudent = async (values: z.infer<typeof studentFormSchema>) => {
+  const handleEditStudent = async (
+    values: z.infer<typeof studentFormSchema>
+  ) => {
     if (!selectedStudent) return;
 
     try {
@@ -244,7 +251,7 @@ export default function StudentManagement() {
       });
 
       if (!response.ok) throw new Error("更新学生失败");
-      
+
       toast.success("学生信息更新成功");
       setIsEditDialogOpen(false);
       loadStudents();
@@ -264,7 +271,7 @@ export default function StudentManagement() {
       });
 
       if (!response.ok) throw new Error("删除学生失败");
-      
+
       toast.success("学生删除成功");
       setIsDeleteDialogOpen(false);
       loadStudents();
@@ -277,27 +284,28 @@ export default function StudentManagement() {
   // 打开编辑对话框
   const openEditDialog = (student: Student) => {
     setSelectedStudent(student);
+    const defaultExternalAppId = [{ appId: "", appName: "", externalId: "" }];
+    const externalAppIds = Array.isArray(student.externalAppIds)
+      ? student.externalAppIds
+      : defaultExternalAppId;
+
     form.reset({
       name: student.name,
-      gender: student.gender,
-      enrollmentYear: student.enrollmentYear,
+      gender: student.gender === "男" ? "male" : "female",
+      enrollmentYear: Number(student.enrollmentYear),
       birthDate: student.birthDate,
       studentNumber: student.studentNumber,
-      classId: student.classId,
-      gradeId: student.gradeId,
-      externalAppIds: student.externalAppIds.length > 0 
-        ? student.externalAppIds 
-        : [{ appId: "", appName: "", externalId: "" }],
+      classId: student.classId || "",
+      gradeId: student.gradeId || "",
+      externalAppIds,
     });
-    setExternalAppIdFields(
-      student.externalAppIds.length > 0 
-        ? student.externalAppIds 
-        : [{ appId: "", appName: "", externalId: "" }]
-    );
-    
+    setExternalAppIdFields(externalAppIds);
+
     // 设置对应的班级列表
-    setFilteredClasses(classes.filter(cls => cls.gradeId === student.gradeId));
-    
+    setFilteredClasses(
+      classes.filter((cls) => cls.gradeId === student.gradeId)
+    );
+
     setIsEditDialogOpen(true);
   };
 
@@ -316,50 +324,68 @@ export default function StudentManagement() {
   };
 
   // 更新外部应用ID字段
-  const updateExternalAppIdField = (index: number, field: string, value: string) => {
+  const updateExternalAppIdField = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
     const updatedFields = [...externalAppIdFields];
     updatedFields[index] = { ...updatedFields[index], [field]: value };
     setExternalAppIdFields(updatedFields);
-    
+
     // 同时更新表单值
-    form.setValue("externalAppIds", updatedFields.filter(
-      field => field.appId && field.appName && field.externalId
-    ));
+    form.setValue(
+      "externalAppIds",
+      updatedFields.filter(
+        (field) => field.appId && field.appName && field.externalId
+      )
+    );
   };
 
   // 删除外部应用ID字段
   const removeExternalAppIdField = (index: number) => {
     const updatedFields = externalAppIdFields.filter((_, i) => i !== index);
-    setExternalAppIdFields(updatedFields.length ? updatedFields : [{ appId: "", appName: "", externalId: "" }]);
-    
+    setExternalAppIdFields(
+      updatedFields.length
+        ? updatedFields
+        : [{ appId: "", appName: "", externalId: "" }]
+    );
+
     // 同时更新表单值
-    form.setValue("externalAppIds", updatedFields.filter(
-      field => field.appId && field.appName && field.externalId
-    ));
+    form.setValue(
+      "externalAppIds",
+      updatedFields.filter(
+        (field) => field.appId && field.appName && field.externalId
+      )
+    );
   };
 
   // 获取年级名称
   const getGradeName = (gradeId: string) => {
-    const grade = grades.find(g => g.id === gradeId);
-    return grade ? grade.gradeLevel : '';
+    const grade = grades.find((g) => g.id === gradeId);
+    return grade ? grade.gradeLevel : "";
   };
 
   // 获取班级名称
   const getClassName = (classId: string) => {
-    const cls = classes.find(c => c.id === classId);
-    return cls ? cls.name : '';
+    const cls = classes.find((c) => c.id === classId);
+    return cls ? cls.name : "";
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">学生管理</h1>
-        <Button onClick={() => {
-          form.reset();
-          setExternalAppIdFields([{ appId: "", appName: "", externalId: "" }]);
-          setFilteredClasses([]);
-          setIsAddDialogOpen(true);
-        }}>
+        <Button
+          onClick={() => {
+            form.reset();
+            setExternalAppIdFields([
+              { appId: "", appName: "", externalId: "" },
+            ]);
+            setFilteredClasses([]);
+            setIsAddDialogOpen(true);
+          }}
+        >
           <Plus className="mr-2 h-4 w-4" /> 添加学生
         </Button>
       </div>
@@ -377,24 +403,21 @@ export default function StudentManagement() {
             <Search className="h-4 w-4 mr-2" /> 搜索
           </Button>
         </form>
-        
-        <Select
-          value={gradeFilter}
-          onValueChange={setGradeFilter}
-        >
+
+        <Select value={gradeFilter} onValueChange={setGradeFilter}>
           <SelectTrigger>
             <SelectValue placeholder="选择年级" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">所有年级</SelectItem>
-            {grades.map(grade => (
+            {grades.map((grade) => (
               <SelectItem key={grade.id} value={grade.id}>
                 {grade.gradeLevel} ({grade.academicYear})
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        
+
         <Select
           value={classFilter}
           onValueChange={setClassFilter}
@@ -405,7 +428,7 @@ export default function StudentManagement() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">所有班级</SelectItem>
-            {filteredClasses.map(cls => (
+            {filteredClasses.map((cls) => (
               <SelectItem key={cls.id} value={cls.id}>
                 {cls.name}
               </SelectItem>
@@ -441,10 +464,12 @@ export default function StudentManagement() {
               <TableBody>
                 {students.map((student) => (
                   <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {student.name}
+                    </TableCell>
                     <TableCell>{student.studentNumber}</TableCell>
-                    <TableCell>{getGradeName(student.gradeId)}</TableCell>
-                    <TableCell>{getClassName(student.classId)}</TableCell>
+                    <TableCell>{getGradeName(student.gradeId ?? "")}</TableCell>
+                    <TableCell>{getClassName(student.classId ?? "")}</TableCell>
                     <TableCell>{student.enrollmentYear}</TableCell>
                     <TableCell>
                       {student.gender === "male" ? "男" : "女"}
@@ -458,10 +483,12 @@ export default function StudentManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(student)}>
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(student)}
+                          >
                             <Edit className="mr-2 h-4 w-4" /> 编辑
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => openDeleteDialog(student)}
                             className="text-destructive focus:text-destructive"
                           >
@@ -493,7 +520,9 @@ export default function StudentManagement() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage >= totalPages}
               >
                 下一页 <ChevronRight className="h-4 w-4 ml-1" />
@@ -513,7 +542,10 @@ export default function StudentManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleAddStudent)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleAddStudent)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="name"
@@ -559,11 +591,11 @@ export default function StudentManagement() {
                     <FormItem>
                       <FormLabel>入学年份 *</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          min={2015} 
-                          max={new Date().getFullYear()} 
-                          {...field} 
+                        <Input
+                          type="number"
+                          min={2015}
+                          max={new Date().getFullYear()}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -577,9 +609,9 @@ export default function StudentManagement() {
                     <FormItem>
                       <FormLabel>出生日期 *</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="date" 
-                          {...field} 
+                        <Input
+                          type="date"
+                          {...field}
                           onChange={(e) => {
                             field.onChange(e.target.value);
                           }}
@@ -620,7 +652,7 @@ export default function StudentManagement() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {grades.map(grade => (
+                          {grades.map((grade) => (
                             <SelectItem key={grade.id} value={grade.id}>
                               {grade.gradeLevel}
                             </SelectItem>
@@ -648,7 +680,7 @@ export default function StudentManagement() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {filteredClasses.map(cls => (
+                          {filteredClasses.map((cls) => (
                             <SelectItem key={cls.id} value={cls.id}>
                               {cls.name}
                             </SelectItem>
@@ -671,19 +703,37 @@ export default function StudentManagement() {
                         <Input
                           placeholder="应用ID"
                           value={field.appId}
-                          onChange={(e) => updateExternalAppIdField(index, "appId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="应用名称"
                           value={field.appName}
-                          onChange={(e) => updateExternalAppIdField(index, "appName", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appName",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="外部ID"
                           value={field.externalId}
-                          onChange={(e) => updateExternalAppIdField(index, "externalId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "externalId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                       </div>
@@ -710,7 +760,11 @@ export default function StudentManagement() {
               </div>
 
               <DialogFooter className="mt-6">
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
                   取消
                 </Button>
                 <Button type="submit">保存</Button>
@@ -730,7 +784,10 @@ export default function StudentManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleEditStudent)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleEditStudent)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="name"
@@ -776,11 +833,11 @@ export default function StudentManagement() {
                     <FormItem>
                       <FormLabel>入学年份 *</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          min={2015} 
-                          max={new Date().getFullYear()} 
-                          {...field} 
+                        <Input
+                          type="number"
+                          min={2015}
+                          max={new Date().getFullYear()}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -794,9 +851,9 @@ export default function StudentManagement() {
                     <FormItem>
                       <FormLabel>出生日期 *</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="date" 
-                          {...field} 
+                        <Input
+                          type="date"
+                          {...field}
                           onChange={(e) => {
                             field.onChange(e.target.value);
                           }}
@@ -837,7 +894,7 @@ export default function StudentManagement() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {grades.map(grade => (
+                          {grades.map((grade) => (
                             <SelectItem key={grade.id} value={grade.id}>
                               {grade.gradeLevel}
                             </SelectItem>
@@ -865,7 +922,7 @@ export default function StudentManagement() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {filteredClasses.map(cls => (
+                          {filteredClasses.map((cls) => (
                             <SelectItem key={cls.id} value={cls.id}>
                               {cls.name}
                             </SelectItem>
@@ -888,19 +945,37 @@ export default function StudentManagement() {
                         <Input
                           placeholder="应用ID"
                           value={field.appId}
-                          onChange={(e) => updateExternalAppIdField(index, "appId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="应用名称"
                           value={field.appName}
-                          onChange={(e) => updateExternalAppIdField(index, "appName", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "appName",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                         <Input
                           placeholder="外部ID"
                           value={field.externalId}
-                          onChange={(e) => updateExternalAppIdField(index, "externalId", e.target.value)}
+                          onChange={(e) =>
+                            updateExternalAppIdField(
+                              index,
+                              "externalId",
+                              e.target.value
+                            )
+                          }
                           className="col-span-1"
                         />
                       </div>
@@ -927,7 +1002,11 @@ export default function StudentManagement() {
               </div>
 
               <DialogFooter className="mt-6">
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
                   取消
                 </Button>
                 <Button type="submit">保存</Button>
@@ -943,11 +1022,14 @@ export default function StudentManagement() {
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              您确定要删除学生 "{selectedStudent?.name}" 吗？此操作不可撤销。
+              您确定要删除学生 {selectedStudent?.name} 吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               取消
             </Button>
             <Button variant="destructive" onClick={handleDeleteStudent}>
@@ -958,4 +1040,4 @@ export default function StudentManagement() {
       </Dialog>
     </div>
   );
-} 
+}

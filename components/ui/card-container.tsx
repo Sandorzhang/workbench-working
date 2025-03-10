@@ -60,6 +60,7 @@ interface CardContainerProps {
   /**
    * 其他属性
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
@@ -93,7 +94,7 @@ export function CardContainer({
   // 加载状态
   if (loading) {
     return (
-      <div 
+      <div
         className={cn(
           "rounded-lg border border-gray-100/80",
           elevated && "shadow-sm",
@@ -112,7 +113,7 @@ export function CardContainer({
             {description && <Skeleton className="h-3.5 w-2/3" />}
           </div>
         )}
-        
+
         {/* 内容区域骨架屏 */}
         <div className="space-y-3">
           <Skeleton className="h-20 w-full rounded-md" />
@@ -121,7 +122,7 @@ export function CardContainer({
             <Skeleton className="h-3.5 w-2/3" />
           </div>
         </div>
-        
+
         {/* 底部区域骨架屏 */}
         {footer && (
           <div className="mt-3 pt-3 border-t border-gray-100">
@@ -133,11 +134,11 @@ export function CardContainer({
   }
 
   return (
-    <div 
+    <div
       className={cn(
         "rounded-lg border border-gray-100/80",
         elevated && "shadow-sm",
-        clickable && 
+        clickable &&
           "cursor-pointer hover:border-gray-200 hover:shadow-md transition-all duration-200",
         backgroundClassName || "bg-white",
         className
@@ -148,22 +149,20 @@ export function CardContainer({
     >
       {/* 卡片头部 */}
       {(title || description || actions) && (
-        <div className={cn(
-          "flex flex-col space-y-1.5",
-          children && paddingMap[padding],
-          children && "pb-2"
-        )}>
+        <div
+          className={cn(
+            "flex flex-col space-y-1.5",
+            children && paddingMap[padding],
+            children && "pb-2"
+          )}
+        >
           <div className="flex items-start justify-between">
             <div>
               {title && (
-                <h3 className="text-base font-medium text-gray-900">
-                  {title}
-                </h3>
+                <h3 className="text-base font-medium text-gray-900">{title}</h3>
               )}
               {description && (
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {description}
-                </p>
+                <p className="text-sm text-gray-500 mt-0.5">{description}</p>
               )}
             </div>
             {actions && (
@@ -174,28 +173,30 @@ export function CardContainer({
           </div>
         </div>
       )}
-      
+
       {/* 卡片内容 */}
       {children && (
-        <div 
+        <div
           className={cn(
-            (!title && !description && !actions) ? paddingMap[padding] : "px-4"
+            !title && !description && !actions ? paddingMap[padding] : "px-4"
           )}
         >
           {children}
         </div>
       )}
-      
+
       {/* 卡片底部 */}
       {footer && (
-        <div className={cn(
-          "mt-3 pt-3 border-t border-gray-100",
-          paddingMap[padding],
-          "pt-3"
-        )}>
+        <div
+          className={cn(
+            "mt-3 pt-3 border-t border-gray-100",
+            paddingMap[padding],
+            "pt-3"
+          )}
+        >
           {footer}
         </div>
       )}
     </div>
   );
-} 
+}

@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { BookOpen } from "lucide-react";
 
 export interface AcademicRecord {
@@ -28,9 +33,7 @@ export function StudentAcademic({ records }: StudentAcademicProps) {
           <BookOpen className="mr-2 h-5 w-5 text-blue-500" />
           学业记录
         </CardTitle>
-        <CardDescription>
-          该学生的学习成绩和考试记录
-        </CardDescription>
+        <CardDescription>该学生的学习成绩和考试记录</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -39,25 +42,66 @@ export function StudentAcademic({ records }: StudentAcademicProps) {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学科</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成绩</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">排名</th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      学科
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      成绩
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      类型
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      日期
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      排名
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {records.map((record, index) => (
                     <tr key={record.id || index}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{record.subject}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {record.subject}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Badge variant={record.score >= 90 ? "default" : record.score >= 60 ? "secondary" : "destructive"}>
+                        <Badge
+                          variant={
+                            record.score >= 90
+                              ? "default"
+                              : record.score >= 60
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
                           {record.score}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{record.type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.date}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.rank || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {record.type}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {record.date}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {record.rank || "-"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -72,4 +116,4 @@ export function StudentAcademic({ records }: StudentAcademicProps) {
       </CardContent>
     </Card>
   );
-} 
+}

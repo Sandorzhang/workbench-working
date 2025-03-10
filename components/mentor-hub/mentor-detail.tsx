@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { Mentor, MentorStudent } from "@/lib/types";
 import { StudentDetail } from "./student-detail";
@@ -14,7 +13,9 @@ interface MentorDetailProps {
 
 export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
   const [students, setStudents] = useState<MentorStudent[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<MentorStudent | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<MentorStudent | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,14 +24,14 @@ export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/mentors/${mentor.id}/students`);
-        if (!response.ok) throw new Error('Failed to fetch students');
-        
+        if (!response.ok) throw new Error("Failed to fetch students");
+
         const data = await response.json();
         setStudents(data);
-      } catch (err) {
-        setError('Failed to load students');
+      } catch (_err) {
+        setError("Failed to load students");
       } finally {
         setIsLoading(false);
       }
@@ -51,8 +52,19 @@ export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
   return (
     <div className="space-y-6">
       <Button variant="outline" onClick={onBack} className="mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-          <path d="m15 18-6-6 6-6"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="mr-2"
+        >
+          <path d="m15 18-6-6 6-6" />
         </svg>
         返回
       </Button>
@@ -90,9 +102,25 @@ export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-4">
-              <svg className="animate-spin h-5 w-5 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin h-5 w-5 text-primary mx-auto"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
             </div>
           ) : error ? (
@@ -102,13 +130,21 @@ export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
           ) : (
             <div className="grid gap-4">
               {students.map((student) => (
-                <Card key={student.id} className="cursor-pointer hover:bg-gray-50 transition-colors">
-                  <CardContent className="p-4" onClick={() => setSelectedStudent(student)}>
+                <Card
+                  key={student.id}
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <CardContent
+                    className="p-4"
+                    onClick={() => setSelectedStudent(student)}
+                  >
                     <div className="flex justify-between items-center">
                       <div>
                         <h4 className="font-medium">{student.name}</h4>
                         <p className="text-sm text-gray-500 mt-1">
-                          {student.studentNumber} | {student.major} {student.gradeId ? `${student.gradeId}级` : ''} {student.classId ? `${student.classId}班` : ''}
+                          {student.studentNumber} | {student.major}{" "}
+                          {student.gradeId ? `${student.gradeId}级` : ""}{" "}
+                          {student.classId ? `${student.classId}班` : ""}
                         </p>
                       </div>
                       <Button variant="ghost" size="sm">
@@ -124,4 +160,4 @@ export function MentorDetail({ mentor, onBack }: MentorDetailProps) {
       </Card>
     </div>
   );
-} 
+}

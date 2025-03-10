@@ -1,14 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import {
-  BadgeCheck,
-  ChevronsUpDown,
-  LogOut,
-  Settings,
-  User,
-  Loader2,
-} from "lucide-react";
+import { ChevronsUpDown, LogOut, Settings, User, Loader2 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -96,8 +87,8 @@ export function NavUserAuth({
         // console.log('登出功能已禁用');
         toast.info("当前处于演示模式，登出功能已禁用");
       }
-    } catch (error) {
-      // console.error('登出失败:', error);
+    } catch {
+      // console.error('登出失败');
       toast.error("登出失败，请稍后再试");
       // 失败时也要重置登出状态
       setIsLoggingOut(false);

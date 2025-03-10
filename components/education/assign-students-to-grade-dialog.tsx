@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -39,7 +45,7 @@ export function AssignStudentsToGradeDialog({
   open,
   onOpenChange,
   grade,
-  onSuccess
+  onSuccess,
 }: AssignStudentsToGradeDialogProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -52,6 +58,7 @@ export function AssignStudentsToGradeDialog({
     if (open && grade) {
       fetchStudents();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, grade]);
 
   // 重置状态
@@ -66,18 +73,20 @@ export function AssignStudentsToGradeDialog({
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/students');
+      const response = await fetch("/api/students");
       if (!response.ok) {
-        throw new Error('获取学生列表失败');
+        throw new Error("获取学生列表失败");
       }
       const data = await response.json();
-      
+
       // 过滤掉已经在该年级的学生
-      const filteredStudents = data.filter((student: Student) => student.grade !== grade?.id);
+      const filteredStudents = data.filter(
+        (student: Student) => student.grade !== grade?.id
+      );
       setStudents(filteredStudents);
     } catch (error) {
-      console.error('Error fetching students:', error);
-      toast.error('获取学生列表失败');
+      console.error("Error fetching students:", error);
+      toast.error("获取学生列表失败");
     } finally {
       setIsLoading(false);
     }
@@ -85,9 +94,9 @@ export function AssignStudentsToGradeDialog({
 
   // 处理学生选择
   const handleStudentSelection = (studentId: string) => {
-    setSelectedStudentIds(prev => {
+    setSelectedStudentIds((prev) => {
       if (prev.includes(studentId)) {
-        return prev.filter(id => id !== studentId);
+        return prev.filter((id) => id !== studentId);
       } else {
         return [...prev, studentId];
       }
@@ -99,25 +108,25 @@ export function AssignStudentsToGradeDialog({
     if (selectedStudentIds.length === filteredStudents.length) {
       setSelectedStudentIds([]);
     } else {
-      setSelectedStudentIds(filteredStudents.map(student => student.id));
+      setSelectedStudentIds(filteredStudents.map((student) => student.id));
     }
   };
 
   // 提交分配
   const handleSubmit = async () => {
     if (!grade) return;
-    
+
     if (selectedStudentIds.length === 0) {
-      toast.warning('请至少选择一名学生');
+      toast.warning("请至少选择一名学生");
       return;
     }
 
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/grades/${grade.id}/students`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ studentIds: selectedStudentIds }),
       });
@@ -125,27 +134,29 @@ export function AssignStudentsToGradeDialog({
       if (!response.ok) {
         const errorData = await response.json();
         if (errorData.hasClasses === false) {
-          toast.error('该年级下没有班级，请先创建班级');
+          toast.error("该年级下没有班级，请先创建班级");
         } else {
-          throw new Error('分配学生失败');
+          throw new Error("分配学生失败");
         }
         return;
       }
 
       const result = await response.json();
-      toast.success(`成功将 ${result.addedStudentCount} 名学生分配到 ${grade.name}`);
+      toast.success(
+        `成功将 ${result.addedStudentCount} 名学生分配到 ${grade.name}`
+      );
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      console.error('Error assigning students:', error);
-      toast.error('分配学生失败');
+      console.error("Error assigning students:", error);
+      toast.error("分配学生失败");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // 过滤学生
-  const filteredStudents = students.filter(student => {
+  const filteredStudents = students.filter((student) => {
     const searchLower = searchQuery.toLowerCase();
     return (
       student.name.toLowerCase().includes(searchLower) ||
@@ -159,15 +170,17 @@ export function AssignStudentsToGradeDialog({
         <DialogHeader>
           <DialogTitle>分配学生到年级</DialogTitle>
         </DialogHeader>
-        
+
         <div className="flex flex-col space-y-4 flex-1 overflow-hidden">
           {grade && (
             <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-md">
               <span className="font-medium">目标年级:</span>
-              <span>{grade.name} ({grade.year}学年)</span>
+              <span>
+                {grade.name} ({grade.year}学年)
+              </span>
             </div>
           )}
-          
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -178,7 +191,7 @@ export function AssignStudentsToGradeDialog({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -188,20 +201,25 @@ export function AssignStudentsToGradeDialog({
               <div className="flex items-center space-x-2 py-2">
                 <Checkbox
                   id="select-all"
-                  checked={selectedStudentIds.length > 0 && selectedStudentIds.length === filteredStudents.length}
+                  checked={
+                    selectedStudentIds.length > 0 &&
+                    selectedStudentIds.length === filteredStudents.length
+                  }
                   onCheckedChange={handleSelectAll}
                 />
                 <Label htmlFor="select-all" className="cursor-pointer">
-                  {selectedStudentIds.length === 0 ? '全选' : 
-                   selectedStudentIds.length === filteredStudents.length ? '取消全选' : 
-                   `已选择 ${selectedStudentIds.length} 名学生`}
+                  {selectedStudentIds.length === 0
+                    ? "全选"
+                    : selectedStudentIds.length === filteredStudents.length
+                    ? "取消全选"
+                    : `已选择 ${selectedStudentIds.length} 名学生`}
                 </Label>
               </div>
-              
+
               <ScrollArea className="flex-1 border rounded-md">
                 {filteredStudents.length === 0 ? (
                   <div className="flex items-center justify-center py-8 text-muted-foreground">
-                    {searchQuery ? '未找到匹配的学生' : '没有可分配的学生'}
+                    {searchQuery ? "未找到匹配的学生" : "没有可分配的学生"}
                   </div>
                 ) : (
                   <div className="p-4 space-y-2">
@@ -213,15 +231,23 @@ export function AssignStudentsToGradeDialog({
                         <Checkbox
                           id={`student-${student.id}`}
                           checked={selectedStudentIds.includes(student.id)}
-                          onCheckedChange={() => handleStudentSelection(student.id)}
+                          onCheckedChange={() =>
+                            handleStudentSelection(student.id)
+                          }
                         />
-                        <Label htmlFor={`student-${student.id}`} className="flex-1 cursor-pointer">
+                        <Label
+                          htmlFor={`student-${student.id}`}
+                          className="flex-1 cursor-pointer"
+                        >
                           <div className="flex justify-between">
                             <div className="font-medium">{student.name}</div>
-                            <div className="text-sm text-muted-foreground">{student.studentId}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {student.studentId}
+                            </div>
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {student.gender} | {student.age}岁 | 监护人: {student.guardian}
+                            {student.gender} | {student.age}岁 | 监护人:{" "}
+                            {student.guardian}
                           </div>
                         </Label>
                       </div>
@@ -232,7 +258,7 @@ export function AssignStudentsToGradeDialog({
             </>
           )}
         </div>
-        
+
         <DialogFooter className="pt-4">
           <Button
             variant="outline"
@@ -259,4 +285,4 @@ export function AssignStudentsToGradeDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

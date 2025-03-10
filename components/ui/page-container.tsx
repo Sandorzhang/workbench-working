@@ -65,6 +65,7 @@ interface PageContainerProps {
   /**
    * 其他HTML div元素的属性
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
@@ -118,60 +119,65 @@ export function PageContainer({
 
   // 渲染加载状态
   if (loading) {
-    return loadingComponent || (
-      <div className={cn("animate-pulse", spacingMap[spacing], className)} {...props}>
-        {/* 标题区域骨架屏 */}
-        {(title || description) && (
-          <div className="mb-6 flex flex-col space-y-2">
-            {title && <Skeleton className="h-8 w-1/3" />}
-            {description && <Skeleton className="h-4 w-2/3" />}
-          </div>
-        )}
-        
-        {/* 内容区域骨架屏 */}
-        <div className={layoutClassName[layout]}>
-          {layout === "grid" && (
-            <>
-              {Array.from({ length: Math.min(columns, 4) }).map((_, i) => (
-                <div key={i} className="flex flex-col space-y-4">
-                  <Skeleton className="h-40 w-full rounded-lg" />
+    return (
+      loadingComponent || (
+        <div
+          className={cn("animate-pulse", spacingMap[spacing], className)}
+          {...props}
+        >
+          {/* 标题区域骨架屏 */}
+          {(title || description) && (
+            <div className="mb-6 flex flex-col space-y-2">
+              {title && <Skeleton className="h-8 w-1/3" />}
+              {description && <Skeleton className="h-4 w-2/3" />}
+            </div>
+          )}
+
+          {/* 内容区域骨架屏 */}
+          <div className={layoutClassName[layout]}>
+            {layout === "grid" && (
+              <>
+                {Array.from({ length: Math.min(columns, 4) }).map((_, i) => (
+                  <div key={i} className="flex flex-col space-y-4">
+                    <Skeleton className="h-40 w-full rounded-lg" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ))}
+              </>
+            )}
+
+            {layout === "stack" && (
+              <>
+                <Skeleton className="h-48 w-full rounded-lg" />
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
                 </div>
-              ))}
-            </>
-          )}
-          
-          {layout === "stack" && (
-            <>
-              <Skeleton className="h-48 w-full rounded-lg" />
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            </>
-          )}
-          
-          {layout === "split" && (
-            <>
-              <Skeleton className="h-64 w-full md:w-1/3 rounded-lg" />
-              <div className="space-y-4 flex-1">
-                <Skeleton className="h-6 w-2/3" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            </>
-          )}
+              </>
+            )}
+
+            {layout === "split" && (
+              <>
+                <Skeleton className="h-64 w-full md:w-1/3 rounded-lg" />
+                <div className="space-y-4 flex-1">
+                  <Skeleton className="h-6 w-2/3" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )
     );
   }
 
   return (
-    <div 
+    <div
       className={cn(
         "rounded-xl border border-gray-100/60",
         backgroundClassName || "bg-white",
@@ -186,14 +192,10 @@ export function PageContainer({
         <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center space-y-4 sm:space-y-0">
           <div>
             {title && (
-              <h1 className="text-xl font-semibold text-gray-900">
-                {title}
-              </h1>
+              <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
             )}
             {description && (
-              <p className="mt-1 text-sm text-gray-500">
-                {description}
-              </p>
+              <p className="mt-1 text-sm text-gray-500">{description}</p>
             )}
           </div>
           {actions && (
@@ -203,11 +205,9 @@ export function PageContainer({
           )}
         </div>
       )}
-      
+
       {/* 页面内容区域 */}
-      <div className={cn(layoutClassName[layout])}>
-        {children}
-      </div>
+      <div className={cn(layoutClassName[layout])}>{children}</div>
     </div>
   );
-} 
+}

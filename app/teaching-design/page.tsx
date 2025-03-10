@@ -14,16 +14,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,7 +25,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -43,32 +35,26 @@ import {
   Filter,
   SlidersHorizontal,
   Download,
-  Upload,
   LayoutDashboard,
   ChevronLeft,
   ChevronRight,
   Clock,
   Users,
-  GraduationCap,
   CalendarDays,
   FileText,
   Book,
   Pencil,
   Play,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
 import {
   TitleSkeleton,
-  CardSkeleton,
   CardGridSkeleton,
-  DetailSkeleton,
   TabsSkeleton,
 } from "@/components/ui/skeleton-loader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageContainer } from "@/components/ui/page-container";
-import { api } from "@/api/request";
 import { toast } from "sonner";
+import Image from "next/image";
 
 // 模拟单元教案数据
 const mockDesigns = [
@@ -308,7 +294,7 @@ const CreateTeachingDesignDialog = ({
     });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (_: React.ChangeEvent<HTMLInputElement>) => {
     // 处理文件上传逻辑
     //console.log("File selected:", e.target.files);
   };
@@ -319,13 +305,14 @@ const CreateTeachingDesignDialog = ({
 
     // 调用API创建单元教案
     try {
-      await api.teachingDesigns.create({
-        ...formData,
-        status: "进行中",
-        progress: 0,
-        lessons: [],
-        lastModified: new Date().toISOString().split("T")[0],
-      });
+      // TODO: 调用API创建单元教案
+      // await api.teachingDesigns.create({
+      //   ...formData,
+      //   status: "进行中",
+      //   progress: 0,
+      //   lessons: [],
+      //   lastModified: new Date().toISOString().split("T")[0],
+      // });
 
       toast.success("单元教案创建成功！");
       onClose();
@@ -474,13 +461,14 @@ export default function TeachingDesignPage() {
       // 实际API请求
       try {
         setIsLoading(true);
-        const response: any = await api.teachingDesigns.getList();
-        setDesigns(response.data || []);
-        // 如果API返回的数据为空，使用模拟数据
-        if (!response.data || response.data.length === 0) {
-          //console.log("API返回的单元教案数据为空，使用模拟数据");
-          setDesigns(mockDesigns);
-        }
+        // TODO: 调用API获取单元教案列表
+        // const response: any = await api.teachingDesigns.getList();
+        // setDesigns(response.data || []);
+        // // 如果API返回的数据为空，使用模拟数据
+        // if (!response.data || response.data.length === 0) {
+        //   //console.log("API返回的单元教案数据为空，使用模拟数据");
+        //   setDesigns(mockDesigns);
+        // }
       } catch (error) {
         console.error("获取单元教案数据失败:", error);
         toast.error("获取单元教案数据失败");
@@ -629,10 +617,12 @@ export default function TeachingDesignPage() {
                       onClick={() => handleViewDesign(design)}
                     >
                       <div className="aspect-video w-full relative overflow-hidden">
-                        <img
+                        <Image
                           src={design.coverImage}
                           alt={design.title}
-                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         {getStatusBadge(design.status)}
                       </div>
@@ -697,11 +687,13 @@ export default function TeachingDesignPage() {
                       className="flex items-center p-4 hover:bg-accent cursor-pointer transition-colors"
                       onClick={() => handleViewDesign(design)}
                     >
-                      <div className="mr-4 h-12 w-12 overflow-hidden rounded-md">
-                        <img
+                      <div className="mr-4 h-12 w-12 relative overflow-hidden rounded-md">
+                        <Image
                           src={design.coverImage}
                           alt={design.title}
-                          className="object-cover h-full w-full"
+                          fill
+                          sizes="48px"
+                          className="object-cover"
                         />
                       </div>
                       <div className="flex-1">
@@ -902,11 +894,14 @@ export default function TeachingDesignPage() {
               </DialogHeader>
 
               <div className="mt-4 space-y-6">
-                <div className="aspect-video overflow-hidden rounded-lg border">
-                  <img
+                <div className="aspect-video overflow-hidden rounded-lg border relative">
+                  <Image
                     src={selectedDesign.coverImage}
                     alt={selectedDesign.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 1200px) 100vw, 1200px"
+                    priority
+                    className="object-cover"
                   />
                 </div>
 

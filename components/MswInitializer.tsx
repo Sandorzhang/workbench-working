@@ -103,7 +103,7 @@ export function MswInitializer({
                   // console.warn(`[MSW] 超级管理员API请求未被拦截: ${request.method} ${urlPath}`);
                   // console.warn(`[MSW] 检查MSW是否配置了对应的处理程序，路径前缀应该包含通配符(*)`);
                 }
-              } catch (err) {
+              } catch (_err) {
                 // console.error('[MSW] 无法解析请求URL', err);
               }
 
@@ -115,9 +115,9 @@ export function MswInitializer({
                 // console.error(`[MSW] ⚠️ API请求未被拦截: ${request.method} ${request.url} - 这可能导致解析错误`);
                 // 检查这个URL是否有对应的处理器
                 try {
-                  const urlPath = new URL(request.url).pathname;
+                  // const urlPath = new URL(request.url).pathname;
                   // console.error(`[MSW] 检查路径 '${urlPath}' 是否有对应的处理器配置`);
-                } catch (err) {
+                } catch (_err) {
                   // console.error('[MSW] 无法解析请求URL', err);
                 }
                 toast.error(

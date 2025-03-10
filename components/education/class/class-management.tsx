@@ -6,38 +6,60 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CardContainer } from "@/components/ui/card-container";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
-import { 
-  Search, 
-  Edit, 
-  Trash2, 
-  Plus, 
+import {
+  Search,
+  Edit,
+  Trash2,
+  Plus,
   MoreHorizontal,
   RefreshCw,
   Users,
-  UserCog
+  UserCog,
 } from "lucide-react";
-import { Class, Grade } from "@/types/education";
+import { Class, Grade } from "@/types/models";
 
 // 表单验证模式
 const classFormSchema = z.object({
@@ -45,12 +67,8 @@ const classFormSchema = z.object({
     .string()
     .min(1, { message: "班级名称不能为空" })
     .max(50, { message: "班级名称最长为50个字符" }),
-  gradeId: z
-    .string()
-    .min(1, { message: "必须选择所属年级" }),
-  headTeacherId: z
-    .string()
-    .optional(),
+  gradeId: z.string().min(1, { message: "必须选择所属年级" }),
+  headTeacherId: z.string().optional(),
   roomNumber: z
     .string()
     .max(20, { message: "教室号最长为20个字符" })
@@ -131,9 +149,10 @@ export default function ClassManagement() {
   const loadClasses = async () => {
     setIsLoading(true);
     try {
-      const url = selectedGradeId && selectedGradeId !== 'all'
-        ? `/api/classes?gradeId=${selectedGradeId}&search=${searchQuery}` 
-        : `/api/classes?search=${searchQuery}`;
+      const url =
+        selectedGradeId && selectedGradeId !== "all"
+          ? `/api/classes?gradeId=${selectedGradeId}&search=${searchQuery}`
+          : `/api/classes?search=${searchQuery}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("获取班级数据失败");
@@ -156,6 +175,7 @@ export default function ClassManagement() {
   // 当年级选择或搜索条件变化时重新加载班级数据
   useEffect(() => {
     loadClasses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGradeId, searchQuery]);
 
   // 处理搜索
@@ -166,7 +186,7 @@ export default function ClassManagement() {
   // 处理年级选择
   const handleGradeChange = (value: string) => {
     setSelectedGradeId(value);
-    if (value && value !== 'all') {
+    if (value && value !== "all") {
       // 更新URL但不触发完全导航
       const newUrl = `/admin/education/classes?gradeId=${value}`;
       window.history.pushState({}, "", newUrl);
@@ -291,8 +311,8 @@ export default function ClassManagement() {
 
   // 获取年级名称
   const getGradeName = (gradeId: string) => {
-    const grade = grades.find(g => g.id === gradeId);
-    return grade ? grade.name : '-';
+    const grade = grades.find((g) => g.id === gradeId);
+    return grade ? grade.name : "-";
   };
 
   return (
@@ -301,10 +321,7 @@ export default function ClassManagement() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="w-full sm:w-48">
-            <Select 
-              value={selectedGradeId} 
-              onValueChange={handleGradeChange}
-            >
+            <Select value={selectedGradeId} onValueChange={handleGradeChange}>
               <SelectTrigger>
                 <SelectValue placeholder="选择年级" />
               </SelectTrigger>
@@ -330,7 +347,12 @@ export default function ClassManagement() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={loadClasses} variant="outline" size="icon" className="h-10 w-10">
+          <Button
+            onClick={loadClasses}
+            variant="outline"
+            size="icon"
+            className="h-10 w-10"
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
           <Button onClick={openAddDialog} className="h-10">
@@ -377,15 +399,17 @@ export default function ClassManagement() {
                       >
                         {searchQuery
                           ? "未找到匹配的班级"
-                          : selectedGradeId 
-                            ? `${getGradeName(selectedGradeId)}暂无班级数据`
-                            : "暂无班级数据"}
+                          : selectedGradeId
+                          ? `${getGradeName(selectedGradeId)}暂无班级数据`
+                          : "暂无班级数据"}
                       </TableCell>
                     </TableRow>
                   ) : (
                     classes.map((classItem) => (
                       <TableRow key={classItem.id}>
-                        <TableCell className="font-medium">{classItem.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {classItem.name}
+                        </TableCell>
                         <TableCell>{getGradeName(classItem.gradeId)}</TableCell>
                         <TableCell>{classItem.roomNumber || "-"}</TableCell>
                         <TableCell>{classItem.studentCount || 0}</TableCell>
@@ -396,20 +420,30 @@ export default function ClassManagement() {
                           <div className="flex justify-end space-x-2">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => manageStudents(classItem.id)}>
+                                <DropdownMenuItem
+                                  onClick={() => manageStudents(classItem.id)}
+                                >
                                   <Users className="h-4 w-4 mr-2" />
                                   管理学生
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => manageTeachers(classItem.id)}>
+                                <DropdownMenuItem
+                                  onClick={() => manageTeachers(classItem.id)}
+                                >
                                   <UserCog className="h-4 w-4 mr-2" />
                                   管理教师
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openEditDialog(classItem)}>
+                                <DropdownMenuItem
+                                  onClick={() => openEditDialog(classItem)}
+                                >
                                   <Edit className="h-4 w-4 mr-2" />
                                   编辑
                                 </DropdownMenuItem>
@@ -444,7 +478,10 @@ export default function ClassManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onAddSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onAddSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="name"
@@ -464,8 +501,8 @@ export default function ClassManagement() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>所属年级</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -529,7 +566,10 @@ export default function ClassManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+            <form
+              onSubmit={editForm.handleSubmit(onEditSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={editForm.control}
                 name="name"
@@ -549,8 +589,8 @@ export default function ClassManagement() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>所属年级</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -613,25 +653,19 @@ export default function ClassManagement() {
           <div className="py-4">
             <p>
               确定要删除班级
-              <span className="font-medium mx-1">
-                {selectedClass?.name}
-              </span>
+              <span className="font-medium mx-1">{selectedClass?.name}</span>
               吗？此操作不可撤销，并且会解除该班级与所有学生和教师的关联关系。
             </p>
           </div>
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
             >
               取消
             </Button>
-            <Button 
-              type="button" 
-              variant="destructive" 
-              onClick={confirmDelete}
-            >
+            <Button type="button" variant="destructive" onClick={confirmDelete}>
               确认删除
             </Button>
           </DialogFooter>
@@ -639,4 +673,4 @@ export default function ClassManagement() {
       </Dialog>
     </div>
   );
-} 
+}

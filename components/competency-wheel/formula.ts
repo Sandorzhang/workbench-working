@@ -2,15 +2,7 @@ import { Params, Point, Ring, Sector } from "./types";
 
 // 渲染扇区
 export function renderSectors(params: Params) {
-  const {
-    cx,
-    cy,
-    segmentCount,
-    layerCount,
-    layerSpacing,
-    sectorSpacing,
-    radius,
-  } = params;
+  const { cx, cy, segmentCount, sectorSpacing, radius } = params;
 
   // 计算环
   const rings = renderRings(params);
@@ -49,9 +41,9 @@ export function getLabelPosList(
   //     segmentRadii: segmentRadii || "未提供"
   // });
 
-  // 预估标签宽度 - 用于计算避免重叠
-  const estimatedLabelWidth = 80; // 估计每个标签的平均宽度为80px
-  const minAngleBetweenLabels = 30; // 标签之间的最小角度差
+  // // 预估标签宽度 - 用于计算避免重叠
+  // const estimatedLabelWidth = 80; // 估计每个标签的平均宽度为80px
+  // const minAngleBetweenLabels = 30; // 标签之间的最小角度差
 
   for (let i = 0; i < segmentCount; i++) {
     const angle = (360 / segmentCount) * i + 360 / segmentCount / 2;
@@ -213,7 +205,7 @@ export function transformRingsToSectors(rings: Ring[]): Sector[] {
     .map(() => []);
 
   // 遍历所有环，将弧段添加到对应的扇区中
-  rings.forEach((ring, ringIndex) => {
+  rings.forEach((ring) => {
     ring.paths.forEach((path, pathIndex) => {
       // 添加弧段到对应扇区
       sectors[pathIndex].push({

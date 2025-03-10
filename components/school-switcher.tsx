@@ -1,25 +1,24 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronsUpDown, Plus, School, Building, BookOpen } from "lucide-react"
-import { useAuth } from "@/lib/auth"
+import * as React from "react";
+import { ChevronsUpDown, School, Building, BookOpen } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 // 默认学校数据
 const defaultSchool = {
@@ -27,36 +26,36 @@ const defaultSchool = {
   name: "通用平台",
   logo: Building,
   type: "完全中学",
-  region: "全国"
-}
+  region: "全国",
+};
 
 export function SchoolSwitcher() {
-  const { isMobile } = useSidebar()
-  const { user } = useAuth()
-  
+  const { isMobile } = useSidebar();
+  const { user } = useAuth();
+
   // 获取学制对应的图标
   const getSchoolLogo = (type?: string) => {
     if (!type) return Building;
-    if (type.includes('小学')) return BookOpen;
-    if (type.includes('九年一贯制')) return School;
-    if (type.includes('完全中学')) return Building;
+    if (type.includes("小学")) return BookOpen;
+    if (type.includes("九年一贯制")) return School;
+    if (type.includes("完全中学")) return Building;
     return Building;
   };
-  
+
   // 根据用户信息创建学校对象
-  const userSchool = user?.school 
+  const userSchool = user?.school
     ? {
         id: "user-school",
         name: user.school,
         logo: getSchoolLogo(user.schoolType),
         type: user.schoolType || "完全中学",
-        region: "全国"
+        region: "全国",
       }
-    : defaultSchool
-  
+    : defaultSchool;
+
   // 只显示用户自己的学校
   const schools = [userSchool];
-  const [activeSchool, setActiveSchool] = React.useState(userSchool)
+  const [activeSchool, setActiveSchool] = React.useState(userSchool);
 
   return (
     <SidebarMenu>
@@ -68,14 +67,16 @@ export function SchoolSwitcher() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="bg-primary/10 text-primary flex aspect-square size-8 items-center justify-center rounded-lg">
-                {typeof activeSchool.logo === 'function' ? (
+                {typeof activeSchool.logo === "function" ? (
                   <activeSchool.logo className="size-4" />
                 ) : (
                   <Building className="size-4" />
                 )}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeSchool.name}</span>
+                <span className="truncate font-medium">
+                  {activeSchool.name}
+                </span>
                 <span className="truncate text-xs">{activeSchool.type}</span>
               </div>
               {/* 隐藏下拉箭头，因为只有一个选项 */}
@@ -101,7 +102,7 @@ export function SchoolSwitcher() {
                   className="gap-2 p-2"
                 >
                   <div className="flex size-6 items-center justify-center rounded-xs border bg-primary/5">
-                    {typeof school.logo === 'function' ? (
+                    {typeof school.logo === "function" ? (
                       <school.logo className="size-4 shrink-0 text-primary" />
                     ) : (
                       <Building className="size-4 shrink-0 text-primary" />
@@ -110,10 +111,15 @@ export function SchoolSwitcher() {
                   <div className="flex flex-col flex-1">
                     <span className="text-sm font-medium">{school.name}</span>
                     <div className="flex items-center gap-1">
-                      <Badge variant="outline" className="px-1 py-0 text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className="px-1 py-0 text-[10px]"
+                      >
                         {school.type}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{school.region}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {school.region}
+                      </span>
                     </div>
                   </div>
                   <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
@@ -124,5 +130,5 @@ export function SchoolSwitcher() {
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
-} 
+  );
+}

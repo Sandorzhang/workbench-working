@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import { 
+import {
   BookOpen,
-  Calendar,
   SearchIcon,
   Star,
   History,
@@ -15,11 +14,9 @@ import {
   Search,
   User,
   BarChart3,
-  ClipboardEdit
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Skeleton } from "../ui/skeleton";
-import { Progress } from "../ui/progress";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { EnrichedStudent } from "@/lib/types";
@@ -29,23 +26,24 @@ import { StudentTracking } from "./student-tracking";
 import { StudentEvaluation } from "./student-evaluation";
 
 // 学生列表组件
-function StudentList({ 
-  students, 
+function StudentList({
+  students,
   onSelectStudent,
   selectedStudentId,
-  onRefresh
-}: { 
-  students: EnrichedStudent[], 
-  onSelectStudent: (student: EnrichedStudent) => void,
-  selectedStudentId: string | null,
-  onRefresh: () => void
+  onRefresh,
+}: {
+  students: EnrichedStudent[];
+  onSelectStudent: (student: EnrichedStudent) => void;
+  selectedStudentId: string | null;
+  onRefresh: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // 过滤学生列表
-  const filteredStudents = students.filter(student => 
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    student.studentId.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredStudents = students.filter(
+    (student) =>
+      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // 处理刷新
@@ -63,7 +61,7 @@ function StudentList({
               <User className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-medium text-gray-800">学生列表</h2>
             </div>
-            <Button 
+            <Button
               variant="ghost"
               size="sm"
               onClick={handleRefresh}
@@ -80,7 +78,9 @@ function StudentList({
             <User className="w-5 h-5 text-muted-foreground opacity-50" />
           </div>
           <p className="text-muted-foreground text-sm">暂无分配学生</p>
-          <p className="text-muted-foreground text-xs mt-1">请联系管理员分配学生</p>
+          <p className="text-muted-foreground text-xs mt-1">
+            请联系管理员分配学生
+          </p>
         </div>
       </div>
     );
@@ -94,9 +94,9 @@ function StudentList({
             <User className="mr-2 h-5 w-5 text-primary" />
             学生列表
           </h2>
-          <Button 
+          <Button
             variant="outline"
-            size="sm" 
+            size="sm"
             onClick={handleRefresh}
             className="h-8 px-2"
             title="刷新学生数据"
@@ -105,22 +105,31 @@ function StudentList({
             刷新
           </Button>
         </div>
-        
+
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
+          <Input
             type="text"
-            placeholder="搜索姓名或学号..." 
+            placeholder="搜索姓名或学号..."
             className="h-9 text-sm pl-9 pr-8 rounded-md border-gray-200 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button 
+            <button
               className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-gray-700 transition-colors"
               onClick={() => setSearchQuery("")}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+              >
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
@@ -128,7 +137,7 @@ function StudentList({
           )}
         </div>
       </div>
-      
+
       <div className="overflow-y-auto flex-1 student-list-scroll">
         {filteredStudents.length === 0 ? (
           <div className="px-4 py-8 text-center">
@@ -136,7 +145,7 @@ function StudentList({
               <SearchIcon className="h-5 w-5 text-muted-foreground opacity-40" />
             </div>
             <p className="text-sm text-muted-foreground">未找到匹配的学生</p>
-            <button 
+            <button
               className="mt-2 text-sm text-primary font-medium hover:underline"
               onClick={() => setSearchQuery("")}
             >
@@ -146,25 +155,30 @@ function StudentList({
         ) : (
           <div className="p-3">
             {filteredStudents.map((student) => (
-              <div 
-                key={student.id} 
+              <div
+                key={student.id}
                 className={`px-3 py-2.5 rounded-md mb-1 flex items-center cursor-pointer transition-all duration-200 group ${
-                  selectedStudentId === student.id 
-                    ? 'bg-primary/10 border-l-4 border-l-primary' 
-                    : 'hover:bg-slate-50 border-l-4 border-l-transparent hover:border-l-primary/50'
+                  selectedStudentId === student.id
+                    ? "bg-primary/10 border-l-4 border-l-primary"
+                    : "hover:bg-slate-50 border-l-4 border-l-transparent hover:border-l-primary/50"
                 }`}
                 onClick={() => onSelectStudent(student)}
               >
                 <Avatar className="h-10 w-10 mr-3 ring-1 ring-gray-100 transition-shadow group-hover:ring-2 group-hover:ring-primary/20">
                   <AvatarImage src={student.avatar} alt={student.name} />
-                  <AvatarFallback className="text-sm bg-slate-100 text-slate-500">{student.name.slice(0, 2)}</AvatarFallback>
+                  <AvatarFallback className="text-sm bg-slate-100 text-slate-500">
+                    {student.name.slice(0, 2)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-slate-700 group-hover:text-primary transition-colors truncate">
                     {student.name}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    学号: <span className="font-medium text-slate-600">{student.studentId}</span>
+                    学号:{" "}
+                    <span className="font-medium text-slate-600">
+                      {student.id}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -172,21 +186,21 @@ function StudentList({
           </div>
         )}
       </div>
-      
+
       <style jsx global>{`
         .student-list-scroll::-webkit-scrollbar {
           width: 4px;
         }
-        
+
         .student-list-scroll::-webkit-scrollbar-track {
           background: transparent;
         }
-        
+
         .student-list-scroll::-webkit-scrollbar-thumb {
           background-color: rgba(203, 213, 225, 0.7);
           border-radius: 4px;
         }
-        
+
         .student-list-scroll::-webkit-scrollbar-thumb:hover {
           background-color: rgba(148, 163, 184, 0.8);
         }
@@ -210,12 +224,12 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
       setActiveTab("tracking");
     };
 
-    window.addEventListener('record-added', handleRecordAdded);
-    window.addEventListener('refresh-student-records', handleRecordAdded);
-    
+    window.addEventListener("record-added", handleRecordAdded);
+    window.addEventListener("refresh-student-records", handleRecordAdded);
+
     return () => {
-      window.removeEventListener('record-added', handleRecordAdded);
-      window.removeEventListener('refresh-student-records', handleRecordAdded);
+      window.removeEventListener("record-added", handleRecordAdded);
+      window.removeEventListener("refresh-student-records", handleRecordAdded);
     };
   }, []);
 
@@ -230,16 +244,16 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
               {student.name.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 space-y-2 text-center md:text-left">
             <div>
               <h2 className="text-xl font-bold flex items-center justify-center md:justify-start gap-2">
                 {student.name}
                 <Badge variant="outline" className="ml-2 text-xs font-normal">
-                  {student.grade} {student.class}
+                  {student.gradeId} {student.classId}
                 </Badge>
               </h2>
-              <p className="text-muted-foreground">学号: {student.studentId}</p>
+              <p className="text-muted-foreground">学号: {student.id}</p>
             </div>
           </div>
         </div>
@@ -265,22 +279,22 @@ function StudentDetail({ student }: { student: EnrichedStudent }) {
             学生评价
           </TabsTrigger>
         </TabsList>
-        
+
         {/* 学生轮盘(素养概览和素养详情) */}
         <TabsContent value="competency" className="mt-0">
-          <StudentCompetency indicators={student.indicators} />
+          <StudentCompetency />
         </TabsContent>
-        
+
         {/* 学生学业 */}
         <TabsContent value="academic" className="mt-0">
           <StudentAcademic records={student.academicRecords || []} />
         </TabsContent>
-        
+
         {/* 学生追踪 */}
         <TabsContent value="tracking" className="mt-0">
           <StudentTracking studentId={student.id} />
         </TabsContent>
-        
+
         {/* 学生评价 */}
         <TabsContent value="evaluation" className="mt-0">
           <StudentEvaluation studentId={student.id} />
@@ -309,22 +323,24 @@ function TeacherViewSkeleton() {
 // 教师视图主组件
 export default function TeacherView() {
   const [students, setStudents] = useState<EnrichedStudent[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<EnrichedStudent | null>(null);
+  const [selectedStudent, setSelectedStudent] =
+    useState<EnrichedStudent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // 获取教师管理的学生列表
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/teacher/mentored-students');
-      
+      const response = await fetch("/api/teacher/mentored-students");
+
       if (!response.ok) {
-        throw new Error('Failed to fetch students');
+        throw new Error("Failed to fetch students");
       }
-      
+
       const data = await response.json();
-      
+
       // 转换数据格式以符合EnrichedStudent类型
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const enrichedStudents: EnrichedStudent[] = data.map((student: any) => ({
         id: student.id,
         name: student.name,
@@ -336,44 +352,44 @@ export default function TeacherView() {
         indicators: [
           {
             id: `academic-${student.id}`,
-            name: '学术素养',
+            name: "学术素养",
             value: student.competencyStatus.academic,
             maxValue: 100,
-            description: '学术和学科知识掌握程度'
+            description: "学术和学科知识掌握程度",
           },
           {
             id: `social-${student.id}`,
-            name: '社交素养',
+            name: "社交素养",
             value: student.competencyStatus.social,
             maxValue: 100,
-            description: '人际交往和团队协作能力'
+            description: "人际交往和团队协作能力",
           },
           {
             id: `personal-${student.id}`,
-            name: '个人素养',
+            name: "个人素养",
             value: student.competencyStatus.personal,
             maxValue: 100,
-            description: '自我管理和个人发展能力'
+            description: "自我管理和个人发展能力",
           },
           {
             id: `engineering-${student.id}`,
-            name: '工程素养',
+            name: "工程素养",
             value: student.competencyStatus.engineering,
             maxValue: 100,
-            description: '实践能力和解决实际问题的能力'
-          }
-        ]
+            description: "实践能力和解决实际问题的能力",
+          },
+        ],
       }));
-      
+
       setStudents(enrichedStudents);
-      
+
       // 如果有学生数据，默认选择第一个学生
       if (enrichedStudents.length > 0 && !selectedStudent) {
         fetchStudentDetail(enrichedStudents[0].id);
       }
     } catch (error) {
-      console.error('获取学生列表失败:', error);
-      toast.error('获取学生列表失败');
+      console.error("获取学生列表失败:", error);
+      toast.error("获取学生列表失败");
     } finally {
       setIsLoading(false);
     }
@@ -383,66 +399,69 @@ export default function TeacherView() {
   const fetchStudentDetail = async (studentId: string) => {
     try {
       const response = await fetch(`/api/teacher/student/${studentId}`);
-      
+
       if (!response.ok) {
-        throw new Error('获取学生详细信息失败');
+        throw new Error("获取学生详细信息失败");
       }
-      
+
       const data = await response.json();
-      
+
+      // TODO: 字段补全
       // 将API返回的数据转换成组件需要的格式
       const enrichedStudent: EnrichedStudent = {
         id: data.id,
         name: data.name,
         avatar: data.avatar,
-        studentId: data.studentId,
-        grade: data.grade,
-        class: data.class,
+        gradeId: data.gradeId,
+        classId: data.classId,
         gender: data.gender,
-        birthday: data.birthday,
-        contact: data.contact,
+        birthDate: data.birthDate,
+        // contact: data.contact,
         address: data.address,
-        interests: data.interests,
-        strengths: data.strengths,
-        areasToImprove: data.areasToImprove,
-        notes: data.notes,
+        // interests: data.interests,
+        // strengths: data.strengths,
+        // areasToImprove: data.areasToImprove,
+        // notes: data.notes,
         academicRecords: data.academicRecords,
+        enrollmentYear: "",
+        studentNumber: "",
+        status: "",
         indicators: [
           {
-            id: 'academic',
-            name: '学术素养',
+            id: "academic",
+            name: "学术素养",
             value: data.competencyDetail.academic.progress,
             maxValue: 100,
-            description: data.competencyDetail.academic.description
+            description: data.competencyDetail.academic.description,
           },
           {
-            id: 'social',
-            name: '社交素养',
+            id: "social",
+            name: "社交素养",
             value: data.competencyDetail.social.progress,
             maxValue: 100,
-            description: data.competencyDetail.social.description
+            description: data.competencyDetail.social.description,
           },
           {
-            id: 'personal',
-            name: '个人素养',
+            id: "personal",
+            name: "个人素养",
             value: data.competencyDetail.personal.progress,
             maxValue: 100,
-            description: data.competencyDetail.personal.description
+            description: data.competencyDetail.personal.description,
           },
           {
-            id: 'engineering',
-            name: '工程素养',
+            id: "engineering",
+            name: "工程素养",
             value: data.competencyDetail.engineering.progress,
             maxValue: 100,
-            description: data.competencyDetail.engineering.description
-          }
-        ]
+            description: data.competencyDetail.engineering.description,
+          },
+        ],
       };
-      
+
       setSelectedStudent(enrichedStudent);
     } catch (error) {
-      console.error('获取学生详细信息失败:', error);
-      toast.error('获取学生详细信息失败');
+      console.error("获取学生详细信息失败:", error);
+      toast.error("获取学生详细信息失败");
     }
   };
 
@@ -454,6 +473,7 @@ export default function TeacherView() {
   // 组件挂载时获取学生列表
   useEffect(() => {
     fetchStudents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 添加全局事件监听，响应hero栏中的record-added事件
@@ -463,22 +483,22 @@ export default function TeacherView() {
       // 检查事件详情
       const customEvent = event as CustomEvent;
       console.log("事件详情:", customEvent.detail);
-      
+
       // 无论选中了哪个学生，都应该刷新学生列表
       fetchStudents();
-      
+
       if (selectedStudent) {
         // 刷新学生详情，包括学生记录
         console.log("刷新学生详情:", selectedStudent.id);
         fetchStudentDetail(selectedStudent.id);
-        
+
         // 这里我们添加一个直接的DOM事件来触发学生记录组件的刷新
-        const refreshEvent = new CustomEvent('refresh-student-records', { 
-          detail: { studentId: selectedStudent.id } 
+        const refreshEvent = new CustomEvent("refresh-student-records", {
+          detail: { studentId: selectedStudent.id },
         });
         console.log("触发refresh-student-records事件");
         window.dispatchEvent(refreshEvent);
-        
+
         toast.success("学生记录已更新");
       } else {
         // 如果没有选中学生，但学生列表有数据，选择第一个学生
@@ -491,11 +511,12 @@ export default function TeacherView() {
       }
     };
 
-    window.addEventListener('record-added', handleRecordAdded);
-    
+    window.addEventListener("record-added", handleRecordAdded);
+
     return () => {
-      window.removeEventListener('record-added', handleRecordAdded);
+      window.removeEventListener("record-added", handleRecordAdded);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStudent, students]);
 
   // 处理刷新
@@ -504,7 +525,7 @@ export default function TeacherView() {
     if (selectedStudent) {
       fetchStudentDetail(selectedStudent.id);
     }
-    toast.success('数据已刷新');
+    toast.success("数据已刷新");
   };
 
   if (isLoading) {
@@ -514,14 +535,14 @@ export default function TeacherView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="col-span-1 lg:col-span-2 bg-white rounded-xl overflow-hidden">
-        <StudentList 
-          students={students} 
+        <StudentList
+          students={students}
           onSelectStudent={handleSelectStudent}
           selectedStudentId={selectedStudent?.id || null}
           onRefresh={handleRefresh}
         />
       </div>
-      
+
       <div className="col-span-1 lg:col-span-10">
         {selectedStudent ? (
           <StudentDetail student={selectedStudent} />
@@ -539,4 +560,4 @@ export default function TeacherView() {
       </div>
     </div>
   );
-} 
+}

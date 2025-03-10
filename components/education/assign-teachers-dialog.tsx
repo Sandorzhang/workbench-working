@@ -12,30 +12,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -85,7 +72,7 @@ export function AssignTeachersDialog({
 }: AssignTeachersDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allTeachers, setAllTeachers] = useState<Teacher[]>([]);
-  const [classData, setClassData] = useState<Class | null>(null);
+  const [, setClassData] = useState<Class | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
 
@@ -98,7 +85,7 @@ export function AssignTeachersDialog({
   });
 
   // 监听选中的教师变化
-  const watchTeachers = form.watch("teacherIds");
+  // const watchTeachers = form.watch("teacherIds");
 
   // 重置表单
   const resetForm = () => {
@@ -130,7 +117,7 @@ export function AssignTeachersDialog({
           }
           const classData = await classResponse.json();
           setClassData(classData);
-          
+
           // 设置已选教师
           setSelectedTeacherIds(classData.teacherIds || []);
           form.setValue("teacherIds", classData.teacherIds || []);
@@ -147,6 +134,7 @@ export function AssignTeachersDialog({
     } else {
       resetForm();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, classId, form]);
 
   const onSubmit = async (values: FormValues) => {
@@ -184,16 +172,19 @@ export function AssignTeachersDialog({
   };
 
   // 处理教师勾选/取消勾选
-  const handleTeacherSelection = (teacherId: string, isChecked: boolean | "indeterminate") => {
+  const handleTeacherSelection = (
+    teacherId: string,
+    isChecked: boolean | "indeterminate"
+  ) => {
     if (isChecked === true) {
       const newSelected = [...selectedTeacherIds, teacherId];
       setSelectedTeacherIds(newSelected);
       form.setValue("teacherIds", newSelected);
     } else {
-      const newSelected = selectedTeacherIds.filter(id => id !== teacherId);
+      const newSelected = selectedTeacherIds.filter((id) => id !== teacherId);
       setSelectedTeacherIds(newSelected);
       form.setValue("teacherIds", newSelected);
-      
+
       // 如果取消选中的是班主任，也清除班主任设置
       if (form.getValues("headTeacherId") === teacherId) {
         form.setValue("headTeacherId", undefined);
@@ -236,7 +227,10 @@ export function AssignTeachersDialog({
                   <TableBody>
                     {allTeachers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell
+                          colSpan={7}
+                          className="text-center py-8 text-muted-foreground"
+                        >
                           暂无教师数据
                         </TableCell>
                       </TableRow>
@@ -244,11 +238,11 @@ export function AssignTeachersDialog({
                       allTeachers.map((teacher) => (
                         <TableRow key={teacher.id}>
                           <TableCell>
-                            <Checkbox 
+                            <Checkbox
                               checked={selectedTeacherIds.includes(teacher.id)}
-                              onCheckedChange={(checked: boolean | "indeterminate") => 
-                                handleTeacherSelection(teacher.id, checked)
-                              }
+                              onCheckedChange={(
+                                checked: boolean | "indeterminate"
+                              ) => handleTeacherSelection(teacher.id, checked)}
                             />
                           </TableCell>
                           <TableCell>{teacher.name}</TableCell>
@@ -257,12 +251,18 @@ export function AssignTeachersDialog({
                           <TableCell>{teacher.subject}</TableCell>
                           <TableCell>{teacher.title}</TableCell>
                           <TableCell>
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               name="headTeacher"
-                              disabled={!selectedTeacherIds.includes(teacher.id)}
-                              checked={form.getValues("headTeacherId") === teacher.id}
-                              onChange={() => form.setValue("headTeacherId", teacher.id)}
+                              disabled={
+                                !selectedTeacherIds.includes(teacher.id)
+                              }
+                              checked={
+                                form.getValues("headTeacherId") === teacher.id
+                              }
+                              onChange={() =>
+                                form.setValue("headTeacherId", teacher.id)
+                              }
                               className="h-4 w-4 text-primary rounded-full focus:ring-primary"
                             />
                           </TableCell>
@@ -276,7 +276,7 @@ export function AssignTeachersDialog({
               <FormField
                 control={form.control}
                 name="teacherIds"
-                render={({ field }) => (
+                render={({}) => (
                   <FormItem>
                     <FormMessage />
                   </FormItem>
@@ -291,7 +291,12 @@ export function AssignTeachersDialog({
                 >
                   取消
                 </Button>
-                <Button type="submit" disabled={isSubmitting || form.getValues("teacherIds").length === 0}>
+                <Button
+                  type="submit"
+                  disabled={
+                    isSubmitting || form.getValues("teacherIds").length === 0
+                  }
+                >
                   {isSubmitting ? "保存中..." : "确认分配"}
                 </Button>
               </DialogFooter>
@@ -301,4 +306,4 @@ export function AssignTeachersDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

@@ -37,16 +37,20 @@ import { toast } from "sonner";
 import {
   Search,
   Filter,
-  Shield,
   UserCog,
-  Settings,
   AppWindow,
   Info,
   CheckCircle2,
   XCircle,
   RefreshCw,
-  User,
 } from "lucide-react";
+
+// 用户数据类型
+interface UserData {
+  id: string;
+  name: string;
+  role: string;
+}
 
 // 资源权限类型
 interface ResourcePermission {
@@ -110,9 +114,7 @@ export default function PermissionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [users, setUsers] = useState<
-    { id: string; name: string; role: string }[]
-  >([]);
+  const [users, setUsers] = useState<UserData[]>([]);
 
   // 检查认证状态
   useEffect(() => {
@@ -150,6 +152,7 @@ export default function PermissionsPage() {
     // 加载初始数据
     fetchAppPermissions();
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, currentUser, router, authLoading]);
 
   // 当选择的用户ID改变时，获取用户权限
@@ -201,7 +204,7 @@ export default function PermissionsPage() {
       const data = await response.json();
       //console.log(`成功获取${data.length}个用户`);
       setUsers(
-        data.map((user: any) => ({
+        data.map((user: UserData) => ({
           id: user.id,
           name: user.name,
           role: user.role,

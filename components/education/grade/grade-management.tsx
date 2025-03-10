@@ -6,35 +6,53 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CardContainer } from "@/components/ui/card-container";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationLink } from "@/components/ui/pagination";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationLink,
+} from "@/components/ui/pagination";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
-import { 
-  Search, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  MoreHorizontal,
-  RefreshCw,
-  BookOpen,
-  Loader2
-} from "lucide-react";
+import { Search, Plus, MoreHorizontal, RefreshCw, Loader2 } from "lucide-react";
 import { Grade } from "@/types/models/education";
 
 // 表单验证模式
@@ -84,7 +102,8 @@ export default function GradeManagement() {
     defaultValues: {
       gradeLevel: "",
       gradeNumber: 1,
-      academicYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
+      academicYear:
+        new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       description: "",
     },
   });
@@ -104,7 +123,9 @@ export default function GradeManagement() {
   const loadGrades = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/grades?page=${currentPage}&limit=${pageSize}&search=${searchQuery}`);
+      const response = await fetch(
+        `/api/grades?page=${currentPage}&limit=${pageSize}&search=${searchQuery}`
+      );
       if (!response.ok) {
         throw new Error("获取年级列表失败");
       }
@@ -123,6 +144,7 @@ export default function GradeManagement() {
   // 监听页码变化，重新加载数据
   useEffect(() => {
     loadGrades();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchQuery]);
 
   // 处理搜索输入
@@ -136,7 +158,8 @@ export default function GradeManagement() {
     form.reset({
       gradeLevel: "",
       gradeNumber: 1,
-      academicYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
+      academicYear:
+        new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       description: "",
     });
     setIsAddDialogOpen(true);
@@ -180,7 +203,7 @@ export default function GradeManagement() {
         const errorData = await response.json();
         toast.error(errorData.error || "添加失败，请重试");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("添加失败，请重试");
     } finally {
       setIsSubmitting(false);
@@ -190,7 +213,7 @@ export default function GradeManagement() {
   // 编辑年级
   const onEditSubmit = async (data: GradeFormValues) => {
     if (!selectedGrade) return;
-    
+
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/grades/${selectedGrade.id}`, {
@@ -209,7 +232,7 @@ export default function GradeManagement() {
         const errorData = await response.json();
         toast.error(errorData.error || "更新失败，请重试");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("更新失败，请重试");
     } finally {
       setIsSubmitting(false);
@@ -219,7 +242,7 @@ export default function GradeManagement() {
   // 删除年级
   const handleDelete = async () => {
     if (!selectedGrade) return;
-    
+
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/grades/${selectedGrade.id}`, {
@@ -234,7 +257,7 @@ export default function GradeManagement() {
         const errorData = await response.json();
         toast.error(errorData.error || "删除失败，请重试");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("删除失败，请重试");
     } finally {
       setIsSubmitting(false);
@@ -261,7 +284,12 @@ export default function GradeManagement() {
           />
         </div>
         <div className="flex gap-2">
-          <Button onClick={loadGrades} variant="outline" size="icon" className="h-10 w-10">
+          <Button
+            onClick={loadGrades}
+            variant="outline"
+            size="icon"
+            className="h-10 w-10"
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
           <Button onClick={openAddDialog} className="h-10">
@@ -298,15 +326,15 @@ export default function GradeManagement() {
                         colSpan={4}
                         className="h-32 text-center text-muted-foreground"
                       >
-                        {searchQuery
-                          ? "未找到匹配的年级"
-                          : "暂无年级数据"}
+                        {searchQuery ? "未找到匹配的年级" : "暂无年级数据"}
                       </TableCell>
                     </TableRow>
                   ) : (
                     grades.map((grade) => (
                       <TableRow key={grade.id}>
-                        <TableCell className="font-medium">{grade.gradeLevel}</TableCell>
+                        <TableCell className="font-medium">
+                          {grade.gradeLevel}
+                        </TableCell>
                         <TableCell>{grade.gradeNumber}</TableCell>
                         <TableCell>{grade.academicYear}</TableCell>
                         <TableCell className="max-w-xs truncate">
@@ -328,7 +356,9 @@ export default function GradeManagement() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openEditDialog(grade)}>
+                                <DropdownMenuItem
+                                  onClick={() => openEditDialog(grade)}
+                                >
                                   编辑
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -367,7 +397,9 @@ export default function GradeManagement() {
                       setCurrentPage(currentPage - 1);
                     }
                   }}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  }
                 />
               </PaginationItem>
               {Array.from({ length: totalPages }).map((_, i) => (
@@ -387,7 +419,11 @@ export default function GradeManagement() {
                       setCurrentPage(currentPage + 1);
                     }
                   }}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -405,7 +441,10 @@ export default function GradeManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onAddSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onAddSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="gradeLevel"
@@ -426,12 +465,12 @@ export default function GradeManagement() {
                   <FormItem>
                     <FormLabel>年级编号</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         placeholder="例如：1"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
-                        value={field.value || ''}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
@@ -494,7 +533,10 @@ export default function GradeManagement() {
             </DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+            <form
+              onSubmit={editForm.handleSubmit(onEditSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={editForm.control}
                 name="gradeLevel"
@@ -515,12 +557,12 @@ export default function GradeManagement() {
                   <FormItem>
                     <FormLabel>年级编号</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="例如：1" 
+                      <Input
+                        type="number"
+                        placeholder="例如：1"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
-                        value={field.value || ''}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
@@ -589,16 +631,16 @@ export default function GradeManagement() {
             </p>
           </div>
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
             >
               取消
             </Button>
-            <Button 
-              type="button" 
-              variant="destructive" 
+            <Button
+              type="button"
+              variant="destructive"
               onClick={handleDelete}
               disabled={isSubmitting}
             >
@@ -616,4 +658,4 @@ export default function GradeManagement() {
       </Dialog>
     </div>
   );
-} 
+}

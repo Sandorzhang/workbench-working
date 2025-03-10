@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import ClassManagement from "@/components/education/class/class-management";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "班级管理",
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function ClassesPage() {
   return (
     <div className="container py-8">
-      <ClassManagement />
+      <Suspense fallback={<div>加载中...</div>}>
+        <ClassManagement />
+      </Suspense>
     </div>
   );
-} 
+}

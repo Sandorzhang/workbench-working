@@ -56,6 +56,7 @@ interface SectionContainerProps {
   /**
    * 其他属性
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
@@ -91,7 +92,7 @@ export function SectionContainer({
   // 加载状态
   if (loading) {
     return (
-      <div 
+      <div
         className={cn(
           "rounded-xl border border-gray-100/80",
           backgroundClassName || "bg-white",
@@ -109,10 +110,10 @@ export function SectionContainer({
             {description && <Skeleton className="h-4 w-1/2" />}
           </div>
         )}
-        
+
         {/* 分隔线骨架屏 */}
         {divider && <Skeleton className="h-px w-full my-4" />}
-        
+
         {/* 内容区域骨架屏 */}
         <div className="space-y-4">
           <Skeleton className="h-24 w-full rounded-md" />
@@ -127,7 +128,7 @@ export function SectionContainer({
   }
 
   return (
-    <div 
+    <div
       className={cn(
         "rounded-xl border border-gray-100/80",
         backgroundClassName || "bg-white",
@@ -139,14 +140,16 @@ export function SectionContainer({
     >
       {/* 区块标题区域 */}
       {(title || description || actions) && (
-        <div className={cn(
-          "flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0",
-          paddingMap[padding],
-          divider && "border-b border-gray-100"
-        )}>
+        <div
+          className={cn(
+            "flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0",
+            paddingMap[padding],
+            divider && "border-b border-gray-100"
+          )}
+        >
           <div className="space-y-1">
             {title && (
-              <h2 
+              <h2
                 className={cn(
                   "text-lg font-medium text-gray-900",
                   collapsible && "flex items-center cursor-pointer select-none"
@@ -156,23 +159,25 @@ export function SectionContainer({
                 {collapsible && (
                   <svg
                     className={cn(
-                      "mr-1.5 h-4 w-4 text-gray-500 transition-transform", 
+                      "mr-1.5 h-4 w-4 text-gray-500 transition-transform",
                       isOpen ? "transform rotate-0" : "transform rotate-180"
                     )}
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
-                    <path fillRule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832 6.29 12.77a.75.75 0 11-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832 6.29 12.77a.75.75 0 11-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 )}
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-sm text-gray-500">
-                {description}
-              </p>
+              <p className="text-sm text-gray-500">{description}</p>
             )}
           </div>
           {actions && (
@@ -182,12 +187,14 @@ export function SectionContainer({
           )}
         </div>
       )}
-      
+
       {/* 区块内容区域 */}
       {(!collapsible || isOpen) && (
-        <div 
+        <div
           className={cn(
-            (!title && !description && !actions) || !divider ? paddingMap[padding] : "px-6 pb-6 pt-4"
+            (!title && !description && !actions) || !divider
+              ? paddingMap[padding]
+              : "px-6 pb-6 pt-4"
           )}
         >
           {children}
@@ -195,4 +202,4 @@ export function SectionContainer({
       )}
     </div>
   );
-} 
+}

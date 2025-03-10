@@ -63,7 +63,7 @@ export function ClassOverview({ classId, className }: ClassOverviewProps) {
     fetchData();
   }, [classId]);
 
-  const handleTimeRangeChange = (startDate: Date, endDate: Date) => {
+  const handleTimeRangeChange = () => {
     // In a real application, this would fetch data for the selected time range
     //console.log('Time range changed:', { startDate, endDate });
   };

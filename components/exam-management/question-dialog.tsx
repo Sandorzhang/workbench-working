@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -17,52 +17,55 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { toast } from '@/components/ui/use-toast'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "@/components/ui/use-toast";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Question, LearningObjective } from '@/types/question'
-import { CheckCircle2, Image, Loader2, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Label } from '@/components/ui/label'
+} from "@/components/ui/select";
+import { Question, LearningObjective } from "@/types/question";
+import { Image as ImageIcon, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // 表单验证架构
 const questionSchema = z.object({
-  questionNumber: z.string().min(1, '题号不能为空'),
-  learningObjective: z.string().min(1, '请选择学业目标'),
-  score: z.coerce.number().min(0.5, '分值不能小于0.5').max(100, '分值不能超过100'),
+  questionNumber: z.string().min(1, "题号不能为空"),
+  learningObjective: z.string().min(1, "请选择学业目标"),
+  score: z.coerce
+    .number()
+    .min(0.5, "分值不能小于0.5")
+    .max(100, "分值不能超过100"),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
-})
+});
 
-type QuestionFormValues = z.infer<typeof questionSchema>
+type QuestionFormValues = z.infer<typeof questionSchema>;
 
 const defaultValues: Partial<QuestionFormValues> = {
-  questionNumber: '',
-  learningObjective: '',
+  questionNumber: "",
+  learningObjective: "",
   score: 1,
-  description: '',
-  imageUrl: '',
-}
+  description: "",
+  imageUrl: "",
+};
 
 interface QuestionDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  question: Question | null
-  learningObjectives: LearningObjective[]
-  isLoading: boolean
-  examSubject: string // 添加考试学科属性
-  onSubmit: (data: Partial<Question>) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  question: Question | null;
+  learningObjectives: LearningObjective[];
+  isLoading: boolean;
+  examSubject: string; // 添加考试学科属性
+  onSubmit: (data: Partial<Question>) => void;
 }
 
 export function QuestionDialog({
@@ -74,16 +77,16 @@ export function QuestionDialog({
   examSubject,
   onSubmit,
 }: QuestionDialogProps) {
-  const isEditing = Boolean(question?.id)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
+  const isEditing = Boolean(question?.id);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // 设置表单
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(questionSchema),
     defaultValues,
-    mode: 'onChange',
-  })
+    mode: "onChange",
+  });
 
   // 当对话框打开或题目变化时重置表单
   useEffect(() => {
@@ -93,102 +96,105 @@ export function QuestionDialog({
           questionNumber: question.questionNumber,
           learningObjective: question.learningObjective,
           score: question.score,
-          description: question.description || '',
-          imageUrl: question.imageUrl || '',
-        })
-        setImagePreview(question.imageUrl || null)
+          description: question.description || "",
+          imageUrl: question.imageUrl || "",
+        });
+        setImagePreview(question.imageUrl || null);
       } else {
-        form.reset(defaultValues)
-        setImagePreview(null)
+        form.reset(defaultValues);
+        setImagePreview(null);
       }
     }
-  }, [open, question, form])
+  }, [open, question, form]);
 
   // 处理图片上传
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     // 检查文件类型
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       toast({
-        title: '文件类型错误',
-        description: '请上传图片文件',
-        variant: 'destructive',
-      })
-      return
+        title: "文件类型错误",
+        description: "请上传图片文件",
+        variant: "destructive",
+      });
+      return;
     }
 
     // 检查文件大小（限制为2MB）
     if (file.size > 2 * 1024 * 1024) {
       toast({
-        title: '文件过大',
-        description: '图片大小不能超过2MB',
-        variant: 'destructive',
-      })
-      return
+        title: "文件过大",
+        description: "图片大小不能超过2MB",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setIsUploading(true)
+    setIsUploading(true);
 
     try {
       // 在实际应用中，这里应该上传图片到服务器
       // 这里我们模拟上传过程，并使用本地URL预览
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (event) => {
-        const imageUrl = event.target?.result as string
-        setImagePreview(imageUrl)
-        form.setValue('imageUrl', imageUrl)
-        setIsUploading(false)
-      }
-      reader.readAsDataURL(file)
+        const imageUrl = event.target?.result as string;
+        setImagePreview(imageUrl);
+        form.setValue("imageUrl", imageUrl);
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
 
       // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error('图片上传失败:', error)
+      console.error("图片上传失败:", error);
       toast({
-        title: '图片上传失败',
-        description: '请稍后再试',
-        variant: 'destructive',
-      })
-      setIsUploading(false)
+        title: "图片上传失败",
+        description: "请稍后再试",
+        variant: "destructive",
+      });
+      setIsUploading(false);
     }
-  }
+  };
 
   // 移除图片
   const handleRemoveImage = () => {
-    setImagePreview(null)
-    form.setValue('imageUrl', '')
-  }
+    setImagePreview(null);
+    form.setValue("imageUrl", "");
+  };
 
   // 处理表单提交
   const handleSubmit = (data: QuestionFormValues) => {
     const submissionData: Partial<Question> = {
       ...data,
-    }
+    };
 
     if (isEditing && question?.id) {
-      submissionData.id = question.id
+      submissionData.id = question.id;
     }
 
-    onSubmit(submissionData)
-  }
+    onSubmit(submissionData);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? '编辑题目' : '添加题目'}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "编辑题目" : "添加题目"}</DialogTitle>
           <DialogDescription>
-            {isEditing ? '修改题目信息和分值' : '添加新题目并设置学业目标和分值'}
+            {isEditing
+              ? "修改题目信息和分值"
+              : "添加新题目并设置学业目标和分值"}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="questionNumber"
@@ -225,13 +231,18 @@ export function QuestionDialog({
                     <SelectContent className="max-h-[300px]">
                       {learningObjectives.length === 0 ? (
                         <div className="p-2 text-center text-muted-foreground">
-                          {isLoading ? '加载中...' : '暂无学业目标数据'}
+                          {isLoading ? "加载中..." : "暂无学业目标数据"}
                         </div>
                       ) : (
                         learningObjectives.map((objective) => (
-                          <SelectItem key={objective.id || objective.code} value={objective.code}>
+                          <SelectItem
+                            key={objective.id || objective.code}
+                            value={objective.code}
+                          >
                             <div className="flex flex-col">
-                              <span className="font-medium">{objective.code}</span>
+                              <span className="font-medium">
+                                {objective.code}
+                              </span>
                               <span className="text-xs text-muted-foreground truncate max-w-[320px]">
                                 {objective.description}
                               </span>
@@ -242,7 +253,8 @@ export function QuestionDialog({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    选择对应的学业目标，这些目标与{examSubject}学科的教学内容和评价标准相关联
+                    选择对应的学业目标，这些目标与{examSubject}
+                    学科的教学内容和评价标准相关联
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -263,10 +275,10 @@ export function QuestionDialog({
                       step={0.5}
                       {...field}
                       onChange={(e) => {
-                        const value = parseFloat(e.target.value)
-                        if (value < 0.5) e.target.value = '0.5'
-                        if (value > 100) e.target.value = '100'
-                        field.onChange(e)
+                        const value = parseFloat(e.target.value);
+                        if (value < 0.5) e.target.value = "0.5";
+                        if (value > 100) e.target.value = "100";
+                        field.onChange(e);
                       }}
                     />
                   </FormControl>
@@ -298,17 +310,18 @@ export function QuestionDialog({
             <FormField
               control={form.control}
               name="imageUrl"
-              render={({ field }) => (
+              render={({}) => (
                 <FormItem>
                   <FormLabel>题目图片</FormLabel>
                   <div className="space-y-2">
                     {imagePreview ? (
                       <div className="relative rounded-md border overflow-hidden">
                         <div className="relative aspect-video w-full bg-muted/30">
-                          <img
+                          <Image
                             src={imagePreview}
                             alt="题目图片预览"
-                            className="object-contain h-full w-full"
+                            fill
+                            className="object-contain"
                           />
                         </div>
                         <Button
@@ -328,16 +341,23 @@ export function QuestionDialog({
                           "border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors",
                           isUploading && "pointer-events-none opacity-60"
                         )}
-                        onClick={() => document.getElementById('image-upload')?.click()}
+                        onClick={() =>
+                          document.getElementById("image-upload")?.click()
+                        }
                       >
                         {isUploading ? (
                           <div className="flex flex-col items-center justify-center">
                             <Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-2" />
-                            <p className="text-sm text-muted-foreground">上传中...</p>
+                            <p className="text-sm text-muted-foreground">
+                              上传中...
+                            </p>
                           </div>
                         ) : (
                           <>
-                            <Image className="h-10 w-10 text-muted-foreground mb-2" />
+                            <ImageIcon
+                              className="h-10 w-10 text-muted-foreground mb-2"
+                              aria-hidden="true"
+                            />
                             <p className="font-medium">点击上传题目图片</p>
                             <p className="text-xs text-muted-foreground mt-1">
                               支持JPG、PNG格式，最大2MB
@@ -374,12 +394,12 @@ export function QuestionDialog({
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditing ? '保存修改' : '添加题目'}
+                {isEditing ? "保存修改" : "添加题目"}
               </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
-} 
+  );
+}
