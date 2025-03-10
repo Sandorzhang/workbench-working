@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { Region } from '@/lib/api-types';
+import { Region, RegionPageRequest } from '@/types/models/region';
+import { 
+  getRegionsByPage, 
+  createRegion, 
+  updateRegion, 
+  deleteRegion as deleteRegionApi
+} from '@/api/regions';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -24,7 +30,7 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Search, Plus, Edit, Trash2, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 // 对话框组件
@@ -49,71 +55,161 @@ import { Switch } from '@/components/ui/switch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-// 区域表单验证模式
+// 表单验证模式
 const regionFormSchema = z.object({
-  id: z.string()
-    .min(6, '区域ID必须是6位数字')
-    .max(6, '区域ID必须是6位数字')
-    .regex(/^\d+$/, '区域ID必须是数字'),
-  name: z.string().min(1, '区域名称不能为空'),
+  id: z
+    .string()
+    .min(6, { message: '区域编码必须为6位数字' })
+    .max(6, { message: '区域编码必须为6位数字' })
+    .regex(/^\d+$/, { message: '区域编码只能包含数字' }),
+  name: z
+    .string()
+    .min(2, { message: '区域名称至少需要2个字符' })
+    .max(50, { message: '区域名称不能超过50个字符' }),
   status: z.boolean().default(true),
 });
 
 type RegionFormValues = z.infer<typeof regionFormSchema>;
 
 // 默认表单值
-const defaultValues: Partial<RegionFormValues> = {
+const defaultValues: RegionFormValues = {
+  id: '',
+  name: '',
   status: true,
 };
 
+// 每页条数选项
+const pageSizeOptions = [10, 20, 50, 100];
+
 export default function RegionsPage() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const router = useRouter();
   const [regions, setRegions] = useState<Region[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // 对话框状态
+  const [statusFilter, setStatusFilter] = useState<boolean | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+  const [regionToDelete, setRegionToDelete] = useState<Region | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [regionToDelete, setRegionToDelete] = useState<Region | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPage, setTotalPage] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
-  // 创建表单
   const form = useForm<RegionFormValues>({
     resolver: zodResolver(regionFormSchema),
     defaultValues,
   });
 
+  // 身份验证检查
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+    
+    if (!authLoading && isAuthenticated && user?.role !== 'superadmin') {
+      router.push('/workbench');
+    }
+  }, [authLoading, isAuthenticated, router, user]);
+
+  // 初始数据加载
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'superadmin') {
+      fetchRegions();
+    }
+  }, [isAuthenticated, user, pageNumber, pageSize]);
+
+  // 搜索或状态筛选时重置页码并获取数据
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'superadmin') {
+      setPageNumber(1);
+      const timeoutId = setTimeout(() => {
+        fetchRegions();
+      }, 300);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchQuery, statusFilter]);
+
   // 获取区域数据
   const fetchRegions = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/regions');
       
-      if (!response.ok) {
-        throw new Error('获取区域数据失败');
+      const params: RegionPageRequest = {
+        pageNumber,
+        pageSize
+      };
+      
+      // 添加可选的筛选条件
+      if (searchQuery) {
+        params.name = searchQuery;
       }
       
-      const data = await response.json();
-      setRegions(data.regions);
-    } catch (error) {
-      console.error('Error fetching regions:', error);
-      toast.error('获取区域数据失败');
+      if (statusFilter !== undefined) {
+        params.status = statusFilter;
+      }
+      
+      console.log('获取区域数据参数:', params);
+      // 使用更新后的API调用，已经整合了request模块
+      const response = await getRegionsByPage(params);
+      console.log('获取区域数据响应:', response);
+      
+      // Request模块会自动解析并提取响应数据，处理错误情况
+      if (response && response.code === "0" && response.data) {
+        // 正确获取数据
+        setRegions(response.data.list || []);
+        setTotalCount(response.data.totalCount || 0);
+        setTotalPage(response.data.totalPage || 1);
+      } else {
+        // 处理错误响应
+        setRegions([]);
+        setTotalCount(0);
+        setTotalPage(0);
+        console.error('获取区域数据失败:', response?.msg || '未知错误');
+        toast.error(response?.msg || '获取区域数据失败');
+      }
+    } catch (error: unknown) {
+      // 处理请求异常
+      console.error('获取区域数据异常:', error);
+      setRegions([]);
+      setTotalCount(0);
+      setTotalPage(0);
+      
+      // 安全地获取错误消息
+      let errorMessage = '获取区域数据失败';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = String((error as { message: unknown }).message);
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // 过滤区域
-  const filteredRegions = regions.filter(region => 
-    region.id.includes(searchQuery) || 
-    region.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   // 打开添加区域对话框
   const openAddDialog = () => {
@@ -142,32 +238,21 @@ export default function RegionsPage() {
       
       if (isEditMode && currentRegion) {
         // 更新区域
-        const response = await fetch(`/api/regions/${currentRegion.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || '更新区域失败');
-        }
-        
+        const { name, status } = values;
+        await updateRegion(currentRegion.id, { name, status });
         toast.success('区域更新成功');
       } else {
         // 创建区域
-        const response = await fetch('/api/regions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        });
+        const response = await createRegion(values);
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || '创建区域失败');
+        if (response.code === "0") {
+          toast.success('区域创建成功');
+        } else {
+          toast.error(response.msg || '创建区域失败');
+          // 创建失败时不关闭对话框，让用户有机会修改
+          setIsSubmitting(false);
+          return;
         }
-        
-        toast.success('区域创建成功');
       }
       
       setIsDialogOpen(false);
@@ -187,258 +272,329 @@ export default function RegionsPage() {
   };
 
   // 删除区域
-  const deleteRegion = async () => {
+  const handleDeleteRegion = async () => {
     if (!regionToDelete) return;
     
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/regions/${regionToDelete.id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '删除区域失败');
-      }
-      
+      await deleteRegionApi(regionToDelete.id);
       toast.success('区域删除成功');
       setIsDeleteDialogOpen(false);
       fetchRegions(); // 重新获取数据
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error deleting region:', error);
-      toast.error(error instanceof Error ? error.message : '删除区域失败');
+      toast.error(error instanceof Error ? error.message : '删除失败');
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // 检查权限并加载数据
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('请先登录');
-      router.push('/login');
-      return;
+  // 翻页处理
+  const handlePageChange = (newPageNumber: number) => {
+    if (newPageNumber >= 1 && newPageNumber <= totalPage) {
+      setPageNumber(newPageNumber);
     }
-    
-    if (user?.role !== 'superadmin') {
-      toast.error('您没有权限访问此页面');
-      router.push('/workbench');
-      return;
-    }
+  };
 
-    fetchRegions();
-  }, [isAuthenticated, user, router]);
+  // 改变每页显示条数
+  const handlePageSizeChange = (newSize: string) => {
+    setPageSize(Number(newSize));
+    setPageNumber(1); // 重置到第一页
+  };
 
-  // 显示加载状态
-  if (!isAuthenticated || user?.role !== 'superadmin') {
-    return null;
+  // 设置状态过滤
+  const handleStatusFilterChange = (status: boolean | undefined) => {
+    setStatusFilter(status);
+    setIsFilterMenuOpen(false);
+  };
+
+  // 清除所有筛选
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter(undefined);
+    setIsFilterMenuOpen(false);
+  };
+
+  // 格式化日期时间
+  const formatDateTime = (dateTimeStr: string) => {
+    return dateTimeStr ? new Date(dateTimeStr).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }) : '-';
+  };
+
+  // 如果正在加载身份验证状态，显示加载中
+  if (authLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-xl">正在加载...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 p-6 pt-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">区域管理</h2>
-          <p className="text-muted-foreground text-sm">管理系统中的所有区域数据与配置</p>
+    <div className="container mx-auto py-8 space-y-6">
+      <div className="flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">区域管理</h1>
+          <p className="text-muted-foreground">
+            管理教育区域信息，包括区域编码、名称和状态
+          </p>
         </div>
-        <Button onClick={openAddDialog} className="shadow-md transition-all hover:shadow-lg">
-          <Plus className="mr-2 h-4 w-4" />
-          添加区域
+        <Button onClick={openAddDialog}>
+          <Plus className="mr-2 h-4 w-4" /> 添加区域
         </Button>
       </div>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">总区域数</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{regions.length}</div>
-          </CardContent>
-        </Card>
 
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">启用区域</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{regions.filter(r => r.status).length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm hover:shadow transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">禁用区域</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{regions.filter(r => !r.status).length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm hover:shadow transition-all bg-muted/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">上次更新</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-medium">{new Date().toLocaleDateString()}</div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 gap-4">
-        <div className="relative max-w-sm w-full sm:w-auto">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="搜索区域..."
-            className="pl-8 md:w-[300px] lg:w-[400px] rounded-md shadow-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <span>总计: {filteredRegions.length} 个区域</span>
-          {searchQuery && (
-            <Badge variant="outline" className="ml-2">
-              筛选中: {searchQuery}
-            </Badge>
-          )}
-        </div>
-      </div>
-      
-      <Card className="overflow-hidden shadow-md border-0 rounded-xl">
-        <CardHeader className="bg-muted/20 px-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div>
-              <CardTitle>区域列表</CardTitle>
-              <CardDescription>管理系统中的所有区域</CardDescription>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle>区域列表</CardTitle>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="搜索区域名称..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              <DropdownMenu open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center">
+                    <Filter className="mr-2 h-4 w-4" />
+                    筛选
+                    {statusFilter !== undefined && <Badge className="ml-2 px-1 py-0">1</Badge>}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>筛选条件</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  <div className="p-2">
+                    <p className="mb-2 text-sm font-medium">状态</p>
+                    <div className="grid gap-2">
+                      <Button 
+                        variant={statusFilter === true ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => handleStatusFilterChange(statusFilter === true ? undefined : true)}
+                        className="justify-start h-8"
+                      >
+                        <Badge variant="outline" className={`mr-2 ${statusFilter === true ? "bg-primary text-primary-foreground" : ""}`}>
+                          启用
+                        </Badge>
+                        <span>已启用</span>
+                      </Button>
+                      
+                      <Button 
+                        variant={statusFilter === false ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => handleStatusFilterChange(statusFilter === false ? undefined : false)}
+                        className="justify-start h-8"
+                      >
+                        <Badge variant="outline" className={`mr-2 ${statusFilter === false ? "bg-primary text-primary-foreground" : ""}`}>
+                          禁用
+                        </Badge>
+                        <span>已禁用</span>
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={clearFilters}>
+                    清除所有筛选条件
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
+          <CardDescription>
+            共 {totalCount} 个区域，当前显示第 {pageNumber} 页，每页 {pageSize} 条
+          </CardDescription>
         </CardHeader>
-        <CardContent className="px-0 py-0">
+        <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
+            <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">加载中...</span>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/5">
-                  <TableRow>
-                    <TableHead className="font-semibold px-6 py-4">区域ID</TableHead>
-                    <TableHead className="font-semibold px-6">区域名称</TableHead>
-                    <TableHead className="font-semibold px-6">状态</TableHead>
-                    <TableHead className="text-right font-semibold px-6">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRegions.length === 0 ? (
+            <>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-16 text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <Search className="h-10 w-10 text-muted-foreground/60" />
-                          没有找到区域数据
-                        </div>
-                      </TableCell>
+                      <TableHead className="w-[100px]">区域ID</TableHead>
+                      <TableHead>区域名称</TableHead>
+                      <TableHead className="w-[100px]">状态</TableHead>
+                      <TableHead className="w-[160px]">创建时间</TableHead>
+                      <TableHead className="w-[160px]">修改时间</TableHead>
+                      <TableHead className="w-[120px] text-right">操作</TableHead>
                     </TableRow>
-                  ) : (
-                    filteredRegions.map((region) => (
-                      <TableRow key={region.id} className="hover:bg-muted/10 transition-colors">
-                        <TableCell className="font-medium px-6 py-4">{region.id}</TableCell>
-                        <TableCell className="px-6">{region.name}</TableCell>
-                        <TableCell className="px-6">
-                          {region.status ? (
-                            <Badge className="bg-green-50 text-green-800 hover:bg-green-100 border-green-200 font-medium">
-                              启用
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-red-50 text-red-800 hover:bg-red-50 border-red-200 font-medium">
-                              禁用
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right px-6">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => openEditDialog(region)} className="h-8 px-3 rounded-md hover:bg-primary/10 transition-colors">
-                              <Edit className="h-3.5 w-3.5 mr-1" />
-                              编辑
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 h-8 px-3 rounded-md hover:bg-red-50 transition-colors" onClick={() => openDeleteDialog(region)}>
-                              <Trash2 className="h-3.5 w-3.5 mr-1" />
-                              删除
-                            </Button>
-                          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {regions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          没有找到区域数据
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ) : (
+                      regions.map((region) => (
+                        <TableRow key={region.id}>
+                          <TableCell className="font-medium">{region.id}</TableCell>
+                          <TableCell>{region.name}</TableCell>
+                          <TableCell>
+                            <Badge variant={region.status ? "default" : "secondary"}>
+                              {region.status ? '启用' : '禁用'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDateTime(region.createdAt)}</TableCell>
+                          <TableCell>{formatDateTime(region.modifiedAt)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => openEditDialog(region)}
+                                aria-label="编辑区域"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => openDeleteDialog(region)}
+                                aria-label="删除区域"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* 分页控件 */}
+              {totalPage > 0 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      value={pageSize.toString()}
+                      onValueChange={handlePageSizeChange}
+                    >
+                      <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent side="top">
+                        {pageSizeOptions.map((size) => (
+                          <SelectItem key={size} value={size.toString()}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">条/页</p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handlePageChange(pageNumber - 1)}
+                      disabled={pageNumber <= 1}
+                      aria-label="上一页"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm">{pageNumber}</span>
+                      <span className="text-sm text-muted-foreground">/ {totalPage}</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handlePageChange(pageNumber + 1)}
+                      disabled={pageNumber >= totalPage}
+                      aria-label="下一页"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
-      
+
       {/* 添加/编辑区域对话框 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] rounded-xl shadow-lg border-0">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-xl">{isEditMode ? '编辑区域' : '添加区域'}</DialogTitle>
+            <DialogTitle>{isEditMode ? '编辑区域' : '添加区域'}</DialogTitle>
             <DialogDescription>
-              {isEditMode ? '修改区域信息' : '添加一个新的区域到系统中'}
+              {isEditMode 
+                ? '修改区域信息。请填写以下信息，然后点击保存。'
+                : '添加新的区域。请填写以下信息，然后点击添加。'}
             </DialogDescription>
           </DialogHeader>
-          
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-medium">区域ID</FormLabel>
+                    <FormLabel>区域编码</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="请输入6位数字ID"
-                        className="rounded-md"
-                        {...field}
-                        disabled={isEditMode} // 编辑模式下不允许修改ID
+                      <Input 
+                        placeholder="请输入6位数字编码" 
+                        {...field} 
+                        disabled={isEditMode}
                       />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      区域ID必须是6位数字
+                    <FormDescription>
+                      区域编码必须是6位数字
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-medium">区域名称</FormLabel>
+                    <FormLabel>区域名称</FormLabel>
                     <FormControl>
-                      <Input placeholder="请输入区域名称" className="rounded-md" {...field} />
+                      <Input placeholder="请输入区域名称" {...field} />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      区域的名称，如&quot;海淀区&quot;、&quot;朝阳区&quot;等
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="status"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel className="font-medium">状态</FormLabel>
-                      <FormDescription className="text-xs">
-                        启用或禁用该区域
+                      <FormLabel>状态</FormLabel>
+                      <FormDescription>
+                        设置区域是否启用
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -450,40 +606,49 @@ export default function RegionsPage() {
                   </FormItem>
                 )}
               />
-              
-              <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDialogOpen(false)}>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
                   取消
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="rounded-md shadow-sm">
+                <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isEditMode ? '保存更改' : '创建区域'}
+                  {isEditMode ? '保存' : '添加'}
                 </Button>
               </DialogFooter>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       {/* 删除确认对话框 */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-xl shadow-lg border-0">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-xl">确认删除</DialogTitle>
-            <DialogDescription className="pt-2">
-              您确定要删除区域 <span className="font-semibold">&quot;{regionToDelete?.name}&quot;</span> 吗？此操作不可撤销。
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>
+              您确定要删除区域 &quot;{regionToDelete?.name}&quot; 吗？此操作无法撤销。
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-red-50 p-4 rounded-lg my-2 text-sm text-red-700">
-            <p>删除后将无法恢复，请确认此操作。</p>
-          </div>
-          <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" className="rounded-md" onClick={() => setIsDeleteDialogOpen(false)}>
+          <DialogFooter>
+            <Button
+              type="button" 
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               取消
             </Button>
-            <Button type="button" variant="destructive" className="rounded-md shadow-sm" onClick={deleteRegion} disabled={isDeleting}>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={handleDeleteRegion}
+              disabled={isDeleting}
+            >
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              确认删除
+              删除
             </Button>
           </DialogFooter>
         </DialogContent>

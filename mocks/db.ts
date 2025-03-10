@@ -222,6 +222,8 @@ const dbFactory = factory({
     id: primaryKey(String),    // 六位数字编码ID
     name: String,              // 区域名称
     status: Boolean,           // 启用/停用状态
+    createdAt: String,
+    modifiedAt: String,
   },
   
   // 学校模型
@@ -484,60 +486,110 @@ export function seedRegionAndSchoolData() {
   } else {
     console.log('初始化区域数据...');
     
+    const now = new Date().toISOString();
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
     // 添加区域数据
     db.region.create({
       id: '110101',
       name: '北京市东城区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '110102',
       name: '北京市西城区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '110105',
       name: '北京市朝阳区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '110106',
       name: '北京市丰台区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '110108',
       name: '北京市海淀区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '110109',
       name: '北京市门头沟区',
-      status: false
+      status: false,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '310101',
       name: '上海市黄浦区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '310104',
       name: '上海市徐汇区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
     
     db.region.create({
       id: '310105',
       name: '上海市长宁区',
-      status: true
+      status: true,
+      createdAt: yesterday,
+      modifiedAt: now
     });
+    
+    // 添加与示例数据匹配的区域
+    db.region.create({
+      id: '120123',
+      name: '经开区',
+      status: false,
+      createdAt: "2025-03-07 20:02:59",
+      modifiedAt: "2025-03-07 20:25:39"
+    });
+    
+    db.region.create({
+      id: '120124',
+      name: '专属经济区',
+      status: false,
+      createdAt: "2025-03-07 20:02:59",
+      modifiedAt: "2025-03-07 20:26:22"
+    });
+    
+    // 添加更多数据用于测试分页功能
+    for (let i = 1; i <= 20; i++) {
+      const id = `99${i.toString().padStart(4, '0')}`;
+      db.region.create({
+        id,
+        name: `测试区域 ${i}`,
+        status: i % 2 === 0, // 交替设置状态
+        createdAt: yesterday,
+        modifiedAt: now
+      });
+    }
     
     console.log('区域数据初始化完成');
   }

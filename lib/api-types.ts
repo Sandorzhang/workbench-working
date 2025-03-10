@@ -149,7 +149,6 @@ export interface ApiResponseStatus {
   message?: string;
   updatedAt?: string;
 }
-
 // 区域相关类型
 export interface Region {
   id: string; // 六位数字编码ID
@@ -192,3 +191,4 @@ export interface SchoolListResponse {
   schools: School[];
   total: number;
 }
+
