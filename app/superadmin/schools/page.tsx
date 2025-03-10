@@ -452,7 +452,7 @@ export default function SchoolsPage() {
         </CardHeader>
 
         <CardContent className="px-6 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium block mb-2">区域</label>
               <Select value={filterRegion} onValueChange={setFilterRegion}>
@@ -500,38 +500,39 @@ export default function SchoolsPage() {
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="flex flex-col justify-end">
-              <div className="flex gap-2">
-                <Button onClick={applyFilters} className="flex-1">
-                  应用筛选
-                </Button>
-                <Button variant="outline" onClick={clearFilters}>
-                  清除
-                </Button>
-              </div>
-              
-              {/* 活跃筛选条件标签 */}
+          </div>
+          
+          <div className="flex flex-wrap justify-between items-center mt-6">
+            <div className="flex flex-wrap gap-2 items-center">
               {(filterRegion !== 'all' || filterType !== 'all' || filterStatus !== 'all') && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  <div className="text-xs text-muted-foreground">筛选中:</div>
+                <>
+                  <span className="text-xs text-muted-foreground">已选择:</span>
                   {filterRegion !== 'all' && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal flex items-center gap-1.5">
                       区域: {regions.find(r => r.id === filterRegion)?.name || filterRegion}
                     </Badge>
                   )}
                   {filterType !== 'all' && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal flex items-center gap-1.5">
                       类型: {filterType}
                     </Badge>
                   )}
                   {filterStatus !== 'all' && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="px-2 py-0.5 text-xs font-normal flex items-center gap-1.5">
                       状态: {filterStatus === 'true' ? '启用' : '禁用'}
                     </Badge>
                   )}
-                </div>
+                </>
               )}
+            </div>
+            
+            <div className="flex gap-2 mt-4 sm:mt-0">
+              <Button onClick={applyFilters} className="px-4">
+                应用筛选
+              </Button>
+              <Button variant="outline" onClick={clearFilters} className="px-4">
+                清除
+              </Button>
             </div>
           </div>
         </CardContent>
