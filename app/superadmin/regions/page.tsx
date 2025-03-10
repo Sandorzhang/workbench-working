@@ -116,7 +116,6 @@ export default function RegionsPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [welcomeToastShown, setWelcomeToastShown] = useState(false);
 
   const form = useForm<RegionFormValues>({
     resolver: zodResolver(regionFormSchema),
@@ -133,17 +132,6 @@ export default function RegionsPage() {
       router.push('/workbench');
     }
   }, [authLoading, isAuthenticated, router, user]);
-
-  // 仅在首次加载时显示欢迎Toast
-  useEffect(() => {
-    if (isAuthenticated && user?.role === 'superadmin' && !welcomeToastShown) {
-      toast.success('区域管理模块已加载', {
-        description: '您可以管理区域信息、添加、编辑或删除区域数据',
-        duration: 3000,
-      });
-      setWelcomeToastShown(true);
-    }
-  }, [isAuthenticated, user, welcomeToastShown]);
   
   // 初始及页码切换时加载数据
   useEffect(() => {
@@ -420,7 +408,7 @@ export default function RegionsPage() {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border max-w-md">
         <h2 className="text-xl font-bold mb-2">区域管理帮助</h2>
         <ul className="list-disc pl-5 space-y-2 my-3 text-sm">
-          <li>您可以添加、编辑或删除教育区域信息</li>
+          <li>您可以添加、编辑或删除区域信息</li>
           <li>区域状态可以设置为启用或禁用</li>
           <li>区域ID必须是6位数字</li>
           <li>区域名称必须唯一</li>
@@ -633,7 +621,7 @@ export default function RegionsPage() {
             </div>
           </div>
           <CardDescription>
-            共 {totalCount} 个区域，当前显示第 {pageNumber} 页，每页 {pageSize} 条
+            {/* 描述已移至分页控件区域 */}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -711,49 +699,59 @@ export default function RegionsPage() {
               
               {/* 分页控件 */}
               {totalPage > 0 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      value={pageSize.toString()}
-                      onValueChange={handlePageSizeChange}
-                    >
-                      <SelectTrigger className="h-8 w-[70px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent side="top">
-                        {pageSizeOptions.map((size) => (
-                          <SelectItem key={size} value={size.toString()}>
-                            {size}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-muted-foreground">条/页</p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4">
+                  <div className="flex items-center">
+                    <p className="text-sm text-muted-foreground pl-1">
+                      共 <span className="font-medium text-foreground">{totalCount}</span> 个区域，
+                      当前显示第 <span className="font-medium text-foreground">{pageNumber}</span> 页，
+                      每页 <span className="font-medium text-foreground">{pageSize}</span> 条
+                    </p>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(pageNumber - 1)}
-                      disabled={pageNumber <= 1}
-                      aria-label="上一页"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm">{pageNumber}</span>
-                      <span className="text-sm text-muted-foreground">/ {totalPage}</span>
+                  <div className="flex items-center gap-6 ml-auto">
+                    <div className="flex items-center space-x-2">
+                      <Select
+                        value={pageSize.toString()}
+                        onValueChange={handlePageSizeChange}
+                      >
+                        <SelectTrigger className="h-8 w-[70px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                          {pageSizeOptions.map((size) => (
+                            <SelectItem key={size} value={size.toString()}>
+                              {size}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">条/页</p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(pageNumber + 1)}
-                      disabled={pageNumber >= totalPage}
-                      aria-label="下一页"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(pageNumber - 1)}
+                        disabled={pageNumber <= 1}
+                        aria-label="上一页"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium">{pageNumber}</span>
+                        <span className="text-sm text-muted-foreground">/ {totalPage}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(pageNumber + 1)}
+                        disabled={pageNumber >= totalPage}
+                        aria-label="下一页"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
