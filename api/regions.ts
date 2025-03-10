@@ -70,7 +70,7 @@ export async function getRegionsByPage(params: RegionPageRequest): Promise<Regio
     // 返回一个统一的错误响应格式，确保数据包裹在data字段中
     return {
       code: "500",
-      msg: error instanceof Error ? error.message : '获取区域分页数据失败',
+      msg: error instanceof Error ? `获取区域分页数据失败: ${error.message}` : '获取区域分页数据失败',
       data: {
         pageNumber: params.pageNumber,
         pageSize: params.pageSize,
@@ -112,6 +112,7 @@ export async function getAllRegions(): Promise<RegionListResponse> {
     };
   } catch (error) {
     console.error('获取所有区域失败:', error);
+    // 返回一个标准响应，无数据
     return {
       regions: [],
       total: 0
@@ -147,7 +148,7 @@ export async function getRegionById(id: string): Promise<Region> {
       }
     }
     // 兜底处理
-    throw new Error('区域数据格式不正确');
+    throw new Error(`无法获取区域ID为 ${id} 的数据，格式不正确`);
   } catch (error) {
     console.error(`获取区域(ID: ${id})详情失败:`, error);
     throw error; // 重新抛出异常，由调用者处理
@@ -175,14 +176,16 @@ export async function createRegion(regionData: RegionCreateRequest): Promise<Sim
     // 如果响应不符合预期格式，构造一个标准响应
     return {
       code: "0",
-      msg: "请求成功"
+      msg: "区域创建成功"
     };
   } catch (error) {
     console.error('创建区域失败:', error);
-    // 返回错误响应
+    // 返回详细的错误响应
     return {
       code: "500",
-      msg: error instanceof Error ? error.message : "创建区域失败"
+      msg: error instanceof Error 
+        ? `创建区域失败: ${error.message}` 
+        : "创建区域失败，请检查网络连接或服务器状态"
     };
   }
 }
@@ -206,7 +209,8 @@ export async function updateRegion(id: string, regionData: RegionUpdateRequest):
       if ('code' in response && 'msg' in response) {
         return {
           success: response.code === "0",
-          message: String(response.msg)
+          message: String(response.msg),
+          region: 'data' in response ? response.data as Region : undefined
         };
       }
       
@@ -219,14 +223,16 @@ export async function updateRegion(id: string, regionData: RegionUpdateRequest):
     // 默认返回成功响应
     return {
       success: true,
-      message: "区域更新成功"
+      message: `区域(ID: ${id})更新成功`
     };
   } catch (error) {
     console.error(`更新区域(ID: ${id})失败:`, error);
-    // 返回错误响应
+    // 返回详细的错误响应
     return {
       success: false,
-      message: error instanceof Error ? error.message : `更新区域(ID: ${id})失败`
+      message: error instanceof Error 
+        ? `更新区域(ID: ${id})失败: ${error.message}` 
+        : `更新区域(ID: ${id})失败，请检查网络连接或服务器状态`
     };
   }
 }
@@ -262,14 +268,16 @@ export async function deleteRegion(id: string): Promise<RegionResponse> {
     // 默认返回成功响应
     return {
       success: true,
-      message: "区域删除成功"
+      message: `区域(ID: ${id})删除成功`
     };
   } catch (error) {
     console.error(`删除区域(ID: ${id})失败:`, error);
-    // 返回错误响应
+    // 返回详细的错误响应
     return {
       success: false,
-      message: error instanceof Error ? error.message : `删除区域(ID: ${id})失败`
+      message: error instanceof Error 
+        ? `删除区域(ID: ${id})失败: ${error.message}` 
+        : `删除区域(ID: ${id})失败，请检查网络连接或服务器状态`
     };
   }
 } 

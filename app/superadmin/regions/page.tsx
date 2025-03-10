@@ -116,6 +116,7 @@ export default function RegionsPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [welcomeToastShown, setWelcomeToastShown] = useState(false);
 
   const form = useForm<RegionFormValues>({
     resolver: zodResolver(regionFormSchema),
@@ -133,14 +134,21 @@ export default function RegionsPage() {
     }
   }, [authLoading, isAuthenticated, router, user]);
 
-  // 初始数据加载
+  // 仅在首次加载时显示欢迎Toast
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'superadmin') {
-      fetchRegions();
+    if (isAuthenticated && user?.role === 'superadmin' && !welcomeToastShown) {
       toast.success('区域管理模块已加载', {
         description: '您可以管理区域信息、添加、编辑或删除区域数据',
         duration: 3000,
       });
+      setWelcomeToastShown(true);
+    }
+  }, [isAuthenticated, user, welcomeToastShown]);
+  
+  // 初始及页码切换时加载数据
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'superadmin') {
+      fetchRegions();
     }
   }, [isAuthenticated, user, pageNumber, pageSize]);
 
@@ -433,24 +441,6 @@ export default function RegionsPage() {
       position: 'top-right',
     });
   };
-
-  // 如果没有数据，显示欢迎提示
-  useEffect(() => {
-    if (!isLoading && regions.length === 0 && !searchQuery && statusFilter === undefined) {
-      // 没有数据且没有筛选条件时，显示欢迎提示
-      toast.info(
-        '欢迎使用区域管理',
-        {
-          description: '当前没有区域数据，请点击"添加区域"按钮创建第一个区域',
-          action: {
-            label: '添加',
-            onClick: () => openAddDialog()
-          },
-          duration: 5000,
-        }
-      );
-    }
-  }, [isLoading, regions, searchQuery, statusFilter]);
 
   // 格式化日期时间
   const formatDateTime = (dateTimeStr: string) => {

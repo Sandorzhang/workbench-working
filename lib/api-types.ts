@@ -149,17 +149,12 @@ export interface ApiResponseStatus {
   message?: string;
   updatedAt?: string;
 }
-// 区域相关类型
-export interface Region {
-  id: string; // 六位数字编码ID
-  name: string; // 区域名称
-  status: boolean; // 启用/停用状态
-}
 
-export interface RegionListResponse {
-  regions: Region[];
-  total: number;
-}
+// 区域相关类型
+// 注意：所有区域相关类型已移至 types/models/region.ts
+// 为兼容现有代码，从类型定义文件中重新导出
+import type { Region, RegionListResponse } from '@/types/models/region';
+export type { Region, RegionListResponse };
 
 // 学校阶段学制枚举
 export enum SchoolType {
