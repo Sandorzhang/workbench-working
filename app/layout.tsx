@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   description: "基于Next.js和Shadcn UI构建的教育管理平台",
 };
 
+// 检查是否启用MSW
+const enableMsw = process.env.NEXT_PUBLIC_ENABLE_MSW === 'true';
+
 export default function RootLayout({
   children,
 }: {
@@ -33,16 +36,27 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <MswInitializer>
+        {enableMsw ? (
+          <MswInitializer>
+            <ErrorBoundary>
+              <AuthProvider>
+                <AppLayout>
+                  {children}
+                </AppLayout>
+              </AuthProvider>
+            </ErrorBoundary>
+            {process.env.NODE_ENV === 'development' && <DebugPanel />}
+          </MswInitializer>
+        ) : (
           <ErrorBoundary>
             <AuthProvider>
               <AppLayout>
                 {children}
               </AppLayout>
             </AuthProvider>
+            {process.env.NODE_ENV === 'development' && <DebugPanel />}
           </ErrorBoundary>
-          {process.env.NODE_ENV === 'development' && <DebugPanel />}
-        </MswInitializer>
+        )}
         <Toaster />
       </body>
     </html>
