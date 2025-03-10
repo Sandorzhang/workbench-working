@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -8,13 +8,9 @@ import {
   Settings,
   User,
   Loader2,
-} from "lucide-react"
+} from "lucide-react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,87 +18,87 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function NavUserAuth({
   user,
   onLogout,
 }: {
   user?: {
-    name: string
-    email: string
-    avatar: string
-    role: string
-  }
-  onLogout?: () => Promise<void>
+    name: string;
+    email: string;
+    avatar: string;
+    role: string;
+  };
+  onLogout?: () => Promise<void>;
 }) {
-  const { isMobile } = useSidebar()
-  const router = useRouter()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-  
+  const { isMobile } = useSidebar();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
   // 确保组件在客户端挂载后才执行渲染逻辑
   useEffect(() => {
     setIsMounted(true);
-    
+
     // 检查用户状态并记录日志
     if (user) {
-      console.log('侧边栏用户信息已加载:', user.name);
+      // console.log('侧边栏用户信息已加载:', user.name);
     } else {
-      console.log('用户未登录或信息未加载');
+      // console.log('用户未登录或信息未加载');
     }
   }, [user]);
-  
+
   // 用户角色显示文本
   const getRoleDisplay = (role: string) => {
     const roleMap: Record<string, string> = {
-      'superadmin': '超级管理员',
-      'admin': '管理员',
-      'teacher': '教师',
+      superadmin: "超级管理员",
+      admin: "管理员",
+      teacher: "教师",
     };
-    
+
     return roleMap[role] || role;
   };
-  
+
   // 登出处理函数
   const handleLogout = async () => {
     if (isLoggingOut) return; // 防止重复点击
-    
+
     try {
       setIsLoggingOut(true);
-      console.log('开始登出流程...');
-      
+      // console.log('开始登出流程...');
+
       if (onLogout) {
         // 调用上下文中的登出函数，让它处理token清除
         await onLogout();
-        console.log('登出成功，由auth上下文处理token清除');
-        
+        // console.log('登出成功，由auth上下文处理token清除');
+
         // 不再在这里重复清除token，避免多处清除引起的问题
         // 由auth上下文统一管理token的清除
-        
+
         // 显示成功消息 - 在auth上下文中已经显示了，这里不重复显示
-        
+
         // 使用setTimeout确保状态更新完成后再导航
         setTimeout(() => {
-          router.push('/login');
+          router.push("/login");
         }, 200);
       } else {
-        console.log('登出功能已禁用');
-        toast.info('当前处于演示模式，登出功能已禁用');
+        // console.log('登出功能已禁用');
+        toast.info("当前处于演示模式，登出功能已禁用");
       }
     } catch (error) {
-      console.error('登出失败:', error);
-      toast.error('登出失败，请稍后再试');
+      // console.error('登出失败:', error);
+      toast.error("登出失败，请稍后再试");
       // 失败时也要重置登出状态
       setIsLoggingOut(false);
     }
@@ -130,12 +126,12 @@ export function NavUserAuth({
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start" 
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
             onClick={() => {
-              console.log('点击登录按钮，导航到登录页面');
-              router.push('/login');
+              // console.log('点击登录按钮，导航到登录页面');
+              router.push("/login");
             }}
           >
             <User className="mr-2 h-4 w-4" />
@@ -157,7 +153,9 @@ export function NavUserAuth({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {user.name.slice(0, 2)}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -176,12 +174,17 @@ export function NavUserAuth({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name.slice(0, 2)}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user.name.slice(0, 2)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
-                  <Badge variant="outline" className="mt-1 text-[10px] py-0 w-fit">
+                  <Badge
+                    variant="outline"
+                    className="mt-1 text-[10px] py-0 w-fit"
+                  >
                     {getRoleDisplay(user.role)}
                   </Badge>
                 </div>
@@ -193,8 +196,8 @@ export function NavUserAuth({
               个人设置
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleLogout} 
+            <DropdownMenuItem
+              onClick={handleLogout}
               disabled={isLoggingOut}
               className="text-red-500 cursor-pointer hover:bg-red-50 focus:bg-red-50"
             >
@@ -214,10 +217,10 @@ export function NavUserAuth({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }
 
 // 骨架屏组件
 function Skeleton({ className }: { className: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
-} 
+}

@@ -89,7 +89,7 @@ export default function PermissionsPage() {
   
   // 检查认证状态
   useEffect(() => {
-    console.log('权限页面认证状态检查:', { 
+    //console.log('权限页面认证状态检查:', { 
       authLoading, 
       isAuthenticated, 
       userRole: currentUser?.role 
@@ -97,29 +97,29 @@ export default function PermissionsPage() {
     
     // 等待认证状态加载完成
     if (authLoading) {
-      console.log('认证状态加载中...');
+      //console.log('认证状态加载中...');
       return;
     }
     
     if (!isAuthenticated) {
-      console.log('未认证，重定向到登录页');
+      //console.log('未认证，重定向到登录页');
       router.push('/login');
       return;
     }
     
     if (!currentUser) {
-      console.log('用户数据未加载，等待...');
+      //console.log('用户数据未加载，等待...');
       return;
     }
     
     if (currentUser.role !== 'superadmin') {
-      console.log('无权限访问，重定向到首页');
+      //console.log('无权限访问，重定向到首页');
       toast.error('您没有权限访问此页面');
       router.push('/workbench');
       return;
     }
     
-    console.log('认证通过，开始加载权限数据');
+    //console.log('认证通过，开始加载权限数据');
     // 加载初始数据
     fetchAppPermissions();
     fetchUsers();
@@ -138,7 +138,7 @@ export default function PermissionsPage() {
   const fetchAppPermissions = async () => {
     try {
       setIsLoading(true);
-      console.log('开始获取应用权限...');
+      //console.log('开始获取应用权限...');
       const response = await fetch(`/api/permissions/applications?role=${roleFilter === 'all' ? '' : roleFilter}`);
       
       if (!response.ok) {
@@ -146,7 +146,7 @@ export default function PermissionsPage() {
       }
       
       const data = await response.json();
-      console.log(`成功获取应用权限: ${data.length}个应用`);
+      //console.log(`成功获取应用权限: ${data.length}个应用`);
       setAppPermissions(data);
       setIsLoading(false);
     } catch (error) {
@@ -160,7 +160,7 @@ export default function PermissionsPage() {
   // 获取用户列表
   const fetchUsers = async () => {
     try {
-      console.log('开始获取用户列表...');
+      //console.log('开始获取用户列表...');
       const response = await fetch('/api/superadmin/users');
       
       if (!response.ok) {
@@ -168,7 +168,7 @@ export default function PermissionsPage() {
       }
       
       const data = await response.json();
-      console.log(`成功获取${data.length}个用户`);
+      //console.log(`成功获取${data.length}个用户`);
       setUsers(data.map((user: any) => ({
         id: user.id,
         name: user.name,

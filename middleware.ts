@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 // 定义中间件函数
 export function middleware(request: NextRequest) {
@@ -7,9 +7,9 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // 仅记录API请求
-  if (path.startsWith('/api/')) {
-    console.log(`[Middleware] API请求: ${request.method} ${path}`);
-    console.log('[Middleware] 请求头:', JSON.stringify(Object.fromEntries(request.headers.entries())));
+  if (path.startsWith("/api/")) {
+    //console.log(`[Middleware] API请求: ${request.method} ${path}`);
+    //console.log('[Middleware] 请求头:', JSON.stringify(Object.fromEntries(request.headers.entries())));
   }
 
   // 继续处理请求
@@ -20,6 +20,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // 匹配所有API路由
-    '/api/:path*',
+    "/api/:path*",
   ],
-}; 
+};

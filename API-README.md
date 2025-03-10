@@ -94,7 +94,7 @@ async function loginUser(username: string, password: string) {
   try {
     const result = await login(username, password);
     // 登录成功，处理返回结果
-    console.log("登录成功:", result);
+    //console.log("登录成功:", result);
   } catch (error) {
     // 处理错误
     console.error("登录失败:", error);
@@ -106,7 +106,7 @@ async function getWorkbenchConfig() {
   try {
     const config = await api.workbench.getConfig();
     // 处理工作台配置
-    console.log("工作台配置:", config);
+    //console.log("工作台配置:", config);
   } catch (error) {
     console.error("获取配置失败:", error);
   }
@@ -117,7 +117,7 @@ async function getAgents() {
   try {
     const response = await api.agents.getList();
     // 处理智能体列表
-    console.log("智能体列表:", response.agents);
+    //console.log("智能体列表:", response.agents);
   } catch (error) {
     console.error("获取智能体失败:", error);
   }
@@ -128,8 +128,8 @@ async function getTeachingPlans(page = 1, pageSize = 10) {
   try {
     const response = await api.teachingPlans.getList(page, pageSize);
     // 处理教案列表
-    console.log("教案列表:", response.plans);
-    console.log("总数:", response.total);
+    //console.log("教案列表:", response.plans);
+    //console.log("总数:", response.total);
   } catch (error) {
     console.error("获取教案失败:", error);
   }

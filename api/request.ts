@@ -68,10 +68,10 @@ const getAuthHeaders = (): Record<string, string> => {
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   if (token) {
-    console.log(`添加认证头，token: ${token.substring(0, 5)}...`);
+    // console.log(`添加认证头，token: ${token.substring(0, 5)}...`);
     return { Authorization: `Bearer ${token}` };
   } else {
-    console.log("没有token，使用无认证头");
+    // console.log("没有token，使用无认证头");
     return {};
   }
 };
@@ -102,11 +102,11 @@ request.interceptors.request.use(
 
     // 只在开发环境记录API请求日志
     if (process.env.NODE_ENV === "development") {
-      console.log(
-        `API请求: ${config.url} - Authorization头: ${
-          hasAuthHeader ? "已设置" : "未设置"
-        }`
-      );
+      // console.log(
+      //   `API请求: ${config.url} - Authorization头: ${
+      //     hasAuthHeader ? "已设置" : "未设置"
+      //   }`
+      // );
     }
 
     return config;
@@ -132,7 +132,7 @@ request.interceptors.response.use(
       // 清除无效token
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
-        console.log("尝试重定向到登录页");
+        // console.log("尝试重定向到登录页");
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

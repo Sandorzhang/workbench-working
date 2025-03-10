@@ -310,7 +310,7 @@ const CreateTeachingDesignDialog = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // 处理文件上传逻辑
-    console.log("File selected:", e.target.files);
+    //console.log("File selected:", e.target.files);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -478,7 +478,7 @@ export default function TeachingDesignPage() {
         setDesigns(response.data || []);
         // 如果API返回的数据为空，使用模拟数据
         if (!response.data || response.data.length === 0) {
-          console.log("API返回的单元教案数据为空，使用模拟数据");
+          //console.log("API返回的单元教案数据为空，使用模拟数据");
           setDesigns(mockDesigns);
         }
       } catch (error) {

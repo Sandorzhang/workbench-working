@@ -105,7 +105,7 @@ export default function SchoolsPage() {
       params.append('_t', Date.now().toString());
       
       const queryString = params.toString() ? `?${params.toString()}` : '';
-      console.log('请求学校数据:', `/api/superadmin/schools${queryString}`);
+      //console.log('请求学校数据:', `/api/superadmin/schools${queryString}`);
       
       const response = await fetch(`/api/superadmin/schools${queryString}`, {
         headers: {
@@ -129,7 +129,7 @@ export default function SchoolsPage() {
       }
       
       const data = await response.json();
-      console.log('获取学校数据成功:', data);
+      //console.log('获取学校数据成功:', data);
       setSchools(data);
     } catch (error) {
       console.error('Error fetching schools:', error);
@@ -142,7 +142,7 @@ export default function SchoolsPage() {
   // 获取区域数据
   const fetchRegions = async () => {
     try {
-      console.log('获取区域数据...');
+      //console.log('获取区域数据...');
       const response = await fetch('/api/regions', {
         headers: { 
           'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ export default function SchoolsPage() {
       }
       
       const data = await response.json();
-      console.log('获取区域数据成功:', data);
+      //console.log('获取区域数据成功:', data);
       setRegions(data.regions.filter((region: Region) => region.status));
     } catch (error) {
       console.error('Error fetching regions:', error);
@@ -175,7 +175,7 @@ export default function SchoolsPage() {
   // 获取学校类型
   const fetchSchoolTypes = async () => {
     try {
-      console.log('获取学校类型...');
+      //console.log('获取学校类型...');
       const response = await fetch('/api/school-types', {
         headers: { 
           'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ export default function SchoolsPage() {
       }
       
       const data = await response.json();
-      console.log('获取学校类型成功:', data);
+      //console.log('获取学校类型成功:', data);
       setSchoolTypes(data);
     } catch (error) {
       console.error('Error fetching school types:', error);
@@ -237,7 +237,7 @@ export default function SchoolsPage() {
     try {
       if (isEditMode && currentSchool) {
         // 更新学校
-        console.log('更新学校:', currentSchool.id, values);
+        //console.log('更新学校:', currentSchool.id, values);
         const response = await fetch(`/api/superadmin/schools/${currentSchool.id}`, {
           method: 'PUT',
           headers: { 
@@ -264,7 +264,7 @@ export default function SchoolsPage() {
         toast.success('学校更新成功');
       } else {
         // 创建学校
-        console.log('创建学校:', values);
+        //console.log('创建学校:', values);
         const response = await fetch('/api/superadmin/schools', {
           method: 'POST',
           headers: { 
@@ -312,7 +312,7 @@ export default function SchoolsPage() {
     
     try {
       setIsDeleting(true);
-      console.log('删除学校:', schoolToDelete.id);
+      //console.log('删除学校:', schoolToDelete.id);
       const response = await fetch(`/api/superadmin/schools/${schoolToDelete.id}`, {
         method: 'DELETE',
         headers: { 

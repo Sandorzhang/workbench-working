@@ -97,7 +97,7 @@ export default function CalendarPage() {
       setAuthChecked(true);
       
       if (!isAuthenticated) {
-        console.log('未登录状态，显示提示信息');
+        //console.log('未登录状态，显示提示信息');
         setError('请登录后查看您的日历');
         setIsLoading(false);
         // 导航到登录页面
@@ -106,7 +106,7 @@ export default function CalendarPage() {
           router.push('/login');
         }, 1000);
       } else {
-        console.log('用户已登录:', user?.name);
+        //console.log('用户已登录:', user?.name);
         setError(null);
       }
     }
@@ -116,7 +116,7 @@ export default function CalendarPage() {
   useEffect(() => {
     // 确保认证检查已完成且用户已登录
     if (authChecked && isAuthenticated && user) {
-      console.log('开始获取日历数据, 用户:', user.name, '(', user.role, ')');
+      //console.log('开始获取日历数据, 用户:', user.name, '(', user.role, ')');
       fetchEvents();
     }
   }, [authChecked, isAuthenticated, user, currentYear, currentMonth]);
@@ -135,7 +135,7 @@ export default function CalendarPage() {
   const fetchEvents = async (retryCount = 0) => {
     try {
       if (!isAuthenticated || !token) {
-        console.log('未认证状态，取消获取日历数据');
+        //console.log('未认证状态，取消获取日历数据');
         setError('请登录后查看您的日历');
         setIsLoading(false);
         return;
@@ -164,9 +164,9 @@ export default function CalendarPage() {
         queryParams.append('userId', user.id);
       }
       
-      console.log(`正在获取 ${user?.name || '未知用户'} 的日历事件...`);
-      console.log(`请求URL: /api/calendar-events?${queryParams.toString()}`);
-      console.log(`Authorization头部: ${headers.Authorization ? '已设置' : '未设置'}`);
+      //console.log(`正在获取 ${user?.name || '未知用户'} 的日历事件...`);
+      //console.log(`请求URL: /api/calendar-events?${queryParams.toString()}`);
+      //console.log(`Authorization头部: ${headers.Authorization ? '已设置' : '未设置'}`);
       
       // 发起请求
       const response = await fetch(`/api/calendar-events?${queryParams.toString()}`, { 
@@ -198,7 +198,7 @@ export default function CalendarPage() {
         
         // 其他错误重试
         if (retryCount < 2) { // 最多重试2次
-          console.log(`获取日历事件失败，正在重试(${retryCount + 1}/2)...`);
+          //console.log(`获取日历事件失败，正在重试(${retryCount + 1}/2)...`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
           return fetchEvents(retryCount + 1);
         }
@@ -208,7 +208,7 @@ export default function CalendarPage() {
       
       // 处理响应数据
       const data = await response.json();
-      console.log(`获取到的日历事件数据 (${currentYear}年${currentMonth + 1}月):`, data);
+      //console.log(`获取到的日历事件数据 (${currentYear}年${currentMonth + 1}月):`, data);
       
       // 确保数据是数组，否则使用空数组
       if (Array.isArray(data)) {
@@ -220,7 +220,7 @@ export default function CalendarPage() {
           const eventsForSelectedDate = data.filter(event => event.date === formattedDate);
           if (eventsForSelectedDate.length === 0) {
             // 日期没有事件时也给予反馈
-            console.log(`选中的日期 ${formattedDate} 没有事件`);
+            //console.log(`选中的日期 ${formattedDate} 没有事件`);
           }
         }
         
@@ -352,7 +352,7 @@ export default function CalendarPage() {
       // 提取课堂记录ID
       const recordId = event.description.split('recordId:')[1]?.trim();
       if (recordId) {
-        console.log('跳转到课堂时光机，记录ID:', recordId);
+        //console.log('跳转到课堂时光机，记录ID:', recordId);
         router.push(`/classroom-timemachine/${recordId}`);
       } else {
         console.warn('课堂记录ID未找到:', event);

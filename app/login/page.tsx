@@ -101,7 +101,7 @@ export default function LoginPage() {
       toast.success("验证码已发送，请注意查收");
     } catch (error) {
       // 错误已在 auth context 中处理
-      console.log("error", error);
+      //console.log("error", error);
     }
   };
 
