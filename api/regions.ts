@@ -39,7 +39,31 @@ export async function getRegionsByPage(params: RegionPageRequest): Promise<Regio
     console.log('区域分页数据响应:', response);
     
     // 确保响应符合RegionPageResponse类型
-    return response as unknown as RegionPageResponse;
+    if (response && typeof response === 'object' && 'code' in response && 'msg' in response && 'data' in response) {
+      // 确保响应格式完全符合预期
+      const typedResponse = response as unknown as RegionPageResponse;
+      return typedResponse;
+    }
+    
+    // 如果响应格式不匹配，构造标准格式
+    return {
+      code: "0",
+      msg: "请求成功",
+      data: {
+        pageNumber: params.pageNumber,
+        pageSize: params.pageSize,
+        totalPage: 0,
+        totalCount: 0,
+        list: response && typeof response === 'object' && 
+              'data' in response && 
+              typeof response.data === 'object' && 
+              response.data !== null && 
+              'list' in response.data && 
+              Array.isArray(response.data.list) 
+          ? response.data.list 
+          : []
+      }
+    };
   } catch (error) {
     console.error('获取区域分页数据异常:', error);
     
@@ -112,14 +136,14 @@ export async function getRegionById(id: string): Promise<Region> {
       // 如果响应本身就是Region
       if ('id' in response && 'name' in response && 'status' in response) {
         // 确保返回包含所有必须的字段
-        const region = response as unknown as Partial<Region>;
-        if (!region.createdAt) {
-          region.createdAt = new Date().toISOString();
-        }
-        if (!region.modifiedAt) {
-          region.modifiedAt = new Date().toISOString();
-        }
-        return region as Region;
+        const region: Region = {
+          id: String(response.id),
+          name: String(response.name),
+          status: Boolean(response.status),
+          createdAt: 'createdAt' in response && response.createdAt ? String(response.createdAt) : new Date().toISOString(),
+          modifiedAt: 'modifiedAt' in response && response.modifiedAt ? String(response.modifiedAt) : new Date().toISOString()
+        };
+        return region;
       }
     }
     // 兜底处理

@@ -340,9 +340,21 @@ export const regionHandlers = [
         },
       });
       
+      // 如果更新失败，记录错误并返回
+      if (!updatedRegion) {
+        console.error(`MSW: 区域更新失败, ID: ${id}`);
+        return HttpResponse.json(
+          { 
+            code: "500",
+            msg: "区域更新失败"
+          },
+          { status: 200 }
+        );
+      }
+      
       // 输出当前所有区域, 确认数据已正确更新
       const allRegions = db.region.getAll();
-      console.log(`MSW: 区域更新成功, ID: ${id}, 名称: ${updatedRegion?.name || data.name || '未知'}`);
+      console.log(`MSW: 区域更新成功, ID: ${id}, 名称: ${updatedRegion.name}`);
       console.log(`MSW: 当前区域总数: ${allRegions.length}`);
       
       // 保存数据库状态以确保持久化
