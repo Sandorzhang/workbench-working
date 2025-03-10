@@ -14,19 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
@@ -53,14 +44,6 @@ interface Teacher {
   status: string;
 }
 
-interface Class {
-  id: string;
-  name: string;
-  gradeId: string;
-  headTeacherId?: string;
-  teacherIds: string[];
-}
-
 const formSchema = z.object({
   teacherIds: z.array(z.string()).min(1, "请至少选择一位教师"),
   headTeacherId: z.string().optional(),
@@ -85,7 +68,6 @@ export function AssignTeachersDialog({
 }: AssignTeachersDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allTeachers, setAllTeachers] = useState<Teacher[]>([]);
-  const [classData, setClassData] = useState<Class | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
 
@@ -96,9 +78,6 @@ export function AssignTeachersDialog({
       headTeacherId: undefined,
     },
   });
-
-  // 监听选中的教师变化
-  const watchTeachers = form.watch("teacherIds");
 
   // 重置表单
   const resetForm = () => {
@@ -129,7 +108,6 @@ export function AssignTeachersDialog({
             throw new Error("获取班级数据失败");
           }
           const classData = await classResponse.json();
-          setClassData(classData);
           
           // 设置已选教师
           setSelectedTeacherIds(classData.teacherIds || []);
@@ -276,7 +254,7 @@ export function AssignTeachersDialog({
               <FormField
                 control={form.control}
                 name="teacherIds"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormMessage />
                   </FormItem>

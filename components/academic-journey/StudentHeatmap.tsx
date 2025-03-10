@@ -132,7 +132,7 @@ export function StudentHeatmap({ studentId, className }: StudentHeatmapProps) {
           </div>
 
           {/* Rows with standards and heatmap cells */}
-          {standards.map((standard, standardIndex) => {
+          {standards.map((standard) => {
             const standardData = data.find(d => d.standardId === standard.id);
             
             if (!standardData) return null;

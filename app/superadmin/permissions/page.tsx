@@ -18,15 +18,12 @@ import { toast } from 'sonner';
 import { 
   Search, 
   Filter, 
-  Shield, 
   UserCog, 
-  Settings, 
   AppWindow, 
   Info, 
   CheckCircle2, 
   XCircle, 
-  RefreshCw,
-  User
+  RefreshCw
 } from 'lucide-react';
 
 // 资源权限类型
@@ -169,7 +166,7 @@ export default function PermissionsPage() {
       
       const data = await response.json();
       console.log(`成功获取${data.length}个用户`);
-      setUsers(data.map((user: any) => ({
+      setUsers(data.map((user: {id: string, name: string, role: string}) => ({
         id: user.id,
         name: user.name,
         role: user.role

@@ -32,9 +32,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Question, LearningObjective } from '@/types/question'
-import { CheckCircle2, Image, Loader2, X } from 'lucide-react'
+import { Image, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Label } from '@/components/ui/label'
 
 // 表单验证架构
 const questionSchema = z.object({
@@ -298,7 +297,8 @@ export function QuestionDialog({
             <FormField
               control={form.control}
               name="imageUrl"
-              render={({ field }) => (
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              render={({ field: _ }) => (
                 <FormItem>
                   <FormLabel>题目图片</FormLabel>
                   <div className="space-y-2">

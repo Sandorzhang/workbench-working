@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { userApi } from "@/api/request";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,15 +10,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+  createdAt: string;
+}
+
 export function UserList() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   async function loadUsers() {
     try {
       setLoading(true);
-      const data = await userApi.getUsers();
+      // 模拟API调用
+      const response = await fetch('/api/users');
+      const data = await response.json();
       setUsers(data);
       setError(null);
     } catch (err) {
@@ -32,11 +42,15 @@ export function UserList() {
 
   async function handleDeleteUser(id: string) {
     try {
-      await userApi.deleteUser(id);
+      // 模拟API调用
+      await fetch(`/api/users/${id}`, {
+        method: 'DELETE'
+      });
       // 重新加载用户列表
       loadUsers();
     } catch (err) {
-      console.error("删除用户失败", err);
+      setError("删除用户失败");
+      console.error(err);
     }
   }
 

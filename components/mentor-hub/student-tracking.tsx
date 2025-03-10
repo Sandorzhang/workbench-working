@@ -5,11 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { 
   History,
   ArrowDownWideNarrow,
-  ArrowDown,
-  ArrowUp,
   FileText,
-  ListFilter,
-  Plus,
   AlertTriangle,
   FileQuestion,
   ClipboardList,
@@ -47,7 +43,6 @@ export function StudentTracking({ studentId }: StudentTrackingProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [typeFilter, setTypeFilter] = useState<RecordType | 'all'>('all');
-  const [lastRefresh, setLastRefresh] = useState<string>(new Date().toISOString());
 
   const fetchRecords = async () => {
     try {
@@ -74,7 +69,6 @@ export function StudentTracking({ studentId }: StudentTrackingProps) {
       }
       
       setRecords(data);
-      setLastRefresh(new Date().toISOString());
     } catch (error) {
       console.error('🔍 [StudentTracking] 获取学生记录失败:', error);
       toast({
@@ -295,7 +289,7 @@ export function StudentTracking({ studentId }: StudentTrackingProps) {
                     </p>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      点击"添加记录"按钮开始为该学生记录信息
+                      点击&quot;添加记录&quot;按钮开始为该学生记录信息
                     </p>
                   )}
                   <div className="mt-4">

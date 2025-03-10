@@ -48,29 +48,12 @@ import {
   School as SchoolIcon
 } from 'lucide-react';
 
-// UI Components
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-
 export default function SchoolsPage() {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [schools, setSchools] = useState<School[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [schoolTypes, setSchoolTypes] = useState<string[]>([]);
-  const [allGrades, setAllGrades] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -87,9 +70,6 @@ export default function SchoolsPage() {
   const [schoolToDelete, setSchoolToDelete] = useState<School | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
-  // 年级加载状态
-  const [isLoadingGrades, setIsLoadingGrades] = useState(false);
-
   // 获取学校数据
   const fetchSchools = async () => {
     try {
@@ -291,11 +271,12 @@ export default function SchoolsPage() {
         toast.success('学校创建成功');
       }
       
+      setIsDialogOpen(false);
       fetchSchools(); // 重新获取数据
       return Promise.resolve();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting school:', error);
-      toast.error(error.message || '操作失败，请稍后再试');
+      toast.error(error instanceof Error ? error.message : '操作失败，请稍后再试');
       return Promise.reject(error);
     }
   };
@@ -338,9 +319,9 @@ export default function SchoolsPage() {
       toast.success('学校删除成功');
       setIsDeleteDialogOpen(false);
       fetchSchools(); // 重新获取数据
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting school:', error);
-      toast.error(error.message || '删除学校失败，请稍后再试');
+      toast.error(error instanceof Error ? error.message : '删除学校失败，请稍后再试');
     } finally {
       setIsDeleting(false);
     }
@@ -649,7 +630,7 @@ export default function SchoolsPage() {
           <DialogHeader>
             <DialogTitle>确认删除学校</DialogTitle>
             <DialogDescription>
-              您确定要删除学校 "{schoolToDelete?.name}" 吗？此操作不可撤销，删除后所有相关数据将无法恢复。
+              您确定要删除学校 &quot;{schoolToDelete?.name}&quot; 吗？此操作不可撤销，删除后所有相关数据将无法恢复。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">

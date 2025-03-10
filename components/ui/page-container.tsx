@@ -65,7 +65,7 @@ interface PageContainerProps {
   /**
    * 其他HTML div元素的属性
    */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

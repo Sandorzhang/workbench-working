@@ -8,10 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from "sonner";
 import { 
-  BookOpen, Users, FileText, Calendar, 
-  Sparkles, TrendingUp, Activity, Clock,
-  Database, Loader2, Network, GraduationCap,
-  School, Pencil, UserCheck, FileSpreadsheet,
+  Sparkles, TrendingUp, Activity, 
+  Loader2, Calendar, School, Users,
   AlertCircle, ChevronRight
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
@@ -45,41 +43,9 @@ const getRoleDisplay = (role: string | undefined) => {
   return roleMap[role] || role;
 };
 
-// 图标映射 - 使用类型断言避免TypeScript错误
-const iconComponents: Record<string, any> = {
-  'book': BookOpen,
-  'users': Users,
-  'file': FileText,
-  'calendar': Calendar,
-  'database': Database,
-  'fileText': FileSpreadsheet, // 考试管理使用电子表格图标
-  'network': Network,    // 概念地图使用网络图标
-  'graduationCap': GraduationCap, // 学业旅程使用毕业帽图标
-  'school': School,      // 课堂时光机使用学校图标
-  'pencil': Pencil,      // 单元教学设计使用铅笔图标
-  'userCheck': UserCheck, // 全员导师制使用用户检查图标
-};
-
-// 卡片颜色映射 - 使用更多生动的渐变色
-const colorMap: Record<string, string> = {
-  'book': 'from-blue-500 to-indigo-600',
-  'users': 'from-emerald-400 to-teal-600',
-  'clipboard': 'from-amber-400 to-orange-600',
-  'file': 'from-purple-400 to-violet-600',
-  'calendar': 'from-rose-400 to-pink-600',
-  'settings': 'from-slate-400 to-slate-600',
-  'database': 'from-cyan-400 to-blue-600',
-  'fileText': 'from-amber-400 to-red-600', // 考试管理使用橙红色渐变
-  'graduationCap': 'from-indigo-400 to-blue-600', // 学业旅程使用蓝紫色渐变
-  'school': 'from-green-400 to-teal-600',  // 课堂时光机使用绿色渐变
-  'pencil': 'from-purple-400 to-pink-600', // 单元教学设计使用紫色渐变
-  'userCheck': 'from-blue-400 to-cyan-600', // 全员导师制使用蓝青色渐变
-  'network': 'from-violet-400 to-indigo-600', // 概念地图使用紫色渐变
-};
-
 export default function WorkbenchPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,23 +148,6 @@ export default function WorkbenchPage() {
     
     fetchApplications();
   }, [authChecked, isAuthenticated, user]);
-  
-  // 应用点击处理函数
-  const handleAppClick = (url: string) => {
-    // 记录跳转日志
-    console.log('应用点击，准备导航到:', url);
-    
-    // 确保在客户端路由导航前验证用户状态
-    if (!isAuthenticated || !user) {
-      console.warn('用户未登录，取消导航并重定向到登录页');
-      toast.error('请先登录');
-      router.push('/login');
-      return;
-    }
-    
-    // 执行导航
-    router.push(url);
-  };
   
   // 格式化日期函数
   const formatDate = () => {

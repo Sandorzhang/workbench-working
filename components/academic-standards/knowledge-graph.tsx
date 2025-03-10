@@ -94,12 +94,10 @@ export function KnowledgeGraph({
     svg.setAttribute('viewBox', `-${width/2} -${height/2} ${width} ${height}`);
     
     // 创建一个简单的放射状布局
-    const nodeRadius = 30;
     const totalNodes = graphData.nodes.length;
-    const coreNode = graphData.nodes.find(node => node.type === 'core');
     
     // 绘制连接线
-    graphData.links.forEach((link, index) => {
+    graphData.links.forEach((link) => {
       const sourceNode = graphData.nodes.find(n => n.id === link.source);
       const targetNode = graphData.nodes.find(n => n.id === link.target);
       

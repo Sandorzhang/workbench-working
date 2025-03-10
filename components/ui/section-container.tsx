@@ -56,7 +56,7 @@ interface SectionContainerProps {
   /**
    * 其他属性
    */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

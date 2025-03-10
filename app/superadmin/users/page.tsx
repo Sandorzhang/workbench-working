@@ -159,7 +159,7 @@ export default function SuperAdminUsersPage() {
   });
   
   // 删除用户处理函数
-  const handleDeleteUser = async (userId: string, userName: string) => {
+  const handleDeleteUser = async (userId: string) => {
     toast.promise(
       new Promise(async (resolve, reject) => {
         try {
@@ -558,7 +558,7 @@ export default function SuperAdminUsersPage() {
                                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border max-w-md mx-auto">
                                       <h2 className="text-xl font-semibold mb-2">确认删除用户</h2>
                                       <p className="text-gray-500 dark:text-gray-400 mb-4">
-                                        您确定要删除用户 "{user.name}" 吗？此操作不可撤销。
+                                        您确定要删除用户 &quot;{user.name}&quot; 吗？此操作不可撤销。
                                       </p>
                                       <div className="flex justify-end gap-2">
                                         <Button 
@@ -570,7 +570,7 @@ export default function SuperAdminUsersPage() {
                                         <Button
                                           variant="destructive"
                                           onClick={() => {
-                                            handleDeleteUser(user.id, user.name);
+                                            handleDeleteUser(user.id);
                                             toast.dismiss(t);
                                           }}
                                         >

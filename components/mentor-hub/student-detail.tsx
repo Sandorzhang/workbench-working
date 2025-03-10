@@ -22,28 +22,24 @@ export function StudentDetail({ student, onBack }: StudentDetailProps) {
   const [comment, setComment] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [studentRecords, setStudentRecords] = useState<IndicatorRecord[]>([]);
+  
+  const fetchIndicators = async () => {
+    try {
+      const response = await fetch(`/api/students/${student.id}/indicators`);
+      if (response.ok) {
+        const data = await response.json();
+        setIndicators(data.indicators || []);
+        setStudentRecords(data.records || []);
+      }
+    } catch {
+      console.error('获取学生指标数据失败');
+    }
+  };
 
   useEffect(() => {
-    const fetchIndicators = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/students/${student.id}/indicators`);
-        if (response.ok) {
-          const data = await response.json();
-          setIndicators(data.indicators || []);
-          setStudentRecords(data.records || []);
-        }
-      } catch {
-        console.error('获取学生指标数据失败');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchIndicators();
-  }, []);
+  }, [student.id]);
 
   const handleSubmit = async () => {
     if (!selectedIndicator || !indicatorValue || !comment.trim()) {

@@ -81,19 +81,31 @@ export function LabelFrame({
     );
 }
 
+interface LabelItemProps {
+    text: ReactNode;
+    x: number;
+    y: number;
+    labelRotation: number;
+    labelStyle?: React.CSSProperties;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
+    onClick?: () => void;
+    isSelected?: boolean;
+    color?: string;
+}
+
 const LabelItem = ({ 
     text, 
     x, 
     y, 
     labelRotation, 
     labelStyle,
-    offset = 10,
     onMouseEnter,
     onMouseLeave,
     onClick,
     isSelected,
     color
-}: any) => {
+}: LabelItemProps) => {
     // 计算标签样式
     const finalStyle: React.CSSProperties = {
         position: 'absolute',

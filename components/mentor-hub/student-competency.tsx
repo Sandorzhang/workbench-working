@@ -3,7 +3,6 @@
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Star, Info } from "lucide-react";
-import { Indicator } from "@/lib/types";
 import { CompetencyWheel } from "../competency-wheel/competency-wheel";
 import { CompetencyDetail } from "./competency-detail";
 import { CompetencyDimension } from "@/types/models/competency";

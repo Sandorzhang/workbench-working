@@ -22,17 +22,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CardContainer } from "@/components/ui/card-container";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationLink } from "@/components/ui/pagination";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { 
   Search, 
-  Edit, 
-  Trash2, 
   Plus, 
   MoreHorizontal,
   RefreshCw,
-  BookOpen,
   Loader2
 } from "lucide-react";
 import { Grade } from "@/types/models/education";
@@ -180,7 +177,7 @@ export default function GradeManagement() {
         const errorData = await response.json();
         toast.error(errorData.error || "添加失败，请重试");
       }
-    } catch (error) {
+    } catch {
       toast.error("添加失败，请重试");
     } finally {
       setIsSubmitting(false);
@@ -209,7 +206,7 @@ export default function GradeManagement() {
         const errorData = await response.json();
         toast.error(errorData.error || "更新失败，请重试");
       }
-    } catch (error) {
+    } catch {
       toast.error("更新失败，请重试");
     } finally {
       setIsSubmitting(false);
@@ -234,7 +231,7 @@ export default function GradeManagement() {
         const errorData = await response.json();
         toast.error(errorData.error || "删除失败，请重试");
       }
-    } catch (error) {
+    } catch {
       toast.error("删除失败，请重试");
     } finally {
       setIsSubmitting(false);

@@ -4,7 +4,6 @@ interface SvgFrameProps {
     width: number;
     height: number;
     title?: string;
-    flexShrink?: number;
     children?: ReactNode;
     containerRef?: React.RefObject<HTMLDivElement>;
 }
@@ -13,7 +12,6 @@ export const SvgFrame = forwardRef<SVGSVGElement, SvgFrameProps>(({
     width,
     height,
     title,
-    flexShrink = 0,
     children,
     containerRef
 }, ref) => {
@@ -37,4 +35,6 @@ export const SvgFrame = forwardRef<SVGSVGElement, SvgFrameProps>(({
             </svg>
         </div>
     );
-}); 
+});
+
+SvgFrame.displayName = 'SvgFrame'; 

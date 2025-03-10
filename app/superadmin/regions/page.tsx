@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { Metadata } from 'next';
 import { Region } from '@/lib/api-types';
 
 // UI Components
@@ -36,7 +35,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -174,9 +172,9 @@ export default function RegionsPage() {
       
       setIsDialogOpen(false);
       fetchRegions(); // 重新获取数据
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting region:', error);
-      toast.error(error.message || '操作失败');
+      toast.error(error instanceof Error ? error.message : '操作失败');
     } finally {
       setIsSubmitting(false);
     }
@@ -206,9 +204,9 @@ export default function RegionsPage() {
       toast.success('区域删除成功');
       setIsDeleteDialogOpen(false);
       fetchRegions(); // 重新获取数据
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting region:', error);
-      toast.error(error.message || '删除区域失败');
+      toast.error(error instanceof Error ? error.message : '删除区域失败');
     } finally {
       setIsDeleting(false);
     }
@@ -425,7 +423,7 @@ export default function RegionsPage() {
                       <Input placeholder="请输入区域名称" className="rounded-md" {...field} />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      区域的名称，如"海淀区"、"朝阳区"等
+                      区域的名称，如&quot;海淀区&quot;、&quot;朝阳区&quot;等
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -473,7 +471,7 @@ export default function RegionsPage() {
           <DialogHeader>
             <DialogTitle className="text-xl">确认删除</DialogTitle>
             <DialogDescription className="pt-2">
-              您确定要删除区域 <span className="font-semibold">"{regionToDelete?.name}"</span> 吗？此操作不可撤销。
+              您确定要删除区域 <span className="font-semibold">&quot;{regionToDelete?.name}&quot;</span> 吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <div className="bg-red-50 p-4 rounded-lg my-2 text-sm text-red-700">

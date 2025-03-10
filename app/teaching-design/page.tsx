@@ -495,7 +495,7 @@ const CreateTeachingDesignDialog = ({
 };
 
 // 模拟创建教案请求
-const createTeachingDesign = async (formData: Record<string, any>) => {
+const createTeachingDesign = async (formData: Record<string, string | File | null | undefined>) => {
   try {
     // await request.post('/api/teaching-designs', formData);
     // 模拟成功响应

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WaveGraph } from './wave-graph';
-import { WaveGraphSegment, CompetencySegment } from './types';
+import { WaveGraphSegment } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // 状态对应的虚线样式
@@ -14,20 +14,17 @@ interface CompetencyWheelProps {
     title?: string;
     description?: string;
     isLoading?: boolean;
-    onDimensionClick?: (dimension: any) => void;
-    competencies?: any[];
+    onDimensionClick?: (dimension: Record<string, unknown>) => void;
+    competencies?: Record<string, unknown>[];
 }
 
 export function CompetencyWheel({
-    title = '素养能力轮',
-    description = '展示学生各维度素养发展情况',
     isLoading = false,
     onDimensionClick,
     competencies: externalCompetencies
 }: CompetencyWheelProps) {
-    const [competencies, setCompetencies] = useState<any[]>([]);
+    const [competencies, setCompetencies] = useState<Record<string, unknown>[]>([]);
     const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
-    const [selectedDimension, setSelectedDimension] = useState<any>(null);
     
     // 如果提供了外部数据，直接使用
     useEffect(() => {
@@ -55,12 +52,12 @@ export function CompetencyWheel({
     // 将原始能力数据转换为WaveGraph期望的格式
     const segments: WaveGraphSegment[] = competencies.map(comp => {
         // 计算每个一级维度下有多少二级维度
-        const secondaryCount = comp.children.length;
+        const secondaryCount = (comp.children as Record<string, unknown>[])?.length || 0;
         
         // 获取二级维度对应的状态，用于设置虚线样式
-        const dashStyles = comp.children.map((child: any) => 
-            STATUS_DASH_ARRAY[child.status as keyof typeof STATUS_DASH_ARRAY] || []
-        );
+        const dashStyles = (comp.children as Record<string, unknown>[])?.map((child: Record<string, unknown>) => 
+            STATUS_DASH_ARRAY[(child.status as string) as keyof typeof STATUS_DASH_ARRAY] || []
+        ) || [];
         
         // 每个一级维度的层数 = 二级维度数量（如果有的话）
         // 若没有二级维度，则只有一层
@@ -80,13 +77,13 @@ export function CompetencyWheel({
         
         // 创建段落
         return {
-            id: comp.id,
-            label: comp.name,
-            color: comp.color,
+            id: comp.id as string,
+            label: comp.name as string,
+            color: comp.color as string,
             layers: totalLayers, // 设置正确的层数
             dash: finalDashStyles, // 从内到外的虚线样式数组
-            content: `${comp.name} (${secondaryCount}个子维度)`,
-            isAdvanced: comp.isAdvanced
+            content: `${comp.name as string} (${secondaryCount}个子维度)`,
+            isAdvanced: comp.isAdvanced as boolean
         };
     });
     
@@ -95,16 +92,14 @@ export function CompetencyWheel({
         setSelectedId(id);
         
         if (!id) {
-            setSelectedDimension(null);
-            if (onDimensionClick) onDimensionClick(null);
+            if (onDimensionClick) onDimensionClick(null as unknown as Record<string, unknown>);
             return;
         }
         
         // 查找选中的维度
         const dimension = competencies.find(comp => comp.id === id);
-        if (dimension) {
-            setSelectedDimension(dimension);
-            if (onDimensionClick) onDimensionClick(dimension);
+        if (dimension && onDimensionClick) {
+            onDimensionClick(dimension);
         }
     };
     

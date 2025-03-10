@@ -57,7 +57,6 @@ interface AssignStudentsDialogProps {
   onOpenChange: (open: boolean) => void;
   classId: string;
   className?: string;
-  gradeId?: string;
   onAssignSuccess?: () => void;
 }
 
@@ -66,7 +65,6 @@ export function AssignStudentsDialog({
   onOpenChange,
   classId,
   className,
-  gradeId,
   onAssignSuccess,
 }: AssignStudentsDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -302,7 +300,7 @@ export function AssignStudentsDialog({
               <FormField
                 control={form.control}
                 name="studentIds"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormMessage />
                   </FormItem>

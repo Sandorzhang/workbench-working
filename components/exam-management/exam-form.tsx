@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Exam } from '@/types/exam'
 import { Card, CardContent } from '@/components/ui/card'
 import { CalendarIcon, CheckCircle2, ClockIcon, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -81,6 +80,7 @@ export function ExamForm({ examId }: ExamFormProps) {
         })
         .then(data => {
           // 忽略id字段，使用表单中的其他字段
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { id, ...formData } = data
           
           // 调整时间格式以适应输入框
@@ -189,7 +189,7 @@ export function ExamForm({ examId }: ExamFormProps) {
                     />
                   </FormControl>
                   <FormDescription className="text-xs">
-                    输入一个清晰的考试名称，例如"2023年春季期末考试"
+                    输入一个清晰的考试名称，例如&quot;2023年春季期末考试&quot;
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

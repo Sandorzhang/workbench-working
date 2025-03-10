@@ -39,7 +39,6 @@ export function QuestionManagement({
   const [bulkScoreDialogOpen, setBulkScoreDialogOpen] = useState(false)
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null)
   const [learningObjectives, setLearningObjectives] = useState<LearningObjective[]>([])
-  const [isLoadingObjectives, setIsLoadingObjectives] = useState(false)
   const [examInfo, setExamInfo] = useState<Partial<Exam> | null>(null)
 
   // 获取考试信息
@@ -62,7 +61,6 @@ export function QuestionManagement({
 
   // 获取学业目标，根据考试学科筛选
   const fetchLearningObjectives = async () => {
-    setIsLoadingObjectives(true)
     try {
       // 使用考试学科或传入的学科参数
       const subject = examInfo?.subject || examSubject
@@ -79,8 +77,6 @@ export function QuestionManagement({
         description: '请稍后再试',
         variant: 'destructive',
       })
-    } finally {
-      setIsLoadingObjectives(false)
     }
   }
 
@@ -330,7 +326,7 @@ export function QuestionManagement({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>暂无题目</AlertTitle>
             <AlertDescription>
-              该考试还没有添加任何题目，点击"添加题目"按钮开始创建，或使用"批量导入"功能导入PDF试卷。
+              该考试还没有添加任何题目，点击&quot;添加题目&quot;按钮开始创建，或使用&quot;批量导入&quot;功能导入PDF试卷。
             </AlertDescription>
           </Alert>
         ) : (

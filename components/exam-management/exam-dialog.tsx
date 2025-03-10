@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { toast } from '@/components/ui/use-toast'
@@ -31,8 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Exam } from '@/types/exam'
-import { AlertCircle, CalendarIcon, CheckCircle2, ClockIcon, Loader2, Lock, X } from 'lucide-react'
+import { AlertCircle, CalendarIcon, CheckCircle2, ClockIcon, Loader2, Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -75,10 +74,9 @@ interface ExamDialogProps {
 }
 
 export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialogProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [initialStatus, setInitialStatus] = useState<string>('draft')
-  const isEditing = Boolean(examId)
 
   const form = useForm<ExamFormValues>({
     resolver: zodResolver(examSchema),
@@ -86,24 +84,12 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
     mode: 'onChange',
   })
 
-  // 监听表单中的status字段
-  const currentStatus = useWatch({
-    control: form.control,
-    name: 'status',
-    defaultValue: 'draft'
-  });
-
-  // 判断是否为已发布考试，这里使用初始状态来判断，而不是当前状态
-  // 因为我们要确保即使用户在表单中修改了状态，原本已发布的考试学科仍然保持禁用
-  const isPublished = initialStatus === 'published';
-
   // 重置表单，当弹窗打开/关闭或考试ID变化时
   useEffect(() => {
     if (open) {
       if (!examId) {
         // 新增模式，重置表单为默认值
         form.reset(defaultValues)
-        setInitialStatus('draft')
       } else {
         // 编辑模式，获取考试数据
         fetchExamData(examId)
@@ -112,7 +98,7 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
   }, [open, examId, form])
 
   const fetchExamData = async (id: string) => {
-    setIsLoading(true)
+    setLoading(true)
     try {
       const response = await fetch(`/api/exams/${id}`)
       if (!response.ok) {
@@ -120,10 +106,8 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
       }
       const data = await response.json()
       
-      // 保存初始状态，用于判断学科字段是否可编辑
-      setInitialStatus(data.status)
-      
       // 忽略id字段，使用表单中的其他字段
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id: _, ...formData } = data
       
       // 调整时间格式以适应输入框
@@ -134,6 +118,7 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
       }
       
       form.reset(formattedData)
+      setIsEditing(true)
     } catch (error) {
       console.error('Error fetching exam:', error)
       toast({
@@ -143,7 +128,7 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
       })
       onOpenChange(false)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -208,7 +193,7 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
           </DialogDescription>
         </DialogHeader>
         
-        {isLoading ? (
+        {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="flex flex-col items-center space-y-4">
               <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -218,7 +203,7 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {isPublished && (
+              {isEditing && (
                 <Alert className="bg-amber-50 border-amber-200">
                   <AlertCircle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
@@ -245,8 +230,8 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
                         className="rounded-md"
                       />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      输入一个清晰的考试名称，例如"2023年春季期末考试"
+                    <FormDescription>
+                      试卷标题应简洁明了，例如：&quot;2023秋季高一数学期中考试&quot;
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -261,7 +246,7 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
                     <FormItem>
                       <FormLabel className="flex items-center gap-1">
                         学科
-                        {isPublished && (
+                        {isEditing && (
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                         )}
                       </FormLabel>
@@ -269,12 +254,12 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                         value={field.value}
-                        disabled={isPublished}
+                        disabled={isEditing}
                       >
                         <FormControl>
                           <SelectTrigger className={cn(
                             "rounded-md",
-                            isPublished && "bg-muted opacity-80"
+                            isEditing && "bg-muted opacity-80"
                           )}>
                             <SelectValue placeholder="选择学科" />
                           </SelectTrigger>
@@ -287,7 +272,7 @@ export function ExamDialog({ open, onOpenChange, examId, onSuccess }: ExamDialog
                           ))}
                         </SelectContent>
                       </Select>
-                      {isPublished && (
+                      {isEditing && (
                         <FormDescription className="text-xs text-amber-600">
                           考试发布后学科不可修改
                         </FormDescription>

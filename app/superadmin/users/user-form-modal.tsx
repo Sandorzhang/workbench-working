@@ -169,16 +169,14 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
       });
     } else {
       // 添加模式下重置表单
-      setFormData(prev => {
-        return {
-          name: '',
-          email: '',
-          username: generateUsername('student', NO_SCHOOL_VALUE, userCounter),
-          phone: '',
-          password: '',
-          role: 'student',
-          schoolId: NO_SCHOOL_VALUE,
-        };
+      setFormData({
+        name: '',
+        email: '',
+        username: generateUsername('student', NO_SCHOOL_VALUE, userCounter),
+        phone: '',
+        password: '',
+        role: 'student',
+        schoolId: NO_SCHOOL_VALUE,
       });
     }
     

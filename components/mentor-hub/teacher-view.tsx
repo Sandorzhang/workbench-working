@@ -1,25 +1,21 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { 
   BookOpen,
-  Calendar,
   SearchIcon,
   Star,
   History,
   RefreshCw,
   Search,
   User,
-  BarChart3,
-  ClipboardEdit
+  BarChart3
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Skeleton } from "../ui/skeleton";
-import { Progress } from "../ui/progress";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { EnrichedStudent } from "@/lib/types";
@@ -325,14 +321,14 @@ export default function TeacherView() {
       const data = await response.json();
       
       // 转换数据格式以符合EnrichedStudent类型
-      const enrichedStudents: EnrichedStudent[] = data.map((student: any) => ({
-        id: student.id,
-        name: student.name,
-        avatar: student.avatar,
-        studentId: student.studentId,
-        grade: student.grade,
-        class: student.class,
-        gender: student.gender,
+      const enrichedStudents: EnrichedStudent[] = data.map((student: Record<string, unknown>) => ({
+        id: student.id as string,
+        name: student.name as string,
+        avatar: student.avatar as string,
+        studentId: student.studentId as string,
+        grade: student.grade as string,
+        class: student.class as string,
+        gender: student.gender as string,
         indicators: [
           {
             id: `academic-${student.id}`,
