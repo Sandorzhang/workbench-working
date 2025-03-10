@@ -83,9 +83,9 @@ export function SectionContainer({
   // 内边距映射
   const paddingMap = {
     none: "p-0",
-    compact: "p-4",
-    standard: "p-5 sm:p-6",
-    relaxed: "p-6 sm:p-8",
+    compact: "p-5",
+    standard: "p-6 lg:p-7",
+    relaxed: "p-7 lg:p-8",
   };
 
   // 加载状态
@@ -93,10 +93,12 @@ export function SectionContainer({
     return (
       <div 
         className={cn(
-          "rounded-xl border border-gray-100/80",
-          backgroundClassName || "bg-white",
+          "rounded-xl border border-gray-100/60 dark:border-gray-800/40",
+          "backdrop-blur-sm backdrop-filter",
+          backgroundClassName || "bg-white/90 dark:bg-gray-900/90",
           paddingMap[padding],
           "animate-pulse",
+          "shadow-sm",
           className
         )}
         id={id}
@@ -104,22 +106,22 @@ export function SectionContainer({
       >
         {/* 标题区域骨架屏 */}
         {(title || description) && (
-          <div className="mb-4">
-            {title && <Skeleton className="h-6 w-1/4 mb-2" />}
-            {description && <Skeleton className="h-4 w-1/2" />}
+          <div className="mb-5">
+            {title && <Skeleton className="h-7 w-1/4 mb-3" />}
+            {description && <Skeleton className="h-5 w-1/2" />}
           </div>
         )}
         
         {/* 分隔线骨架屏 */}
-        {divider && <Skeleton className="h-px w-full my-4" />}
+        {divider && <Skeleton className="h-px w-full my-5 bg-gray-100/80 dark:bg-gray-800/60" />}
         
         {/* 内容区域骨架屏 */}
-        <div className="space-y-4">
-          <Skeleton className="h-24 w-full rounded-md" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/6" />
+        <div className="space-y-5">
+          <Skeleton className="h-32 w-full rounded-lg" />
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-5/6" />
+            <Skeleton className="h-5 w-4/6" />
           </div>
         </div>
       </div>
@@ -129,9 +131,11 @@ export function SectionContainer({
   return (
     <div 
       className={cn(
-        "rounded-xl border border-gray-100/80",
-        backgroundClassName || "bg-white",
-        "transition-all duration-200",
+        "rounded-xl border border-gray-100/60 dark:border-gray-800/40",
+        "bg-gradient-to-b from-white/60 to-white/95 dark:from-gray-900/60 dark:to-gray-900/95",
+        "backdrop-blur-sm backdrop-filter",
+        "shadow-sm hover:shadow-md transition-all duration-300 ease-in-out",
+        backgroundClassName,
         className
       )}
       id={id}
@@ -142,13 +146,15 @@ export function SectionContainer({
         <div className={cn(
           "flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0",
           paddingMap[padding],
-          divider && "border-b border-gray-100"
+          divider && "border-b border-gray-100/80 dark:border-gray-800/60 pb-5"
         )}>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {title && (
               <h2 
                 className={cn(
-                  "text-lg font-medium text-gray-900",
+                  "text-lg font-medium tracking-tight text-gray-900 dark:text-gray-100",
+                  "bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700",
+                  "dark:from-gray-100 dark:via-gray-200 dark:to-gray-300",
                   collapsible && "flex items-center cursor-pointer select-none"
                 )}
                 onClick={collapsible ? () => setIsOpen(!isOpen) : undefined}
@@ -156,7 +162,7 @@ export function SectionContainer({
                 {collapsible && (
                   <svg
                     className={cn(
-                      "mr-1.5 h-4 w-4 text-gray-500 transition-transform", 
+                      "mr-2 h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200", 
                       isOpen ? "transform rotate-0" : "transform rotate-180"
                     )}
                     xmlns="http://www.w3.org/2000/svg"
@@ -170,13 +176,13 @@ export function SectionContainer({
               </h2>
             )}
             {description && (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-3xl">
                 {description}
               </p>
             )}
           </div>
           {actions && (
-            <div className="flex items-center space-x-2 shrink-0">
+            <div className="flex items-center space-x-3 shrink-0">
               {actions}
             </div>
           )}
@@ -187,7 +193,7 @@ export function SectionContainer({
       {(!collapsible || isOpen) && (
         <div 
           className={cn(
-            (!title && !description && !actions) || !divider ? paddingMap[padding] : "px-6 pb-6 pt-4"
+            (!title && !description && !actions) || !divider ? paddingMap[padding] : cn("px-6 lg:px-7 pb-6 lg:pb-7", divider && "pt-5")
           )}
         >
           {children}

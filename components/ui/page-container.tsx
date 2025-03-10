@@ -89,16 +89,16 @@ export function PageContainer({
   // 页面容器间距映射
   const spacingMap = {
     none: "p-0",
-    compact: "p-4",
-    standard: "p-6",
-    relaxed: "p-8 lg:p-10",
+    compact: "p-5",
+    standard: "p-6 lg:p-8",
+    relaxed: "p-8 lg:p-12",
   };
 
   // 网格间距映射
   const gridGapMap = {
-    sm: "gap-3",
-    md: "gap-4 lg:gap-6",
-    lg: "gap-6 lg:gap-8",
+    sm: "gap-4",
+    md: "gap-6",
+    lg: "gap-8",
   };
 
   // 网格列数映射
@@ -111,9 +111,9 @@ export function PageContainer({
 
   // 布局类名
   const layoutClassName = {
-    stack: "flex flex-col space-y-6",
+    stack: "flex flex-col space-y-8",
     grid: cn("grid", gridColumnsMap[columns], gridGapMap[gridGap]),
-    split: "flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0",
+    split: "flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0",
   };
 
   // 渲染加载状态
@@ -122,9 +122,9 @@ export function PageContainer({
       <div className={cn("animate-pulse", spacingMap[spacing], className)} {...props}>
         {/* 标题区域骨架屏 */}
         {(title || description) && (
-          <div className="mb-6 flex flex-col space-y-2">
-            {title && <Skeleton className="h-8 w-1/3" />}
-            {description && <Skeleton className="h-4 w-2/3" />}
+          <div className="mb-8 flex flex-col space-y-3">
+            {title && <Skeleton className="h-9 w-1/3" />}
+            {description && <Skeleton className="h-5 w-2/3" />}
           </div>
         )}
         
@@ -134,9 +134,9 @@ export function PageContainer({
             <>
               {Array.from({ length: Math.min(columns, 4) }).map((_, i) => (
                 <div key={i} className="flex flex-col space-y-4">
-                  <Skeleton className="h-40 w-full rounded-lg" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-48 w-full rounded-xl" />
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-5 w-1/2" />
                 </div>
               ))}
             </>
@@ -144,24 +144,24 @@ export function PageContainer({
           
           {layout === "stack" && (
             <>
-              <Skeleton className="h-48 w-full rounded-lg" />
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-56 w-full rounded-xl" />
+              <div className="space-y-5">
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-3/4" />
               </div>
             </>
           )}
           
           {layout === "split" && (
             <>
-              <Skeleton className="h-64 w-full md:w-1/3 rounded-lg" />
-              <div className="space-y-4 flex-1">
-                <Skeleton className="h-6 w-2/3" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5" />
-                <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-72 w-full md:w-1/3 rounded-xl" />
+              <div className="space-y-5 flex-1">
+                <Skeleton className="h-7 w-2/3" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-4/5" />
+                <Skeleton className="h-5 w-3/4" />
               </div>
             </>
           )}
@@ -173,31 +173,35 @@ export function PageContainer({
   return (
     <div 
       className={cn(
-        "rounded-xl border border-gray-100/60",
-        backgroundClassName || "bg-white",
+        "rounded-2xl border border-gray-100/60 dark:border-gray-800/40",
+        "bg-gradient-to-b from-white/80 to-white dark:from-gray-900/80 dark:to-gray-900",
+        "backdrop-blur-sm backdrop-filter",
+        "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+        "dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)]",
         spacingMap[spacing],
-        "transition-all duration-200",
+        "transition-all duration-300 ease-in-out",
+        backgroundClassName,
         className
       )}
       {...props}
     >
       {/* 页面标题区域 */}
       {(title || description || actions) && (
-        <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center space-y-4 sm:space-y-0">
+        <div className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center space-y-4 sm:space-y-0">
           <div>
             {title && (
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300">
                 {title}
               </h1>
             )}
             {description && (
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-2 text-base text-gray-500 dark:text-gray-400 max-w-3xl">
                 {description}
               </p>
             )}
           </div>
           {actions && (
-            <div className="flex items-center space-x-3 shrink-0">
+            <div className="flex items-center space-x-4 shrink-0">
               {actions}
             </div>
           )}

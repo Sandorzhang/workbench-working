@@ -12,7 +12,7 @@ import {
   Sparkles, TrendingUp, Activity, Clock,
   Database, Loader2, Network, GraduationCap,
   School, Pencil, UserCheck, FileSpreadsheet,
-  AlertCircle
+  AlertCircle, ChevronRight
 } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionContainer } from '@/components/ui/section-container';
@@ -224,10 +224,10 @@ export default function WorkbenchPage() {
   // 如果认证状态仍在加载，显示加载状态
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-gray-500">加载中...</p>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+        <div className="flex flex-col items-center space-y-4 p-8 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-lg border border-gray-100/60 dark:border-gray-800/40">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-gray-600 dark:text-gray-300 font-medium">系统加载中...</p>
         </div>
       </div>
     );
@@ -243,40 +243,43 @@ export default function WorkbenchPage() {
   return (
     <PageContainer
       loading={loading}
+      spacing="relaxed"
+      backgroundClassName="bg-gradient-to-b from-gray-50/80 to-white/80 dark:from-gray-950/80 dark:to-gray-900/80"
     >
       {/* 欢迎和统计卡片区域 */}
       <SectionContainer
-        backgroundClassName="bg-gradient-to-br from-white to-gray-50"
-        className="relative overflow-hidden border border-gray-100/80 shadow-sm"
+        backgroundClassName="bg-gradient-to-br from-white/70 to-gray-50/80 dark:from-gray-900/70 dark:to-gray-800/80"
+        className="relative overflow-hidden shadow-lg border-0"
         padding="relaxed"
       >
         {/* 装饰性背景元素 */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/5 to-transparent rounded-full -mr-32 -mt-32"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-primary/5 to-transparent rounded-full -ml-32 -mb-32"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/10 to-transparent rounded-full -mr-32 -mt-32 blur-3xl opacity-70"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-primary/10 to-transparent rounded-full -ml-32 -mb-32 blur-3xl opacity-70"></div>
+        <div className="absolute inset-0 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[2px] backdrop-filter z-0"></div>
         
-        <div className="flex justify-between items-center mb-6 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-8 relative z-10">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80 mr-2">{getGreeting()}</span>
-              {user?.name || '同学'}
+            <h2 className="text-3xl font-bold tracking-tight mb-2">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70 mr-2">{getGreeting()},</span>
+              <span className="text-gray-900 dark:text-gray-100">{user?.name || '同学'}</span>
             </h2>
-            <p className="text-gray-500 mt-1">{formatDate()} · 欢迎回到工作台</p>
+            <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">{formatDate()} · 欢迎回到工作台</p>
             {user?.school && (
-              <p className="text-sm text-primary mt-1">
-                <School className="inline-block h-3.5 w-3.5 mr-1" />
+              <p className="text-primary/90 dark:text-primary/80 flex items-center text-base">
+                <School className="inline-block h-4 w-4 mr-1.5" />
                 {user.school} · {user.schoolType || '学校'}
               </p>
             )}
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="px-3 py-1.5 bg-white border-primary/20">
-              <Sparkles className="h-3.5 w-3.5 text-primary mr-1" />
-              <span className="text-primary">{getRoleDisplay(user?.role)}</span>
+          <div className="flex items-center space-x-4">
+            <Badge variant="outline" className="px-4 py-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-sm border-primary/20 dark:border-primary/30">
+              <Sparkles className="h-4 w-4 text-primary mr-2" />
+              <span className="text-primary font-medium">{getRoleDisplay(user?.role)}</span>
             </Badge>
-            <Avatar className="h-12 w-12 border-2 border-primary/20">
+            <Avatar className="h-14 w-14 border-2 border-primary/20 dark:border-primary/30 shadow-sm">
               <AvatarImage src={user?.avatar || "/avatars/default.png"} alt={user?.name || '用户'} />
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
                 {user?.name?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
@@ -284,51 +287,51 @@ export default function WorkbenchPage() {
         </div>
         
         {/* 统计卡片 */}
-        <ResponsiveGrid xs={1} sm={2} md={4} gap="md">
-          <CardContainer elevated backgroundClassName="bg-white">
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-50 p-3 rounded-full">
-                <TrendingUp className="h-5 w-5 text-blue-500" />
+        <ResponsiveGrid xs={1} sm={2} md={4} gap="lg">
+          <CardContainer elevated backgroundClassName="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center space-x-5 p-1">
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 rounded-xl shadow-sm">
+                <TrendingUp className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">完成任务</p>
-                <h4 className="text-2xl font-semibold">{stats.tasksCompleted}</h4>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">完成任务</p>
+                <h4 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-500">{stats.tasksCompleted}</h4>
               </div>
             </div>
           </CardContainer>
           
-          <CardContainer elevated backgroundClassName="bg-white">
-            <div className="flex items-center space-x-4">
-              <div className="bg-emerald-50 p-3 rounded-full">
-                <Calendar className="h-5 w-5 text-emerald-500" />
+          <CardContainer elevated backgroundClassName="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center space-x-5 p-1">
+              <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 p-4 rounded-xl shadow-sm">
+                <Calendar className="h-6 w-6 text-emerald-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">即将到来</p>
-                <h4 className="text-2xl font-semibold">{stats.upcomingEvents}</h4>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">即将到来</p>
+                <h4 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-emerald-500">{stats.upcomingEvents}</h4>
               </div>
             </div>
           </CardContainer>
           
-          <CardContainer elevated backgroundClassName="bg-white">
-            <div className="flex items-center space-x-4">
-              <div className="bg-amber-50 p-3 rounded-full">
-                <Activity className="h-5 w-5 text-amber-500" />
+          <CardContainer elevated backgroundClassName="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center space-x-5 p-1">
+              <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-4 rounded-xl shadow-sm">
+                <Activity className="h-6 w-6 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">未读消息</p>
-                <h4 className="text-2xl font-semibold">{stats.messagesUnread}</h4>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">未读消息</p>
+                <h4 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-amber-500">{stats.messagesUnread}</h4>
               </div>
             </div>
           </CardContainer>
           
-          <CardContainer elevated backgroundClassName="bg-white">
-            <div className="flex items-center space-x-4">
-              <div className="bg-purple-50 p-3 rounded-full">
-                <Users className="h-5 w-5 text-purple-500" />
+          <CardContainer elevated backgroundClassName="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center space-x-5 p-1">
+              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-4 rounded-xl shadow-sm">
+                <Users className="h-6 w-6 text-purple-500" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">活跃学生</p>
-                <h4 className="text-2xl font-semibold">{stats.activeStudents}</h4>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">活跃学生</p>
+                <h4 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-500">{stats.activeStudents}</h4>
               </div>
             </div>
           </CardContainer>
@@ -338,24 +341,34 @@ export default function WorkbenchPage() {
       {/* 应用列表区域 */}
       <SectionContainer
         title={`应用列表 (${applications.length}个)`}
-        className="mt-6"
+        description="点击卡片进入相应的应用模块"
+        className="mt-8 shadow-md"
         divider
+        actions={
+          <Button variant="ghost" className="text-primary hover:text-primary/90 hover:bg-primary/5">
+            查看全部
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        }
       >
         {loading ? (
           <ApplicationsSkeleton />
         ) : applications.length === 0 ? (
-          <div className="p-8 text-center border rounded-lg">
-            <div className="mb-4">
-              <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+          <div className="p-12 text-center border border-gray-100/60 dark:border-gray-800/40 rounded-xl bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm">
+            <div className="mb-5 bg-gray-50/80 dark:bg-gray-800/80 p-5 rounded-full inline-flex">
+              <AlertCircle className="h-10 w-10 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-medium mb-2">没有可用的应用</h3>
-            <p className="text-muted-foreground mb-4">
+            <h3 className="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">没有可用的应用</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
               您当前没有权限访问任何应用。
               {user && <span> 用户角色: {user.role}</span>}
             </p>
+            <Button variant="outline" className="bg-white/80 dark:bg-gray-800/80">
+              刷新
+            </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {applications.map((app) => (
               <ApplicationCard key={app.id} application={app} />
             ))}
