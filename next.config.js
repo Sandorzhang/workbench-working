@@ -7,12 +7,20 @@ const nextConfig = {
   images: {
     domains: ["images.unsplash.com", "api.dicebear.com"],
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@lib": path.resolve(__dirname, "./lib"),
       "@components": path.resolve(__dirname, "./components"),
     };
+
+    // 排除 mocks 文件夹
+    if (!isServer) {
+      config.resolve.fallback = { ...config.resolve.fallback, fs: false };
+    }
+    // 添加 mocks 文件夹到 webpack 忽略列表
+    config.module.rules.push({ test: /mocks/, loader: "ignore-loader" });
+
     return config;
   },
   experimental: {

@@ -317,6 +317,7 @@ export const worker = {
 
     let retries = 0;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tryStart = async (): Promise<any> => {
       try {
         // //console.log(
