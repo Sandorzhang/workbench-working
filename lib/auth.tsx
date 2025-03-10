@@ -200,9 +200,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const hashedPassword = hashPassword(password);
 
       // 使用API工具进行登录
-      const data = (await apiLogin(username, hashedPassword)) as LoginResponse;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = (await apiLogin(username, hashedPassword)) as any;
 
-      console.log("登录成功，获取到token和用户数据");
+      console.log("登录成功，获取到token和用户数据", data);
 
       // 先保存token到localStorage
       localStorage.setItem("token", data.token);
@@ -245,6 +246,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setTimeout(() => {
         router.push(redirectPath);
       }, 1000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("登录失败:", error);
       const errorMessage = error.message || "登录时发生错误";
@@ -267,7 +269,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // 使用API工具进行验证码登录
       const data = (await apiLoginWithCode(phone, code)) as LoginResponse;
 
-      console.log("验证码登录成功，获取到token和用户数据");
+      console.log("验证码登录成功，获取到token和用户数据", data);
 
       // 先保存token到localStorage
       localStorage.setItem("token", data.token);

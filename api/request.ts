@@ -18,36 +18,38 @@ export const request: AxiosInstance = axios.create({
   },
 });
 
+// 跟踪MSW初始化状态
+let mswInitialized = false;
+
 // 等待MSW准备就绪
 const waitForMsw = async (): Promise<boolean> => {
   // 如果MSW被禁用或不在浏览器环境中，直接返回
-  if (!ENABLE_MSW || typeof window === "undefined") return true;
+  if (!ENABLE_MSW || typeof window === "undefined" || mswInitialized)
+    return true;
 
   // 如果MSW已经就绪，直接返回
   if (window.__MSW_READY__ === true) {
-    console.log("MSW已就绪，继续API请求");
+    mswInitialized = true;
     return true;
   }
-
-  console.log("等待MSW初始化...");
 
   // 等待MSW就绪，最多等待MSW_READY_TIMEOUT毫秒
   return new Promise((resolve) => {
     const startTime = Date.now();
 
     const checkMswReady = () => {
-      // 如果MSW已就绪或超时，则解析Promise
+      // 如果MSW已就绪，标记为已初始化并解析Promise
       if (window.__MSW_READY__ === true) {
-        console.log("MSW已就绪，继续API请求");
+        mswInitialized = true;
         resolve(true);
         return;
       }
 
       // 检查是否超时
       if (Date.now() - startTime > MSW_READY_TIMEOUT) {
-        console.warn("等待MSW就绪超时，继续API请求（可能会导致错误）");
-        // 即使超时也标记为true，以避免阻塞API请求
-        window.__MSW_READY__ = true;
+        console.warn("等待MSW就绪超时，继续API请求");
+        // 标记为已初始化以避免再次等待
+        mswInitialized = true;
         resolve(false);
         return;
       }
@@ -78,7 +80,11 @@ const getAuthHeaders = (): Record<string, string> => {
 request.interceptors.request.use(
   async (config) => {
     // 在开发环境中且MSW启用时等待MSW就绪
-    if (process.env.NODE_ENV === "development" && ENABLE_MSW) {
+    if (
+      process.env.NODE_ENV === "development" &&
+      ENABLE_MSW &&
+      !mswInitialized
+    ) {
       await waitForMsw();
     }
 
@@ -114,7 +120,8 @@ request.interceptors.request.use(
 // 配置响应拦截器
 request.interceptors.response.use(
   (response) => {
-    return response;
+    // 直接返回响应数据
+    return response.data;
   },
   async (error: AxiosError) => {
     const response = error.response;
@@ -213,7 +220,6 @@ request.interceptors.response.use(
         errorData || { originalError: error.message },
     };
 
-    console.log("标准化API错误:", standardError);
     return Promise.reject(standardError);
   }
 );
