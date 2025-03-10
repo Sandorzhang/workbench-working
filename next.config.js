@@ -40,6 +40,8 @@ const nextConfig = {
         "@components": path.resolve(__dirname, "./components"),
       },
     },
+    // 禁用 Turbopack 的字体优化
+    optimizeFonts: false,
   },
   // 环境变量配置
   env: {

@@ -1,22 +1,11 @@
-import { MswInitializer } from '@/components/MswInitializer';
-import { AuthProvider } from '@/lib/auth';
+import { MswInitializer } from "@/components/MswInitializer";
+import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/toaster";
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { DebugPanel } from '@/components/DebugPanel';
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DebugPanel } from "@/components/DebugPanel";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { AppLayout } from "@/components/app-layout";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "教育管理平台",
@@ -30,18 +19,24 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&display=swap"
+        />
+      </head>
+      <body className="font-sans antialiased">
         <MswInitializer>
           <ErrorBoundary>
             <AuthProvider>
-              <AppLayout>
-                {children}
-              </AppLayout>
+              <AppLayout>{children}</AppLayout>
             </AuthProvider>
           </ErrorBoundary>
-          {process.env.NODE_ENV === 'development' && <DebugPanel />}
+          {process.env.NODE_ENV === "development" && <DebugPanel />}
         </MswInitializer>
         <Toaster />
       </body>
