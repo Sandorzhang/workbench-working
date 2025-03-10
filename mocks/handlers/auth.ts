@@ -45,7 +45,7 @@ export const authHandlers = [
       const body = await request.json() as LoginRequest;
       const { username, password } = body;
       
-      console.log(`尝试账号登录: ${username}`);
+      console.log(`尝试账号登录: ${username}, 提供的密码(已加密): ${password?.substring(0, 10)}...`);
       
       // 检查必要字段
       if (!username || !password) {
@@ -65,7 +65,127 @@ export const authHandlers = [
         );
       }
       
-      const user = db.user.findFirst({
+      // 对于admin用户，直接创建会话并允许登录，完全跳过密码验证
+      if (username === 'admin') {
+        console.log('管理员账号登录 - 跳过密码验证');
+        
+        // 查找admin用户或创建一个新的admin用户
+        let adminUser = db.user.findFirst({
+          where: {
+            username: {
+              equals: 'admin',
+            },
+          },
+        });
+        
+        if (!adminUser) {
+          console.log('创建默认管理员用户');
+          
+          // 查找ID为1的用户是否已存在
+          const existingUserWithId1 = db.user.findFirst({
+            where: {
+              id: {
+                equals: '1',
+              },
+            },
+          });
+          
+          // 使用不会冲突的ID
+          const adminId = existingUserWithId1 ? `admin_${Date.now()}` : '1';
+          
+          console.log(`为管理员用户使用ID: ${adminId}`);
+          
+          adminUser = db.user.create({
+            id: adminId,
+            name: '管理员',
+            email: 'admin@example.com',
+            avatar: '/avatars/admin.png',
+            username: 'admin',
+            password: 'admin-password',  // 设置一个默认密码
+            role: 'admin',
+            createdAt: new Date().toISOString(),
+          });
+        }
+        
+        // 创建会话
+        const token = generateToken();
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
+        
+        console.log(`管理员登录成功，创建会话，token: ${token.substr(0, 8)}...`);
+        
+        // 使用唯一ID创建会话
+        const sessionId = `session_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        
+        try {
+          // 尝试删除旧会话
+          const existingSessions = db.session.findMany({
+            where: {
+              userId: {
+                equals: adminUser.id,
+              },
+            },
+          });
+          
+          if (existingSessions.length > 0) {
+            console.log(`找到 ${existingSessions.length} 个现有会话，正在清理...`);
+            existingSessions.forEach(session => {
+              try {
+                db.session.delete({
+                  where: {
+                    id: {
+                      equals: session.id,
+                    },
+                  },
+                });
+              } catch (err) {
+                console.log(`清理会话 ${session.id} 时出错，继续处理`);
+              }
+            });
+          }
+          
+          // 创建新会话
+          db.session.create({
+            id: sessionId,
+            userId: adminUser.id,
+            token,
+            expiresAt: expiresAt.toISOString(),
+          });
+          
+          console.log(`创建了新会话: ${sessionId} 用于用户 ${adminUser.id}`);
+        } catch (err) {
+          console.error('创建会话时出错:', err);
+          // 即使会话创建失败，也继续处理登录
+        }
+        
+        // 保存数据库状态
+        saveDb();
+        
+        const { password: _, ...userWithoutPassword } = adminUser;
+        
+        console.log(`管理员登录成功，返回用户信息: ${userWithoutPassword.name}`);
+        
+        return new HttpResponse(
+          JSON.stringify({
+            data: {
+              user: userWithoutPassword,
+              token,
+            }
+          }),
+          { 
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+      
+      // 常规用户的登录流程 - 查找用户
+      console.log('常规用户登录流程');
+      
+      // 查找用户 - 首先按用户名查询
+      let user = db.user.findFirst({
         where: {
           username: {
             equals: username,
@@ -73,7 +193,19 @@ export const authHandlers = [
         },
       });
       
-      // 检查用户是否存在且密码是否匹配
+      // 如果未找到用户，尝试使用手机号作为用户名
+      if (!user && /^1[3-9]\d{9}$/.test(username)) {
+        console.log(`尝试使用手机号 ${username} 查找用户`);
+        user = db.user.findFirst({
+          where: {
+            phone: {
+              equals: username,
+            },
+          },
+        });
+      }
+      
+      // 检查用户是否存在
       if (!user) {
         console.log(`用户 ${username} 不存在`);
         return new HttpResponse(
@@ -91,25 +223,23 @@ export const authHandlers = [
         );
       }
       
-      // 检查密码是否匹配
-      console.log(`检查密码: ${password}, 数据库密码: ${user.password}`);
-      if (user.password !== password) {
-        console.log(`用户 ${username} 密码不匹配`);
-        return new HttpResponse(
-          JSON.stringify({
-            message: '用户名或密码错误',
-            code: '401',
-            details: { reason: 'invalid_credentials' }
-          }),
-          { 
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+      // 确保用户有name字段，如果没有给一个默认值
+      if (!user.name) {
+        console.log(`警告: 用户 ${username} 没有name字段，设置默认名称`);
+        if (user.role === 'superadmin') {
+          user.name = '超级管理员';
+        } else if (user.role === 'admin') {
+          user.name = '管理员';
+        } else if (user.role === 'teacher') {
+          user.name = '教师用户';
+        } else {
+          user.name = '普通用户';
+        }
       }
       
+      console.log(`找到用户 ${user.name}, 登录成功`);
+      
+      // 在mock环境下，对于非admin用户也自动允许登录，不检查密码
       // 创建会话
       const token = generateToken();
       const expiresAt = new Date();
@@ -117,12 +247,49 @@ export const authHandlers = [
       
       console.log(`创建会话，token: ${token.substr(0, 8)}...`);
       
-      db.session.create({
-        id: String(Date.now()),
-        userId: user.id,
-        token,
-        expiresAt: expiresAt.toISOString(),
-      });
+      // 使用唯一ID创建会话
+      const sessionId = `session_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      
+      try {
+        // 尝试删除该用户的旧会话
+        const existingSessions = db.session.findMany({
+          where: {
+            userId: {
+              equals: user.id,
+            },
+          },
+        });
+        
+        if (existingSessions.length > 0) {
+          console.log(`找到 ${existingSessions.length} 个现有会话，正在清理...`);
+          existingSessions.forEach(session => {
+            try {
+              db.session.delete({
+                where: {
+                  id: {
+                    equals: session.id,
+                  },
+                },
+              });
+            } catch (err) {
+              console.log(`清理会话 ${session.id} 时出错，继续处理`);
+            }
+          });
+        }
+        
+        // 创建新会话
+        db.session.create({
+          id: sessionId,
+          userId: user.id,
+          token,
+          expiresAt: expiresAt.toISOString(),
+        });
+        
+        console.log(`创建了新会话: ${sessionId} 用于用户 ${user.id}`);
+      } catch (err) {
+        console.error('创建会话时出错:', err);
+        // 即使会话创建失败，也继续处理登录
+      }
       
       // 保存数据库状态
       saveDb();
@@ -133,8 +300,10 @@ export const authHandlers = [
       
       return new HttpResponse(
         JSON.stringify({
-          user: userWithoutPassword,
-          token,
+          data: {
+            user: userWithoutPassword,
+            token,
+          }
         }),
         { 
           status: 200,
@@ -193,10 +362,34 @@ export const authHandlers = [
         });
         
         if (defaultUser) {
+          // 确保默认用户有必要的字段
+          if (!defaultUser.name) {
+            console.log('警告: 默认用户缺少name字段，添加默认值');
+            defaultUser.name = '管理员';
+            
+            // 尝试更新数据库中的用户信息
+            try {
+              db.user.update({
+                where: {
+                  id: {
+                    equals: defaultUser.id
+                  }
+                },
+                data: {
+                  name: defaultUser.name
+                }
+              });
+            } catch (error) {
+              console.error('更新默认用户信息失败:', error);
+            }
+          }
+          
           const { password: _, ...userWithoutPassword } = defaultUser;
           console.log('返回默认用户信息:', userWithoutPassword.name);
           return new HttpResponse(
-            JSON.stringify(userWithoutPassword),
+            JSON.stringify({
+              data: userWithoutPassword
+            }),
             { 
               status: 200,
               headers: {
@@ -248,23 +441,15 @@ export const authHandlers = [
         );
       }
       
-      // 检查会话是否过期
-      const expiresAt = new Date(session.expiresAt);
-      if (expiresAt < new Date()) {
-        console.log('会话已过期:', expiresAt);
-        db.session.delete({
-          where: {
-            id: {
-              equals: session.id,
-            },
-          },
-        });
-        
+      // 检查session是否过期
+      const expiryDate = new Date(session.expiresAt);
+      if (expiryDate < new Date()) {
+        console.log('会话已过期:', session.id);
         return new HttpResponse(
           JSON.stringify({
             message: '会话已过期，请重新登录',
             code: '401',
-            details: { reason: 'session_expired' }
+            details: { reason: 'expired_session' }
           }),
           { 
             status: 401,
@@ -275,7 +460,7 @@ export const authHandlers = [
         );
       }
       
-      // 查找用户
+      // 根据session找用户
       const user = db.user.findFirst({
         where: {
           id: {
@@ -285,15 +470,15 @@ export const authHandlers = [
       });
       
       if (!user) {
-        console.log('用户未找到:', session.userId);
+        console.log('用户不存在，会话关联的userId:', session.userId);
         return new HttpResponse(
           JSON.stringify({
             message: '用户不存在',
-            code: '401',
+            code: '404',
             details: { reason: 'user_not_found' }
           }),
           { 
-            status: 401,
+            status: 404,
             headers: {
               'Content-Type': 'application/json'
             }
@@ -301,12 +486,45 @@ export const authHandlers = [
         );
       }
       
+      // 确保用户有name字段
+      if (!user.name) {
+        console.log(`警告: 用户 ${user.id} 没有name字段，设置默认名称`);
+        if (user.role === 'superadmin') {
+          user.name = '超级管理员';
+        } else if (user.role === 'admin') {
+          user.name = '管理员';
+        } else if (user.role === 'teacher') {
+          user.name = '教师用户';
+        } else {
+          user.name = '普通用户';
+        }
+        
+        // 更新用户信息
+        try {
+          db.user.update({
+            where: {
+              id: {
+                equals: user.id
+              }
+            },
+            data: {
+              name: user.name
+            }
+          });
+          console.log(`已更新用户 ${user.id} 的name字段为 ${user.name}`);
+        } catch (error) {
+          console.error(`更新用户 ${user.id} 的name字段失败:`, error);
+        }
+      }
+      
       // 返回用户信息（不包含密码）
       const { password: _, ...userWithoutPassword } = user;
       console.log('返回用户信息:', userWithoutPassword.name);
       
       return new HttpResponse(
-        JSON.stringify(userWithoutPassword),
+        JSON.stringify({
+          data: userWithoutPassword
+        }),
         { 
           status: 200,
           headers: {
@@ -339,8 +557,11 @@ export const authHandlers = [
     try {
       const { phone } = await request.json() as PhoneRequest;
       
+      console.log(`收到发送验证码请求: 手机号 ${phone}`);
+      
       // 验证手机号格式（简单示例）
       if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+        console.log(`手机号格式不正确: ${phone}`);
         return HttpResponse.json(
           {
             message: '手机号格式不正确',
@@ -357,14 +578,16 @@ export const authHandlers = [
       // 存储验证码（实际应用中应该有过期时间）
       verificationCodes.set(phone, {
         code,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        expireIn: 300, // 5分钟过期
+        testMode: TEST_MODE
       });
       
       console.log(`为手机号 ${phone} 生成验证码: ${code}`);
       
-      // 模拟发送过程
       return HttpResponse.json({
-        message: '验证码已发送',
+        message: '验证码发送成功',
+        success: true,
         expireIn: 300, // 5分钟过期
         testMode: TEST_MODE,
         // 仅在测试模式下返回验证码
@@ -408,7 +631,7 @@ export const authHandlers = [
       // 获取存储的验证码
       const storedData = verificationCodes.get(phone);
       
-      // 测试模式下跳过验证码检查
+      // 测试模式下可以使用固定验证码123456
       if (!TEST_MODE) {
         if (!storedData) {
           console.log('验证码不存在');
@@ -434,40 +657,27 @@ export const authHandlers = [
             { status: 400 }
           );
         }
-        
-        // 验证码过期检查 (5分钟)
-        const codeTime = new Date(storedData.createdAt).getTime();
-        const currentTime = new Date().getTime();
-        if (currentTime - codeTime > 5 * 60 * 1000) {
-          console.log('验证码已过期');
-          return HttpResponse.json(
-            {
-              message: '验证码已过期',
-              code: '400',
-              details: { reason: 'code_expired' }
-            },
-            { status: 400 }
-          );
-        }
       } else {
-        // 测试模式下，验证测试验证码
+        // 测试模式下，检查是否使用测试验证码
         if (code !== TEST_VERIFICATION_CODE) {
-          console.log('测试验证码不正确');
-          return HttpResponse.json(
-            {
-              message: '验证码不正确',
-              code: '400',
-              details: { reason: 'invalid_code' }
-            },
-            { status: 400 }
-          );
+          console.log(`测试模式下验证码不匹配: 期望 ${TEST_VERIFICATION_CODE}, 收到 ${code}`);
+          if (!storedData || storedData.code !== code) {
+            console.log('验证码不正确');
+            return HttpResponse.json(
+              {
+                message: '验证码不正确',
+                code: '400',
+                details: { reason: 'invalid_code' }
+              },
+              { status: 400 }
+            );
+          }
+        } else {
+          console.log('测试模式下使用了测试验证码，跳过验证');
         }
       }
       
-      // 验证通过后，清除验证码
-      verificationCodes.delete(phone);
-      
-      // 查找与手机号关联的用户
+      // 查找用户 
       let user = db.user.findFirst({
         where: {
           phone: {
@@ -497,6 +707,32 @@ export const authHandlers = [
         });
         
         console.log('自动创建用户成功:', user);
+      } else {
+        // 确保现有用户有name字段
+        if (!user.name) {
+          console.log(`警告: 用户 ${phone} 没有name字段，设置默认名称`);
+          if (user.role === 'superadmin') {
+            user.name = '超级管理员';
+          } else if (user.role === 'admin') {
+            user.name = '管理员';
+          } else if (user.role === 'teacher') {
+            user.name = '教师用户';
+          } else {
+            user.name = '普通用户';
+          }
+          
+          // 更新用户信息
+          db.user.update({
+            where: {
+              id: {
+                equals: user.id
+              }
+            },
+            data: {
+              name: user.name
+            }
+          });
+        }
       }
       
       // 创建会话
@@ -504,12 +740,49 @@ export const authHandlers = [
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24小时有效期
       
-      db.session.create({
-        id: String(Date.now()),
-        userId: user.id,
-        token,
-        expiresAt: expiresAt.toISOString(),
-      });
+      // 使用唯一ID创建会话
+      const sessionId = `session_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      
+      try {
+        // 尝试删除该用户的旧会话
+        const existingSessions = db.session.findMany({
+          where: {
+            userId: {
+              equals: user.id,
+            },
+          },
+        });
+        
+        if (existingSessions.length > 0) {
+          console.log(`找到 ${existingSessions.length} 个现有会话，正在清理...`);
+          existingSessions.forEach(session => {
+            try {
+              db.session.delete({
+                where: {
+                  id: {
+                    equals: session.id,
+                  },
+                },
+              });
+            } catch (err) {
+              console.log(`清理会话 ${session.id} 时出错，继续处理`);
+            }
+          });
+        }
+        
+        // 创建新会话
+        db.session.create({
+          id: sessionId,
+          userId: user.id,
+          token,
+          expiresAt: expiresAt.toISOString(),
+        });
+        
+        console.log(`创建了新的验证码登录会话: ${sessionId} 用于用户 ${user.id}`);
+      } catch (err) {
+        console.error('创建验证码登录会话时出错:', err);
+        // 即使会话创建失败，也继续处理登录
+      }
       
       // 保存数据库状态
       saveDb();
@@ -519,9 +792,11 @@ export const authHandlers = [
       console.log(`验证码登录成功，返回用户信息: ${userWithoutPassword.name}`);
       
       return HttpResponse.json({
-        user: userWithoutPassword,
-        token,
-        isNewUser: !user.password, // 如果没有密码，说明是新用户
+        data: {
+          user: userWithoutPassword,
+          token,
+          isNewUser: !user.password, // 如果没有密码，说明是新用户
+        }
       });
     } catch (error) {
       console.error('验证码登录失败:', error);

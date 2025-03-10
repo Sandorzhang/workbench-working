@@ -155,7 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // 根据不同角色返回不同的路径
     switch (role) {
       case "superadmin":
-        return "/dashboard";
+        return "/superadmin";
       case "admin":
         return "/workbench";
       case "teacher":

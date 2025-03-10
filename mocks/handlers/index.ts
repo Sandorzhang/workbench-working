@@ -116,41 +116,30 @@ const criticalAuthHandlers = [
     try {
       await delay(500);
       const body = await request.json();
-      const { username, password } = body as { username: string; password: string };
+      const { username } = body as { username: string; password: string };
       
       console.log(`保底登录处理程序接收到请求: 用户名=${username}`);
       
-      // 简单验证
-      if (username === 'admin' && password === 'admin') {
-        return new HttpResponse(
-          JSON.stringify({
+      // 简单验证 - 对于测试账号始终通过，不检查密码
+      console.log('保底处理程序: 返回成功登录响应');
+      return new HttpResponse(
+        JSON.stringify({
+          data: {
             user: {
               id: '1',
               name: '管理员',
               email: 'admin@example.com',
               avatar: '/avatars/admin.png',
               role: 'admin',
-              username: 'admin'
+              username: 'admin',
+              phone: '13800000000',
+              createdAt: new Date().toISOString()
             },
             token: 'mock-token-backup-handler'
-          }),
-          { 
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json'
-            }
           }
-        );
-      }
-      
-      return new HttpResponse(
-        JSON.stringify({
-          message: '用户名或密码错误',
-          code: '401',
-          details: { reason: 'invalid_credentials' }
         }),
         { 
-          status: 401,
+          status: 200,
           headers: {
             'Content-Type': 'application/json'
           }
@@ -175,27 +164,53 @@ const criticalAuthHandlers = [
   }),
   
   // 获取当前用户信息 - 保底实现
-  http.get('*/auth/user', async () => {
+  http.get('*/auth/user', async ({ request }) => {
     console.log('使用保底用户信息处理程序');
     
-    await delay(300);
-    
-    return new HttpResponse(
-      JSON.stringify({
-        id: '1',
-        name: '管理员',
-        email: 'admin@example.com',
-        avatar: '/avatars/admin.png',
-        role: 'admin',
-        username: 'admin'
-      }),
-      { 
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json'
+    try {
+      await delay(300);
+      
+      // 从请求头获取令牌
+      const authHeader = request.headers.get('Authorization');
+      console.log('保底处理程序: Authorization 头:', authHeader ? authHeader.substring(0, 20) + '...' : 'undefined');
+      
+      // 直接返回默认管理员用户
+      return new HttpResponse(
+        JSON.stringify({
+          data: {
+            id: '1',
+            name: '管理员',
+            email: 'admin@example.com',
+            avatar: '/avatars/admin.png',
+            role: 'admin',
+            username: 'admin',
+            phone: '13800000000',
+            createdAt: new Date().toISOString()
+          }
+        }),
+        { 
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
-      }
-    );
+      );
+    } catch (error) {
+      console.error('保底用户信息处理程序出错:', error);
+      return new HttpResponse(
+        JSON.stringify({
+          message: '获取用户信息失败',
+          code: '500',
+          details: { reason: 'server_error' }
+        }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
   }),
   
   // 登出处理程序 - 保底实现
