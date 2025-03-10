@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { userApi } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from "react";
+import { userApi } from "@/api/request";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export function UserList() {
   const [users, setUsers] = useState<any[]>([]);
@@ -17,7 +23,7 @@ export function UserList() {
       setUsers(data);
       setError(null);
     } catch (err) {
-      setError('加载用户列表失败');
+      setError("加载用户列表失败");
       console.error(err);
     } finally {
       setLoading(false);
@@ -30,7 +36,7 @@ export function UserList() {
       // 重新加载用户列表
       loadUsers();
     } catch (err) {
-      console.error('删除用户失败', err);
+      console.error("删除用户失败", err);
     }
   }
 
@@ -54,7 +60,7 @@ export function UserList() {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">用户列表</h2>
-      
+
       {users.length === 0 ? (
         <p>没有用户</p>
       ) : (
@@ -66,9 +72,9 @@ export function UserList() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-4">
-                  <img 
-                    src={user.avatar} 
-                    alt={user.name} 
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
                     className="w-12 h-12 rounded-full"
                   />
                   <div>
@@ -80,8 +86,8 @@ export function UserList() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   onClick={() => handleDeleteUser(user.id)}
                 >
                   删除
@@ -93,4 +99,4 @@ export function UserList() {
       )}
     </div>
   );
-} 
+}

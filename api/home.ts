@@ -1,14 +1,10 @@
+import request from "./request";
 
-  // 工作台相关
-  workbench: {
-    // 获取工作台配置
-    getConfig: () => 
-      handleRequest(`/workbench/config`),
-    
-    // 保存工作台偏好设置
-    savePreferences: (moduleIds: string[]) => 
-      handleRequest(`/workbench/preferences`, {
-        method: 'POST',
-        data: { modules: moduleIds }
-      })
-  },
+// 工作台相关
+
+// 获取工作台配置
+export const getConfig = request.get(`/workbench/config`);
+
+// 保存工作台偏好设置
+export const savePreferences = (moduleIds: string[]) =>
+  request.post(`/workbench/preferences`, moduleIds);

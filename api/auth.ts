@@ -1,52 +1,29 @@
-export const api = {
-    // 用户认证
-    auth: {
-      // 账号密码登录
-      login: async (username: string, password: string) => {
-        console.log(`尝试登录，用户名: ${username}`);
-        
-        try {
-          return await handleRequest(`/auth/login`, {
-            method: 'POST',
-            data: { 
-              username, 
-              password,
-              // 添加登录类型标识，方便后端识别
-              loginType: 'password'
-            }
-          });
-        } catch (error) {
-          console.error('登录失败:', error);
-          // 重新抛出错误以便被上层处理
-          throw error;
-        }
-      },
-      
-      // 验证码登录
-      loginWithCode: (phone: string, code: string) => 
-        handleRequest(`/auth/login-with-code`, {
-          method: 'POST',
-          data: { 
-            phone, 
-            code,
-            loginType: 'code'
-          }
-        }),
-      
-      // 发送短信验证码
-      sendVerificationCode: (phone: string) => 
-        handleRequest(`/auth/send-code`, {
-          method: 'POST',
-          data: { phone }
-        }),
-      
-      // 退出登录
-      logout: () => 
-        handleRequest(`/auth/logout`, {
-          method: 'POST'
-        }),
-      
-      // 获取当前用户信息
-      getCurrentUser: () => 
-        handleRequest(`/auth/user`)
-    },
+import request from "./request";
+
+// 用户认证相关
+
+// 账号密码登录
+export const login = (username: string, password: string) =>
+  request.post(`/auth/login`, {
+    username,
+    password,
+    loginType: "password",
+  });
+
+// 验证码登录
+export const loginWithCode = (phone: string, code: string) =>
+  request.post(`/auth/login-with-code`, {
+    phone,
+    code,
+    loginType: "code",
+  });
+
+// 发送短信验证码
+export const sendVerificationCode = (phone: string) =>
+  request.post(`/auth/send-code`, { phone });
+
+// 退出登录
+export const logout = () => request.post(`/auth/logout`);
+
+// 获取当前用户信息
+export const getCurrentUser = () => request.get(`/auth/user`);

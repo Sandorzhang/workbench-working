@@ -1,7 +1,7 @@
 // API类型定义
 
 // 角色类型
-export type Role = 'superadmin' | 'admin' | 'teacher' | 'student';
+export type Role = "superadmin" | "admin" | "teacher" | "student";
 
 // 用户相关类型
 export interface User {
@@ -58,7 +58,7 @@ export interface Agent {
   name: string;
   avatar: string;
   description: string;
-  status: 'active' | 'disabled';
+  status: "active" | "disabled";
   createdAt: string;
   type: string;
   capabilities: string[];
@@ -106,7 +106,7 @@ export interface TeachingPlan {
   title: string;
   subject: string;
   grade: string;
-  status: 'draft' | 'published';
+  status: "draft" | "published";
   updatedAt: string;
   author: string;
   description?: string;
@@ -127,6 +127,7 @@ export interface TeachingPlanListResponse {
 export interface ApiErrorResponse {
   message: string;
   code?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: any;
 }
 
@@ -139,7 +140,7 @@ export interface PaginationParams {
 // 通用排序参数
 export interface SortParams {
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 // 通用API响应状态
@@ -151,9 +152,9 @@ export interface ApiResponseStatus {
 
 // 区域相关类型
 export interface Region {
-  id: string;       // 六位数字编码ID
-  name: string;     // 区域名称
-  status: boolean;  // 启用/停用状态
+  id: string; // 六位数字编码ID
+  name: string; // 区域名称
+  status: boolean; // 启用/停用状态
 }
 
 export interface RegionListResponse {
@@ -171,23 +172,23 @@ export enum SchoolType {
   NINE_YEAR = "九年一贯制",
   COMPLETE_SIX = "完全中学（六年制）",
   COMPLETE_SEVEN = "完全中学（七年制）",
-  TWELVE_YEAR = "十二年一贯制"
+  TWELVE_YEAR = "十二年一贯制",
 }
 
 // 学校相关类型
 export interface School {
-  id: string;           // 系统生成的唯一ID
-  name: string;         // 学校名称
-  code: string;         // 学校编号（3位数字编码）
-  regionId: string;     // 所属区域ID
-  regionName?: string;  // 所属区域名称
-  type: SchoolType;     // 阶段学制
-  grades: string[];     // 学校年级（数组）
-  status: boolean;      // 启用/停用状态
-  createdAt: string;    // 创建时间
+  id: string; // 系统生成的唯一ID
+  name: string; // 学校名称
+  code: string; // 学校编号（3位数字编码）
+  regionId: string; // 所属区域ID
+  regionName?: string; // 所属区域名称
+  type: SchoolType; // 阶段学制
+  grades: string[]; // 学校年级（数组）
+  status: boolean; // 启用/停用状态
+  createdAt: string; // 创建时间
 }
 
 export interface SchoolListResponse {
   schools: School[];
   total: number;
-} 
+}
