@@ -13,6 +13,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        "@lib": path.resolve(__dirname, "./lib"),
+        "@components": path.resolve(__dirname, "./components"),
+      },
+    },
+  },
   webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -32,16 +40,6 @@ const nextConfig = {
     });
 
     return config;
-  },
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        "@lib": path.resolve(__dirname, "./lib"),
-        "@components": path.resolve(__dirname, "./components"),
-      },
-    },
-    // 禁用 Turbopack 的字体优化
-    optimizeFonts: false,
   },
   // 环境变量配置
   env: {
